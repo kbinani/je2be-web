@@ -1,0 +1,3 @@
+[submodule "deps/je2be"]
+	path = deps/je2be
+	url = https://github.com/kbinani/je2be.git
