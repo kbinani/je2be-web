@@ -1,16 +1,27 @@
 export type StartMessage = {
-  files: FileList;
+  file: File;
 };
 
 export function isStartMessage(x: any): x is StartMessage {
   if (!x) {
     return false;
   }
-  return x["files"] instanceof FileList;
+  return x["file"] instanceof File;
 }
 
-export type FinishMessage = {};
+export type SuccessMessage = {};
 
-export function isFinishMessage(x: any): x is FinishMessage {
-  return true;
+export function isSuccessMessage(x: any): x is SuccessMessage {
+  return !!x;
+}
+
+export type FailedMessage = {
+  code: Error;
+};
+
+export function isFailedMessage(x: any): x is FailedMessage {
+  if (!x) {
+    return false;
+  }
+  return x["code"] instanceof Error;
 }
