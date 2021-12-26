@@ -18,7 +18,8 @@
   },
   "scripts": {
     "front": "esbuild src/front/index.tsx --bundle --define:process.env.NODE_ENV=\\\"production\\\" --outfile=public/out/front.js",
-    "fmt": "prettier --write 'src/**/*.tsx' 'public/style/*.css'",
+    "converter": "esbuild src/converter/main.ts --bundle --define:process.env.NODE_ENV=\\\"production\\\" --outfile=public/out/converter.js",
+    "fmt": "prettier --write 'src/**/*.ts' 'src/**/*.tsx' 'public/style/*.css'",
     "dev": "yarn front --servedir=public --serve=3000"
   }
 }
