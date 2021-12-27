@@ -1,4 +1,10 @@
-import { isStartMessage, StartMessage, WorkerError } from "../share/messages";
+import {
+  FailedMessage,
+  isStartMessage,
+  StartMessage,
+  SuccessMessage,
+  WorkerError,
+} from "../share/messages";
 import * as JSZip from "jszip";
 import { dirname, mkdirp } from "./fs-ext";
 
@@ -8,14 +14,14 @@ self.onmessage = (ev: MessageEvent) => {
   if (isStartMessage(ev.data)) {
     const id = ev.data.id;
     start(ev.data)
-      .then(success)
-      .catch(failed)
+      .then(() => success(id))
+      .catch((e) => failed(e, id))
       .finally(() => cleanup(id));
   }
 };
 
 async function start(msg: StartMessage): Promise<void> {
-  console.log("converter: received StartMessage; file=", msg.file);
+  console.log("converter: received StartMessage");
   const id = msg.id;
   FS.mkdir(`/${id}`);
   FS.mkdir(`/${id}/in`);
@@ -27,7 +33,6 @@ async function start(msg: StartMessage): Promise<void> {
       console.error(err);
     }
   });
-  console.log(`syncfs done`);
 }
 
 async function extract(file: File, id: string) {
@@ -74,9 +79,20 @@ async function extract(file: File, id: string) {
   await Promise.all(promises);
 }
 
-function success() {}
+function success(id: string) {
+  const m: SuccessMessage = { id };
+  self.postMessage(m);
+}
 
-function failed(e: Error) {
+function failed(e: Error, id: string) {
+  let error: WorkerError;
+  if (e instanceof WorkerError) {
+    error = e;
+  } else {
+    error = new WorkerError("Other", e);
+  }
+  const m: FailedMessage = { id, error };
+  self.postMessage(m);
   console.error(e);
 }
 

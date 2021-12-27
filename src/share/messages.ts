@@ -37,10 +37,10 @@ export function isFailedMessage(x: any): x is FailedMessage {
   );
 }
 
-export class WorkerError extends Error {
-  type: "NoLevelDatFound";
+type WorkerErrorType = "NoLevelDatFound" | "Other";
 
-  constructor(type: "NoLevelDatFound") {
+export class WorkerError extends Error {
+  constructor(readonly type: WorkerErrorType, readonly native?: Error) {
     super();
   }
 }
