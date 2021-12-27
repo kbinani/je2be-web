@@ -9,6 +9,7 @@ build/core.wasm: src/core/main.cpp CMakeLists.txt
 	mkdir -p build
 	docker run --rm -v $$(pwd):/src/je2be-web -u $$(id -u):$$(id -g) -w /src/je2be-web je2be_build_wasm make build_wasm
 
+.PHONY: build_docker_image
 build_docker_image:
 	docker build -t je2be_build_wasm .
 
