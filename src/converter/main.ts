@@ -5,8 +5,10 @@ import {
   SuccessMessage,
   WorkerError,
 } from "../share/messages";
-import * as JSZip from "jszip";
+import JSZip from "jszip";
 import { dirname, mkdirp } from "./fs-ext";
+
+const kUseIdbfs = false;
 
 self.importScripts("core.js");
 
@@ -14,25 +16,34 @@ self.onmessage = (ev: MessageEvent) => {
   if (isStartMessage(ev.data)) {
     const id = ev.data.id;
     start(ev.data)
-      .then(() => success(id))
       .catch((e) => failed(e, id))
       .finally(() => cleanup(id));
   }
 };
 
 async function start(msg: StartMessage): Promise<void> {
-  console.log("converter: received StartMessage");
   const id = msg.id;
+  console.log(`[${id}] converter: received StartMessage`);
+
   FS.mkdir(`/${id}`);
   FS.mkdir(`/${id}/in`);
   FS.mkdir(`/${id}/out`);
-  FS.mount(IDBFS, {}, `/${id}`);
+  if (kUseIdbfs) {
+    FS.mount(IDBFS, {}, `/${id}`);
+  }
+
+  console.log(`[${id}] extract...`);
   await extract(msg.file, msg.id);
-  FS.syncfs((err) => {
-    if (err) {
-      console.error(err);
-    }
-  });
+  console.log(`[${id}] extract done`);
+  console.log(`[${id}] convert...`);
+  const files = await convert(msg.id);
+  console.log(`[${id}] convert done`);
+  console.log(`[${id}] archive...`);
+  const url = await archive(id, files);
+  console.log(url);
+  console.log(`[${id}] archive done`);
+  const m: SuccessMessage = { id, blobUrl: url };
+  self.postMessage(m);
 }
 
 async function extract(file: File, id: string) {
@@ -79,9 +90,25 @@ async function extract(file: File, id: string) {
   await Promise.all(promises);
 }
 
-function success(id: string) {
-  const m: SuccessMessage = { id };
-  self.postMessage(m);
+async function convert(id: string): Promise<string[]> {
+  const ret = Module.core(`/${id}/in`, `/${id}/out`);
+  return ret.split("\x0d").filter((it) => it !== "");
+}
+
+async function archive(id: string, files: string[]): Promise<string> {
+  const prefix = `/${id}/out/`;
+  const zip = new JSZip();
+  for (const file of files) {
+    if (!file.startsWith(prefix)) {
+      continue;
+    }
+    const buffer = FS.readFile(file);
+    const rel = file.substring(prefix.length);
+    zip.file(rel, buffer);
+  }
+  const archived: Uint8Array = await zip.generateAsync({ type: "uint8array" });
+  const blob = new Blob([archived]);
+  return URL.createObjectURL(blob);
 }
 
 function failed(e: Error, id: string) {
@@ -96,4 +123,14 @@ function failed(e: Error, id: string) {
   console.error(e);
 }
 
-function cleanup(id: string) {}
+function cleanup(id: string) {
+  if (kUseIdbfs) {
+    FS.syncfs(false, (err) => {
+      if (err) {
+        console.error(`[${id}] syncfs failed`, err);
+      } else {
+        console.log(`[${id}] syncfs done`);
+      }
+    });
+  }
+}

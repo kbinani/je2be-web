@@ -12,6 +12,7 @@ export function isStartMessage(x: any): x is StartMessage {
 
 export type SuccessMessage = {
   id: string;
+  blobUrl: string;
 };
 
 export function isSuccessMessage(x: any): x is SuccessMessage {
@@ -37,7 +38,7 @@ export function isFailedMessage(x: any): x is FailedMessage {
   );
 }
 
-type WorkerErrorType = "NoLevelDatFound" | "Other";
+type WorkerErrorType = "NoLevelDatFound" | "ConverterFailed" | "Other";
 
 export class WorkerError extends Error {
   constructor(readonly type: WorkerErrorType, readonly native?: Error) {
