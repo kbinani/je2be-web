@@ -8,8 +8,6 @@ import {
 import JSZip from "jszip";
 import { dirname, mkdirp } from "./fs-ext";
 
-const kDebug = false;
-
 self.importScripts("core.js");
 
 self.onmessage = (ev: MessageEvent) => {
@@ -28,9 +26,7 @@ async function start(msg: StartMessage): Promise<void> {
   FS.mkdir(`/${id}`);
   FS.mkdir(`/${id}/in`);
   FS.mkdir(`/${id}/out`);
-  if (kDebug) {
-    FS.mount(IDBFS, {}, `/${id}`);
-  }
+  FS.mount(IDBFS, {}, `/${id}`);
 
   console.log(`[${id}] extract...`);
   await extract(msg.file, msg.id);
@@ -130,7 +126,8 @@ function success(id: string, url: string) {
 }
 
 function cleanup(id: string) {
-  if (kDebug) {
+  const keepFs = false;
+  if (keepFs) {
     FS.syncfs(false, (err) => {
       if (err) {
         console.error(`[${id}] syncfs failed`, err);
