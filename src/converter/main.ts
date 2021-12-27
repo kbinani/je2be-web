@@ -59,7 +59,7 @@ async function extract(file: File, id: string) {
   const levelDatPath = foundLevelDat[0];
   const idx = levelDatPath.lastIndexOf("level.dat");
   const prefix = levelDatPath.substring(0, idx);
-  const promises: Promise<void>[] = [];
+  const files: string[] = [];
   data.forEach((p: string, f: JSZip.JSZipObject) => {
     if (!p.startsWith(prefix)) {
       return;
@@ -67,24 +67,27 @@ async function extract(file: File, id: string) {
     if (f.dir) {
       return;
     }
-    const rel = p.substring(prefix.length);
-    const target = `/${id}/in/${rel}`;
-    const dname = dirname(target);
-    mkdirp(dname);
-    const copy = new Promise<void>((resolve, reject) => {
-      f.async("arraybuffer").then((buffer) => {
-        try {
-          const fp = FS.open(target, "w+");
-          FS.write(fp, buffer, 0, buffer.byteLength, 0);
-          FS.close(fp);
-          resolve();
-        } catch (e) {
-          reject(e);
-        }
-      });
-    });
-    promises.push(copy);
+    files.push(p);
   });
+  const promises: Promise<void>[] = [];
+  for (const p of files) {
+    promises.push(
+      new Promise((resolve, reject) => {
+        const rel = p.substring(prefix.length);
+        const target = `/${id}/in/${rel}`;
+        const dname = dirname(target);
+        mkdirp(dname);
+        data
+          .file(p)
+          .async("uint8array")
+          .then((buffer) => {
+            FS.writeFile(target, buffer);
+            resolve();
+          })
+          .catch(reject);
+      })
+    );
+  }
   await Promise.all(promises);
 }
 
