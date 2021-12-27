@@ -5,6 +5,7 @@ import {
   isSuccessMessage,
   StartMessage,
 } from "../share/messages";
+import { v4 as uuidv4 } from "uuid";
 
 export const MainComponent: FC = () => {
   const [files, setFiles] = useState<FileList | null>(null);
@@ -17,7 +18,8 @@ export const MainComponent: FC = () => {
       return;
     }
     const worker = new Worker("out/converter.js");
-    const message: StartMessage = { file: files.item(0) };
+    const id = uuidv4();
+    const message: StartMessage = { file: files.item(0), id };
     console.log(`front: posting StartMessage`);
     worker.postMessage(message);
     worker.onmessage = (msg: MessageEvent) => {

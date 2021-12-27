@@ -6,6 +6,7 @@
   "author": "kbinani <kbinani.bt@gmail.com>",
   "license": "MIT",
   "devDependencies": {
+    "@types/jszip": "^3.4.1",
     "@types/react": "^17.0.38",
     "@types/react-dom": "^17.0.11",
     "esbuild": "^0.14.8",
@@ -15,7 +16,8 @@
   "dependencies": {
     "jszip": "^3.7.1",
     "react": "^17.0.2",
-    "react-dom": "^17.0.2"
+    "react-dom": "^17.0.2",
+    "uuid": "^8.3.2"
   },
   "scripts": {
     "front": "esbuild src/front/index.tsx --bundle --define:process.env.NODE_ENV=\\\"production\\\" --outfile=public/out/front.js",

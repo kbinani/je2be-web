@@ -1,4 +1,5 @@
 export type StartMessage = {
+  id: string;
   file: File;
 };
 
@@ -6,22 +7,40 @@ export function isStartMessage(x: any): x is StartMessage {
   if (!x) {
     return false;
   }
-  return x["file"] instanceof File;
+  return typeof x["id"] === "string" && x["file"] instanceof File;
 }
 
-export type SuccessMessage = {};
+export type SuccessMessage = {
+  id: string;
+};
 
 export function isSuccessMessage(x: any): x is SuccessMessage {
-  return !!x;
+  if (!x) {
+    return false;
+  }
+  return typeof x["id"] === "string";
 }
 
 export type FailedMessage = {
-  code: Error;
+  id: string;
+  error: WorkerError;
 };
 
 export function isFailedMessage(x: any): x is FailedMessage {
   if (!x) {
     return false;
   }
-  return x["code"] instanceof Error;
+  return (
+    typeof x["id"] === "string" &&
+    !x["error"] &&
+    typeof x["error"]["type"] === "string"
+  );
+}
+
+export class WorkerError extends Error {
+  type: "NoLevelDatFound";
+
+  constructor(type: "NoLevelDatFound") {
+    super();
+  }
 }

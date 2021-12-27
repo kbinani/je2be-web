@@ -3,6 +3,8 @@
 build/core.wasm:
 	mkdir -p build
 	cd build && emcmake cmake .. && make -j $$(nproc) core
+	cp build/core.js public/out/
+	cp build/core.wasm public/out/
 
 clean:
 	rm -rf build
