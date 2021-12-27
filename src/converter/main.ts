@@ -8,7 +8,7 @@ import {
 import JSZip from "jszip";
 import { dirname, mkdirp } from "./fs-ext";
 
-const kUseIdbfs = false;
+const kDebug = false;
 
 self.importScripts("core.js");
 
@@ -28,7 +28,7 @@ async function start(msg: StartMessage): Promise<void> {
   FS.mkdir(`/${id}`);
   FS.mkdir(`/${id}/in`);
   FS.mkdir(`/${id}/out`);
-  if (kUseIdbfs) {
+  if (kDebug) {
     FS.mount(IDBFS, {}, `/${id}`);
   }
 
@@ -40,10 +40,8 @@ async function start(msg: StartMessage): Promise<void> {
   console.log(`[${id}] convert done`);
   console.log(`[${id}] archive...`);
   const url = await archive(id, files);
-  console.log(url);
   console.log(`[${id}] archive done`);
-  const m: SuccessMessage = { id, blobUrl: url };
-  self.postMessage(m);
+  success(id, url);
 }
 
 async function extract(file: File, id: string) {
@@ -123,8 +121,13 @@ function failed(e: Error, id: string) {
   console.error(e);
 }
 
+function success(id: string, url: string) {
+  const m: SuccessMessage = { id, blobUrl: url };
+  self.postMessage(m);
+}
+
 function cleanup(id: string) {
-  if (kUseIdbfs) {
+  if (kDebug) {
     FS.syncfs(false, (err) => {
       if (err) {
         console.error(`[${id}] syncfs failed`, err);
@@ -132,5 +135,7 @@ function cleanup(id: string) {
         console.log(`[${id}] syncfs done`);
       }
     });
+  } else {
+    Module.cleanup(`/${id}`);
   }
 }

@@ -29,6 +29,12 @@ std::string core(std::string in, std::string out) {
   return s.str();
 }
 
+void cleanup(std::string id) {
+  error_code ec;
+  fs::remove_all(fs::path(id), ec);
+}
+
 EMSCRIPTEN_BINDINGS(core_module) {
     emscripten::function("core", &core);
+    emscripten::function("cleanup", &cleanup);
 }
