@@ -1,7 +1,6 @@
 #include <je2be.hpp>
 #include <iostream>
 
-#include <unzip.h>
 #include "emscripten/bind.h"
 
 
