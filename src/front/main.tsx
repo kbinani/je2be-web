@@ -14,7 +14,7 @@ export const MainComponent: FC = () => {
       console.error("no file selected, or one or more files selected");
       return;
     }
-    const worker = new Worker("out/converter.js");
+    const worker = new Worker("script/converter.js");
     const id = uuidv4();
     const file = files.item(0);
     const message: StartMessage = { file, id };

@@ -20,8 +20,8 @@
     "uuid": "^8.3.2"
   },
   "scripts": {
-    "front": "esbuild src/front/index.tsx --bundle --define:process.env.NODE_ENV=\\\"production\\\" --outfile=public/out/front.js",
-    "converter": "esbuild src/converter/main.ts --bundle --define:process.env.NODE_ENV=\\\"production\\\" --outfile=public/out/converter.js",
+    "front": "esbuild src/front/index.tsx --bundle --define:process.env.NODE_ENV=\\\"production\\\" --outfile=public/script/front.js",
+    "converter": "esbuild src/converter/main.ts --bundle --define:process.env.NODE_ENV=\\\"production\\\" --outfile=public/script/converter.js",
     "fmt": "prettier --write 'src/**/*.ts' 'src/**/*.tsx' 'public/style/*.css'",
     "dev": "yarn front --servedir=public --serve=3000"
   }

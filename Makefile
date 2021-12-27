@@ -1,9 +1,9 @@
 .PHONY: all
-all: public/out/core.js public/out/core.wasm public/out/converter.js
+all: public/script/core.js public/script/core.wasm public/script/converter.js
 
 .PHONY: clean
 clean:
-	rm -rf build/core.wasm build/core.js public/out
+	rm -rf build/core.wasm build/core.js public/script
 
 build/core.wasm: src/core/main.cpp CMakeLists.txt
 	mkdir -p build
@@ -16,13 +16,13 @@ build_docker_image:
 build_wasm:
 	cd build && emcmake cmake .. && make -j $$(nproc) core
 
-public/out/converter.js: src/converter/main.ts src/converter/fs-ext.ts src/converter/index.d.ts
-	yarn esbuild src/converter/main.ts --bundle --define:process.env.NODE_ENV="production" --outfile=public/out/converter.js
+public/script/converter.js: src/converter/main.ts src/converter/fs-ext.ts src/converter/index.d.ts
+	yarn esbuild src/converter/main.ts --bundle --define:process.env.NODE_ENV="production" --outfile=public/script/converter.js
 
-public/out/core.js: build/core.wasm
-	mkdir -p public/out
-	cp build/core.js public/out/core.js
+public/script/core.js: build/core.wasm
+	mkdir -p public/script
+	cp build/core.js public/script/core.js
 
-public/out/core.wasm: build/core.wasm
-	mkdir -p public/out
-	cp build/core.wasm public/out/core.wasm
+public/script/core.wasm: build/core.wasm
+	mkdir -p public/script
+	cp build/core.wasm public/script/core.wasm
