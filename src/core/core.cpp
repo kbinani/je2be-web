@@ -10,12 +10,22 @@ using namespace std;
 using namespace mcfile;
 namespace fs = std::filesystem;
 
+static void Report(std::string id, std::string stage, double progress) {
+  EM_ASM({
+    const m = {};
+    m["id"] = UTF8ToString($0, $1);
+    m["stage"] = UTF8ToString($2, $3);
+    m["progress"] = $4;
+    self.postMessage(m);
+  },
+         id.c_str(), id.size(), stage.c_str(), stage.size(), progress);
+}
+
 class ProgressRepoter : public je2be::Progress {
 public:
   explicit ProgressRepoter(std::string id) : fId(id) {}
 
   bool report(Phase phase, double progress, double total) override {
-    std::string id = fId;
     std::string stage;
     switch (phase) {
     case Phase::Convert:
@@ -26,14 +36,7 @@ public:
       break;
     }
     double p = progress / total;
-    EM_ASM({
-      const m = {};
-      m["id"] = UTF8ToString($0, $1);
-      m["stage"] = UTF8ToString($2, $3);
-      m["progress"] = $4;
-      self.postMessage(m);
-    },
-           id.c_str(), id.size(), stage.c_str(), stage.size(), p);
+    Report(fId, stage, p);
     return true;
   }
 
@@ -58,6 +61,14 @@ int core(std::string id, std::string in, std::string out, std::string zip) {
   if (!file) {
     return 2;
   }
+  int count = 0;
+  for (auto it : fs::recursive_directory_iterator(out)) {
+    if (!it.is_regular_file()) {
+      continue;
+    }
+    count++;
+  }
+  int progress = 0;
   for (auto it : fs::recursive_directory_iterator(out)) {
     if (!it.is_regular_file()) {
       continue;
@@ -93,6 +104,8 @@ int core(std::string id, std::string in, std::string out, std::string zip) {
       zipClose(file, nullptr);
       return 6;
     }
+    progress++;
+    Report(id, "zip", (double)progress / (double)count);
   }
   if (0 != zipClose(file, nullptr)) {
     return 7;

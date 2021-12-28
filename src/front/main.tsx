@@ -13,11 +13,13 @@ class Progress {
   readonly unzip: number;
   readonly convert: number;
   readonly compaction: number;
+  readonly zip: number;
 
   constructor(msg?: ProgressMessage) {
     this.unzip = 0;
     this.convert = 0;
     this.compaction = 0;
+    this.zip = 0;
     switch (msg?.stage) {
       case "unzip":
         this.unzip = msg.progress;
@@ -30,6 +32,12 @@ class Progress {
         this.unzip = 1;
         this.convert = 1;
         this.compaction = msg.progress;
+        break;
+      case "zip":
+        this.unzip = 1;
+        this.convert = 1;
+        this.compaction = 1;
+        this.zip = msg.progress;
         break;
     }
   }
@@ -105,6 +113,17 @@ export const MainComponent: FC = () => {
               />
               <div className="progressBarLabel">{`LevelDB Compaction: ${Math.floor(
                 progress.compaction * 100
+              )}% done`}</div>
+            </div>
+          )}
+          {progress.zip > 0 && (
+            <div className="progress">
+              <div
+                className="progressBar"
+                style={{ width: `${progress.zip * 100}%` }}
+              />
+              <div className="progressBarLabel">{`Zip: ${Math.floor(
+                progress.zip * 100
               )}% done`}</div>
             </div>
           )}
