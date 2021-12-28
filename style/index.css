@@ -1,0 +1,99 @@
+:root {
+  --background: rgb(50, 62, 68);
+  --background-dark: rgb(38, 50, 56);
+  font-family: "Roboto", sans-serif;
+  user-select: none;
+}
+
+.button {
+  cursor: pointer;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background-color: var(--background);
+  position: absolute;
+}
+
+.header {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: 60px;
+  background-color: var(--background-dark);
+  background-image: url("/image/icon-large.png");
+  background-repeat: no-repeat;
+  background-size: 65px;
+  background-position-y: center;
+  background-position-x: 10px;
+  display: flex;
+}
+
+.appLabel {
+  color: white;
+  text-indent: 90px;
+  line-height: 60px;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.container {
+  width: 600px;
+  height: 430px;
+  background-color: var(--background-dark);
+  margin: 90px auto auto auto;
+  border-radius: 7px;
+}
+
+.inputZip {
+  margin: 20px;
+}
+
+.inputZipLabel {
+  color: white;
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.progressContainer {
+  width: 560px;
+  margin-top: 10px;
+  margin-left: 20px;
+}
+
+.progress {
+  background-color: var(--background);
+  width: 100%;
+  height: 36px;
+  margin-top: 10px;
+  position: relative;
+  border-radius: 3px;
+}
+
+.progressBar {
+  background-color: rgb(60, 79, 87);
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 36px;
+  border-top-left-radius: 3px;
+  border-bottom-left-radius: 3px;
+}
+
+.progressBar[data-completed="true"] {
+  border-top-right-radius: 3px;
+  border-bottom-right-radius: 3px;
+}
+
+.progressLabel {
+  position: absolute;
+  margin-left: 5px;
+  top: 0;
+  left: 0;
+  line-height: 36px;
+  color: #7399a8;
+  font-size: 15px;
+}
