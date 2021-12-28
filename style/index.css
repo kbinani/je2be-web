@@ -40,6 +40,13 @@
   font-weight: bold;
 }
 
+.appLabelSub {
+  color: darkgray;
+  line-height: 65px;
+  font-size: 16px;
+  margin-left: 30px;
+}
+
 .container {
   width: 600px;
   height: 430px;

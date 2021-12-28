@@ -10125,14 +10125,16 @@
       className: "header"
     }, /* @__PURE__ */ React.createElement("div", {
       className: "appLabel"
-    }, "je2be-web")), /* @__PURE__ */ React.createElement("div", {
+    }, "je2be-web"), /* @__PURE__ */ React.createElement("div", {
+      className: "appLabelSub"
+    }, "A data converter for Minecraft")), /* @__PURE__ */ React.createElement("div", {
       className: "container"
     }, /* @__PURE__ */ React.createElement("div", {
       className: "inputZip"
     }, /* @__PURE__ */ React.createElement("label", {
       className: "inputZipLabel",
       htmlFor: "input_zip"
-    }, "Choose a zip file of Java Edition world data"), /* @__PURE__ */ React.createElement("input", {
+    }, "Choose a zip archive of Java Edition world data"), /* @__PURE__ */ React.createElement("input", {
       name: "input_zip",
       type: "file",
       onChange,
