@@ -96,54 +96,41 @@ export const MainComponent: FC = () => {
       }
     };
   };
+  const { unzip, compaction, zip } = state.current;
+  const convert = Math.floor(
+    (state.current.convert / state.current.convertTotal) * 100
+  );
+  const chunks = Math.floor(state.current.convert);
   return (
     <div className="main">
       <div className="container">
         <input type="file" onChange={onChange} />
         <div className="progressContainer">
+          <Progress progress={unzip} label={"Unzip"} />
           <div className="progress">
-            <div
-              className="progressBar"
-              style={{ width: `${state.current.unzip * 100}%` }}
-            />
-            <div className="progressBarLabel">{`Unzip: ${Math.floor(
-              state.current.unzip * 100
-            )}% done`}</div>
+            <div className="progressBar" style={{ width: `${convert}%` }} />
+            <div className="progressLabel">
+              Conversion: {chunks} chunks, {convert}% done
+            </div>
           </div>
-          <div className="progress">
-            <div
-              className="progressBar"
-              style={{
-                width: `${
-                  (state.current.convert / state.current.convertTotal) * 100
-                }%`,
-              }}
-            />
-            <div className="progressBarLabel">{`Conversion: ${Math.floor(
-              state.current.convert
-            )} chunks, ${Math.floor(
-              (state.current.convert / state.current.convertTotal) * 100
-            )}% done`}</div>
-          </div>
-          <div className="progress">
-            <div
-              className="progressBar"
-              style={{ width: `${state.current.compaction * 100}%` }}
-            />
-            <div className="progressBarLabel">{`LevelDB Compaction: ${Math.floor(
-              state.current.compaction * 100
-            )}% done`}</div>
-          </div>
-          <div className="progress">
-            <div
-              className="progressBar"
-              style={{ width: `${state.current.zip * 100}%` }}
-            />
-            <div className="progressBarLabel">{`Zip: ${Math.floor(
-              state.current.zip * 100
-            )}% done`}</div>
-          </div>
+          <Progress progress={compaction} label={"LevelDB Compaction"} />
+          <Progress progress={zip} label={"Zip"} />
         </div>
+      </div>
+    </div>
+  );
+};
+
+const Progress: FC<{ progress: number; label: string }> = ({
+  progress,
+  label,
+}) => {
+  const p = Math.floor(progress * 100);
+  return (
+    <div className="progress">
+      <div className="progressBar" style={{ width: `${p}%` }} />
+      <div className="progressLabel">
+        {label}: {p}% done
       </div>
     </div>
   );
