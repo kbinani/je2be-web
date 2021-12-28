@@ -24,7 +24,7 @@
   width: 100%;
   height: 60px;
   background-color: var(--background-dark);
-  background-image: url("/image/icon-large.png");
+  background-image: url("../image/icon-large.png");
   background-repeat: no-repeat;
   background-size: 65px;
   background-position-y: center;
