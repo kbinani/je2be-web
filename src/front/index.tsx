@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
   Bugsnag.start({
     apiKey: "0b173cbc2086cd69b797414d4cceafbb",
     plugins: [new BugsnagPluginReact()],
+    appVersion: "1.0.0",
   });
   const ErrorBoundary = Bugsnag.getPlugin("react").createErrorBoundary(React);
   ReactDOM.render(
