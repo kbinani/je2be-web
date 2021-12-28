@@ -104,7 +104,7 @@ export const MainComponent: FC = () => {
   return (
     <div className="main">
       <div className="container">
-        <input type="file" onChange={onChange} />
+        <input type="file" onChange={onChange} accept={".zip"} />
         <div className="progressContainer">
           <Progress progress={unzip} label={"Unzip"} />
           <div className="progress">
