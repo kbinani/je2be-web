@@ -2,9 +2,9 @@
   "name": "je2be-web",
   "version": "1.0.0",
   "main": "index.js",
-  "repository": "git@github.com:kbinani/je2be-web.git",
+  "repository": "https://github.com/kbinani/je2be-web.git",
   "author": "kbinani <kbinani.bt@gmail.com>",
-  "license": "MIT",
+  "license": "AGPL",
   "devDependencies": {
     "@types/jszip": "^3.4.1",
     "@types/react": "^17.0.38",
