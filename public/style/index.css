@@ -18,11 +18,33 @@
   position: absolute;
 }
 
+.header {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: 60px;
+  background-color: var(--background-dark);
+  background-image: url("/image/icon-large.png");
+  background-repeat: no-repeat;
+  background-size: 65px;
+  background-position-y: center;
+  background-position-x: 10px;
+  display: flex;
+}
+
+.appLabel {
+  color: white;
+  text-indent: 90px;
+  line-height: 60px;
+  font-size: 20px;
+  font-weight: bold;
+}
+
 .container {
   width: 600px;
   height: 430px;
   background-color: var(--background-dark);
-  margin: auto;
+  margin: 90px auto auto auto;
   border-radius: 7px;
 }
 

@@ -103,6 +103,9 @@ export const MainComponent: FC = () => {
   const chunks = Math.floor(state.current.convert);
   return (
     <div className="main">
+      <div className="header">
+        <div className="appLabel">je2be-web</div>
+      </div>
       <div className="container">
         <div className="inputZip">
           <label className="inputZipLabel" htmlFor={"input_zip"}>
