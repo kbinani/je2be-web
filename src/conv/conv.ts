@@ -1,6 +1,7 @@
 import {
   FailedMessage,
   isStartMessage,
+  ProgressMessage,
   StartMessage,
   SuccessMessage,
   WorkerError,
@@ -69,8 +70,18 @@ async function extract(file: File, id: string) {
     }
     files.push(path);
   });
+  let progress = 0;
+  const total = files.length;
   const promises = files.map((path) =>
-    promiseUnzipFileInZip({ id, zip, path, prefix })
+    promiseUnzipFileInZip({ id, zip, path, prefix }).then(() => {
+      progress++;
+      const m: ProgressMessage = {
+        id,
+        stage: "unzip",
+        progress: progress / total,
+      };
+      self.postMessage(m);
+    })
   );
   await Promise.all(promises);
 }
@@ -104,6 +115,7 @@ async function promiseUnzipFileInZip({
 
 async function convert(id: string): Promise<boolean> {
   const ret = Module.core(
+    id,
     `/je2be/${id}/in`,
     `/je2be/${id}/out`,
     `/je2be/dl/${id}.zip`

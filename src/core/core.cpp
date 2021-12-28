@@ -10,14 +10,46 @@ using namespace std;
 using namespace mcfile;
 namespace fs = std::filesystem;
 
-int core(std::string in, std::string out, std::string zip) {
+class ProgressRepoter : public je2be::Progress {
+public:
+  explicit ProgressRepoter(std::string id) : fId(id) {}
+
+  bool report(Phase phase, double progress, double total) override {
+    std::string id = fId;
+    std::string stage;
+    switch (phase) {
+    case Phase::Convert:
+      stage = "convert";
+      break;
+    case Phase::LevelDbCompaction:
+      stage = "compaction";
+      break;
+    }
+    double p = progress / total;
+    EM_ASM({
+      const m = {};
+      m["id"] = UTF8ToString($0, $1);
+      m["stage"] = UTF8ToString($2, $3);
+      m["progress"] = $4;
+      self.postMessage(m);
+    },
+           id.c_str(), id.size(), stage.c_str(), stage.size(), p);
+    return true;
+  }
+
+public:
+  std::string const fId;
+};
+
+int core(std::string id, std::string in, std::string out, std::string zip) {
   fs::create_directories(fs::path(out));
   fs::create_directories(fs::path(zip).parent_path());
 
   je2be::tobe::InputOption io;
   je2be::tobe::OutputOption oo;
   je2be::tobe::Converter converter(fs::path(in), io, fs::path(out), oo);
-  if (!converter.run(0)) {
+  ProgressRepoter reporter(id);
+  if (!converter.run(0, &reporter)) {
     return 1;
   }
 

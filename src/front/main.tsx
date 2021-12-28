@@ -1,13 +1,42 @@
 import * as React from "react";
-import { ChangeEvent, FC } from "react";
+import { ChangeEvent, FC, useState } from "react";
 import {
   isFailedMessage,
+  isProgressMessage,
   isSuccessMessage,
+  ProgressMessage,
   StartMessage,
 } from "../share/messages";
 import { v4 as uuidv4 } from "uuid";
 
+class Progress {
+  readonly unzip: number;
+  readonly convert: number;
+  readonly compaction: number;
+
+  constructor(msg?: ProgressMessage) {
+    this.unzip = 0;
+    this.convert = 0;
+    this.compaction = 0;
+    switch (msg?.stage) {
+      case "unzip":
+        this.unzip = msg.progress;
+        break;
+      case "convert":
+        this.unzip = 1;
+        this.convert = msg.progress;
+        break;
+      case "compaction":
+        this.unzip = 1;
+        this.convert = 1;
+        this.compaction = msg.progress;
+        break;
+    }
+  }
+}
+
 export const MainComponent: FC = () => {
+  const [progress, setProgress] = useState<Progress>(new Progress());
   const onChange = (ev: ChangeEvent<HTMLInputElement>) => {
     const files = ev.target.files;
     if (!files || files.length !== 1) {
@@ -34,14 +63,53 @@ export const MainComponent: FC = () => {
         link.href = url;
         link.click();
         URL.revokeObjectURL(url);
+      } else if (isProgressMessage(msg.data)) {
+        setProgress(new Progress(msg.data));
       } else if (isFailedMessage(msg.data)) {
         console.error(`front: received FailedMessage; e=`, msg.data.error);
       }
     };
   };
   return (
-    <div>
-      <input type="file" onChange={onChange} />
+    <div className="main">
+      <div className="container">
+        <input type="file" onChange={onChange} />
+        <div className="progressContainer">
+          {progress.unzip > 0 && (
+            <div className="progress">
+              <div
+                className="progressBar"
+                style={{ width: `${progress.unzip * 100}%` }}
+              />
+              <div className="progressBarLabel">{`Unzip: ${Math.floor(
+                progress.unzip * 100
+              )}% done`}</div>
+            </div>
+          )}
+          {progress.convert > 0 && (
+            <div className="progress">
+              <div
+                className="progressBar"
+                style={{ width: `${progress.convert * 100}%` }}
+              />
+              <div className="progressBarLabel">{`Conversion: ${Math.floor(
+                progress.convert * 100
+              )}% done`}</div>
+            </div>
+          )}
+          {progress.compaction > 0 && (
+            <div className="progress">
+              <div
+                className="progressBar"
+                style={{ width: `${progress.compaction * 100}%` }}
+              />
+              <div className="progressBarLabel">{`LevelDB Compaction: ${Math.floor(
+                progress.compaction * 100
+              )}% done`}</div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

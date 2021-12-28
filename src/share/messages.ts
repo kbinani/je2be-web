@@ -19,7 +19,7 @@ export function isSuccessMessage(x: any): x is SuccessMessage {
   if (!x) {
     return false;
   }
-  return typeof x["id"] === "string";
+  return typeof x["id"] === "string" && typeof x["url"] === "string";
 }
 
 export type FailedMessage = {
@@ -35,6 +35,25 @@ export function isFailedMessage(x: any): x is FailedMessage {
     typeof x["id"] === "string" &&
     !x["error"] &&
     typeof x["error"]["type"] === "string"
+  );
+}
+
+export type ProgressMessage = {
+  id: string;
+  stage: "unzip" | "convert" | "compaction";
+  progress: number;
+};
+
+export function isProgressMessage(x: any): x is ProgressMessage {
+  if (!x) {
+    return false;
+  }
+  return (
+    typeof x["id"] === "string" &&
+    (x["stage"] === "unzip" ||
+      x["stage"] === "convert" ||
+      x["stage"] === "compaction") &&
+    typeof x["progress"] === "number"
   );
 }
 
