@@ -25,3 +25,15 @@ export function exists(p: string): boolean {
     return false;
   }
 }
+
+export async function syncfs(populate: boolean): Promise<void> {
+  return new Promise((resolve, reject) => {
+    FS.syncfs(populate, (err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
+}

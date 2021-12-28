@@ -30,9 +30,8 @@ export const MainComponent: FC = () => {
           download = file.name.substring(0, dot) + ".mcworld";
         }
         link.download = download;
-        link.href = msg.data.blobUrl;
+        link.href = `/dl/${id}`;
         link.click();
-        URL.revokeObjectURL(msg.data.blobUrl);
       } else if (isFailedMessage(msg.data)) {
         console.error(`front: received FailedMessage; e=`, msg.data.error);
       }

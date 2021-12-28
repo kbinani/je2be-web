@@ -6,7 +6,7 @@ import {
   WorkerError,
 } from "../share/messages";
 import JSZip from "jszip";
-import { dirname, mkdirp } from "./fs-ext";
+import { dirname, exists, mkdirp, syncfs } from "./fs-ext";
 
 self.importScripts("core.js");
 
@@ -23,27 +23,31 @@ async function start(msg: StartMessage): Promise<void> {
   const id = msg.id;
   console.log(`[${id}] converter: received StartMessage`);
 
-  FS.mkdir(`/${id}`);
-  FS.mkdir(`/${id}/in`);
-  FS.mkdir(`/${id}/out`);
-  FS.mount(IDBFS, {}, `/${id}`);
+  mkdirp(`/je2be`);
+  FS.mount(IDBFS, {}, `/je2be`);
+  await syncfs(true);
+  mkdirp(`/je2be/${id}`);
+  mkdirp(`/je2be/${id}/in`);
+  mkdirp(`/je2be/${id}/out`);
+  mkdirp(`/je2be/dl`);
 
   console.log(`[${id}] extract...`);
   await extract(msg.file, msg.id);
   console.log(`[${id}] extract done`);
   console.log(`[${id}] convert...`);
-  const files = await convert(msg.id);
+  const ok = await convert(msg.id);
   console.log(`[${id}] convert done`);
-  console.log(`[${id}] archive...`);
-  const url = await archive(id, files);
-  console.log(`[${id}] archive done`);
-  success(id, url);
+  if (ok) {
+    success(id);
+  } else {
+    failed(new WorkerError("ConverterFailed"), id);
+  }
 }
 
 async function extract(file: File, id: string) {
-  const data = await JSZip.loadAsync(file);
+  const zip = await JSZip.loadAsync(file);
   const foundLevelDat: string[] = [];
-  data.forEach((p: string, f: JSZip.JSZipObject) => {
+  zip.forEach((p: string, f: JSZip.JSZipObject) => {
     if (!p.endsWith("level.dat")) {
       return;
     }
@@ -56,56 +60,55 @@ async function extract(file: File, id: string) {
   const idx = levelDatPath.lastIndexOf("level.dat");
   const prefix = levelDatPath.substring(0, idx);
   const files: string[] = [];
-  data.forEach((p: string, f: JSZip.JSZipObject) => {
-    if (!p.startsWith(prefix)) {
+  zip.forEach((path: string, f: JSZip.JSZipObject) => {
+    if (!path.startsWith(prefix)) {
       return;
     }
     if (f.dir) {
       return;
     }
-    files.push(p);
+    files.push(path);
   });
-  const promises: Promise<void>[] = [];
-  for (const p of files) {
-    promises.push(
-      new Promise((resolve, reject) => {
-        const rel = p.substring(prefix.length);
-        const target = `/${id}/in/${rel}`;
-        const dname = dirname(target);
-        mkdirp(dname);
-        data
-          .file(p)
-          .async("uint8array")
-          .then((buffer) => {
-            FS.writeFile(target, buffer);
-            resolve();
-          })
-          .catch(reject);
-      })
-    );
-  }
+  const promises = files.map((path) =>
+    promiseUnzipFileInZip({ id, zip, path, prefix })
+  );
   await Promise.all(promises);
 }
 
-async function convert(id: string): Promise<string[]> {
-  const ret = Module.core(`/${id}/in`, `/${id}/out`);
-  return ret.split("\x0d").filter((it) => it !== "");
+async function promiseUnzipFileInZip({
+  id,
+  zip,
+  path,
+  prefix,
+}: {
+  id: string;
+  zip: JSZip;
+  path: string;
+  prefix: string;
+}): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    const rel = path.substring(prefix.length);
+    const target = `/je2be/${id}/in/${rel}`;
+    const directory = dirname(target);
+    mkdirp(directory);
+    zip
+      .file(path)
+      .async("uint8array")
+      .then((buffer) => {
+        FS.writeFile(target, buffer);
+        resolve();
+      })
+      .catch(reject);
+  });
 }
 
-async function archive(id: string, files: string[]): Promise<string> {
-  const prefix = `/${id}/out/`;
-  const zip = new JSZip();
-  for (const file of files) {
-    if (!file.startsWith(prefix)) {
-      continue;
-    }
-    const buffer = FS.readFile(file);
-    const rel = file.substring(prefix.length);
-    zip.file(rel, buffer);
-  }
-  const archived: Uint8Array = await zip.generateAsync({ type: "uint8array" });
-  const blob = new Blob([archived]);
-  return URL.createObjectURL(blob);
+async function convert(id: string): Promise<boolean> {
+  const ret = Module.core(
+    `/je2be/${id}/in`,
+    `/je2be/${id}/out`,
+    `/je2be/dl/${id}.zip`
+  );
+  return ret === 0;
 }
 
 function failed(e: Error, id: string) {
@@ -120,22 +123,18 @@ function failed(e: Error, id: string) {
   console.error(e);
 }
 
-function success(id: string, url: string) {
-  const m: SuccessMessage = { id, blobUrl: url };
+function success(id: string) {
+  const m: SuccessMessage = { id };
   self.postMessage(m);
 }
 
 function cleanup(id: string) {
-  const keepFs = false;
-  if (keepFs) {
-    FS.syncfs(false, (err) => {
-      if (err) {
-        console.error(`[${id}] syncfs failed`, err);
-      } else {
-        console.log(`[${id}] syncfs done`);
-      }
+  Module.cleanup(`/je2be/${id}`);
+  syncfs(false)
+    .then(() => {
+      console.log(`[${id}] syncfs done`);
+    })
+    .catch((e) => {
+      console.error(`[${id}] syncfs failed`, e);
     });
-  } else {
-    Module.cleanup(`/${id}`);
-  }
 }

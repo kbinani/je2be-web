@@ -12,7 +12,6 @@ export function isStartMessage(x: any): x is StartMessage {
 
 export type SuccessMessage = {
   id: string;
-  blobUrl: string;
 };
 
 export function isSuccessMessage(x: any): x is SuccessMessage {
