@@ -107,11 +107,12 @@ export const MainComponent: FC = () => {
     <div className="main">
       <div className="header">
         <div className="appLabel">je2be-web</div>
+        <div className="appLabelSub">A data converter for Minecraft</div>
       </div>
       <div className="container">
         <div className="inputZip">
           <label className="inputZipLabel" htmlFor={"input_zip"}>
-            Choose a zip file of Java Edition world data
+            Choose a zip archive of Java Edition world data
           </label>
           <input
             name={"input_zip"}
