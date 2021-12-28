@@ -8,6 +8,7 @@ import {
   StartMessage,
 } from "../share/messages";
 import { v4 as uuidv4 } from "uuid";
+import Bugsnag from "@bugsnag/js";
 
 type MainComponentState = {
   unzip: number;
@@ -92,6 +93,7 @@ export const MainComponent: FC = () => {
         }
         forceUpdate();
       } else if (isFailedMessage(msg.data)) {
+        Bugsnag.notify(msg.data.error);
         console.error(`front: received FailedMessage; e=`, msg.data.error);
       }
     };
