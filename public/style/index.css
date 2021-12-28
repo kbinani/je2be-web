@@ -1,7 +1,7 @@
 :root {
   --background: rgb(50, 62, 68);
   --background-dark: rgb(38, 50, 56);
-  font-family: "Roboto";
+  font-family: "Roboto", sans-serif;
   user-select: none;
 }
 
@@ -23,12 +23,23 @@
   height: 430px;
   background-color: var(--background-dark);
   margin: auto;
+  border-radius: 7px;
+}
+
+.inputZip {
+  margin: 20px;
+}
+
+.inputZipLabel {
+  color: white;
+  font-weight: bold;
+  margin-right: 10px;
 }
 
 .progressContainer {
-  width: 400px;
+  width: 560px;
   margin-top: 10px;
-  margin-left: 100px;
+  margin-left: 20px;
 }
 
 .progress {
@@ -37,6 +48,7 @@
   height: 36px;
   margin-top: 10px;
   position: relative;
+  border-radius: 3px;
 }
 
 .progressBar {
@@ -45,6 +57,13 @@
   top: 0;
   left: 0;
   height: 36px;
+  border-top-left-radius: 3px;
+  border-bottom-left-radius: 3px;
+}
+
+.progressBar[data-completed="true"] {
+  border-top-right-radius: 3px;
+  border-bottom-right-radius: 3px;
 }
 
 .progressLabel {
@@ -53,4 +72,6 @@
   top: 0;
   left: 0;
   line-height: 36px;
+  color: #7399a8;
+  font-size: 15px;
 }

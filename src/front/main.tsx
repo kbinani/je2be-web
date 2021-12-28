@@ -29,7 +29,7 @@ export const MainComponent: FC = () => {
   const state = useRef<MainComponentState>({
     unzip: 0,
     convert: 0,
-    convertTotal: 0,
+    convertTotal: 1,
     compaction: 0,
     zip: 0,
   });
@@ -48,7 +48,7 @@ export const MainComponent: FC = () => {
     state.current = {
       unzip: 0,
       convert: 0,
-      convertTotal: 0,
+      convertTotal: 1,
       compaction: 0,
       zip: 0,
     };
@@ -104,11 +104,25 @@ export const MainComponent: FC = () => {
   return (
     <div className="main">
       <div className="container">
-        <input type="file" onChange={onChange} accept={".zip"} />
+        <div className="inputZip">
+          <label className="inputZipLabel" htmlFor={"input_zip"}>
+            Choose a zip file of Java Edition world data
+          </label>
+          <input
+            name={"input_zip"}
+            type={"file"}
+            onChange={onChange}
+            accept={".zip"}
+          />
+        </div>
         <div className="progressContainer">
           <Progress progress={unzip} label={"Unzip"} />
           <div className="progress">
-            <div className="progressBar" style={{ width: `${convert}%` }} />
+            <div
+              className="progressBar"
+              style={{ width: `${convert}%` }}
+              data-completed={convert === 100}
+            />
             <div className="progressLabel">
               Conversion: {chunks} chunks, {convert}% done
             </div>
@@ -128,7 +142,11 @@ const Progress: FC<{ progress: number; label: string }> = ({
   const p = Math.floor(progress * 100);
   return (
     <div className="progress">
-      <div className="progressBar" style={{ width: `${p}%` }} />
+      <div
+        className="progressBar"
+        style={{ width: `${p}%` }}
+        data-completed={p === 100}
+      />
       <div className="progressLabel">
         {label}: {p}% done
       </div>
