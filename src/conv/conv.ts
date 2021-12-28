@@ -78,7 +78,8 @@ async function extract(file: File, id: string) {
       const m: ProgressMessage = {
         id,
         stage: "unzip",
-        progress: progress / total,
+        progress,
+        total,
       };
       self.postMessage(m);
     })

@@ -42,6 +42,7 @@ export type ProgressMessage = {
   id: string;
   stage: "unzip" | "convert" | "compaction" | "zip";
   progress: number;
+  total: number;
 };
 
 export function isProgressMessage(x: any): x is ProgressMessage {
@@ -54,7 +55,8 @@ export function isProgressMessage(x: any): x is ProgressMessage {
       x["stage"] === "convert" ||
       x["stage"] === "compaction" ||
       x["stage"] === "zip") &&
-    typeof x["progress"] === "number"
+    typeof x["progress"] === "number" &&
+    typeof x["total"] === "number"
   );
 }
 

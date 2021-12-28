@@ -10,15 +10,16 @@ using namespace std;
 using namespace mcfile;
 namespace fs = std::filesystem;
 
-static void Report(std::string id, std::string stage, double progress) {
+static void Report(std::string id, std::string stage, double progress, double total) {
   EM_ASM({
     const m = {};
     m["id"] = UTF8ToString($0, $1);
     m["stage"] = UTF8ToString($2, $3);
     m["progress"] = $4;
+    m["total"] = $5;
     self.postMessage(m);
   },
-         id.c_str(), id.size(), stage.c_str(), stage.size(), progress);
+         id.c_str(), id.size(), stage.c_str(), stage.size(), progress, total);
 }
 
 class ProgressRepoter : public je2be::Progress {
@@ -35,8 +36,7 @@ public:
       stage = "compaction";
       break;
     }
-    double p = progress / total;
-    Report(fId, stage, p);
+    Report(fId, stage, progress, total);
     return true;
   }
 
@@ -105,7 +105,7 @@ int core(std::string id, std::string in, std::string out, std::string zip) {
       return 6;
     }
     progress++;
-    Report(id, "zip", (double)progress / (double)count);
+    Report(id, "zip", progress, count);
   }
   if (0 != zipClose(file, nullptr)) {
     return 7;
