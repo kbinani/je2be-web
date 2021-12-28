@@ -14,7 +14,7 @@ export const MainComponent: FC = () => {
       console.error("no file selected, or one or more files selected");
       return;
     }
-    const worker = new Worker("script/converter.js");
+    const worker = new Worker("script/conv.js");
     const id = uuidv4();
     const file = files.item(0);
     const message: StartMessage = { file, id };
@@ -22,6 +22,7 @@ export const MainComponent: FC = () => {
     worker.postMessage(message);
     worker.onmessage = (msg: MessageEvent) => {
       if (isSuccessMessage(msg.data)) {
+        const { id, url } = msg.data;
         console.log(`[${id}] front: received SuccessMessage`);
         const link = document.createElement("a");
         const dot = file.name.lastIndexOf(".");
@@ -30,8 +31,9 @@ export const MainComponent: FC = () => {
           download = file.name.substring(0, dot) + ".mcworld";
         }
         link.download = download;
-        link.href = `/dl/${id}`;
+        link.href = url;
         link.click();
+        URL.revokeObjectURL(url);
       } else if (isFailedMessage(msg.data)) {
         console.error(`front: received FailedMessage; e=`, msg.data.error);
       }

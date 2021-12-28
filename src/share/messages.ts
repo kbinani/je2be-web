@@ -12,6 +12,7 @@ export function isStartMessage(x: any): x is StartMessage {
 
 export type SuccessMessage = {
   id: string;
+  url: string;
 };
 
 export function isSuccessMessage(x: any): x is SuccessMessage {

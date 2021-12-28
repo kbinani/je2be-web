@@ -6,7 +6,7 @@ import {
   WorkerError,
 } from "../share/messages";
 import JSZip from "jszip";
-import { dirname, exists, mkdirp, syncfs } from "./fs-ext";
+import { dirname, mkdirp, syncfs } from "./fs-ext";
 
 self.importScripts("core.js");
 
@@ -38,7 +38,7 @@ async function start(msg: StartMessage): Promise<void> {
   const ok = await convert(msg.id);
   console.log(`[${id}] convert done`);
   if (ok) {
-    success(id);
+    send(id);
   } else {
     failed(new WorkerError("ConverterFailed"), id);
   }
@@ -123,8 +123,13 @@ function failed(e: Error, id: string) {
   console.error(e);
 }
 
-function success(id: string) {
-  const m: SuccessMessage = { id };
+function send(id: string) {
+  const file = `/je2be/dl/${id}.zip`;
+  const buffer: Uint8Array = FS.readFile(file);
+  FS.unlink(file);
+  const blob = new Blob([buffer]);
+  const url = URL.createObjectURL(blob);
+  const m: SuccessMessage = { id, url };
   self.postMessage(m);
 }
 
