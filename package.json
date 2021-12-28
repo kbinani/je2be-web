@@ -4,7 +4,7 @@
   "main": "index.js",
   "repository": "https://github.com/kbinani/je2be-web.git",
   "author": "kbinani <kbinani.bt@gmail.com>",
-  "license": "AGPL",
+  "license": "AGPL-3.0-or-later",
   "devDependencies": {
     "@types/jszip": "^3.4.1",
     "@types/react": "^17.0.38",
