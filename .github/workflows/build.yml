@@ -1,7 +1,7 @@
 name: build
 on: push
 env:
-  JE2BE_DOCKER_CACHE_PATH
+  JE2BE_DOCKER_CACHE_PATH: je2be_build_wasm.docker
 jobs:
   build:
     runs-on: ubuntu-latest
