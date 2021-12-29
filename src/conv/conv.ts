@@ -41,12 +41,24 @@ async function start(msg: StartMessage): Promise<void> {
   if (ok) {
     send(id);
   } else {
-    failed(new WorkerError("ConverterFailed"), id);
+    const e: WorkerError = {
+      type: "ConverterFailed",
+    };
+    throw e;
   }
 }
 
 async function extract(file: File, id: string) {
-  const zip = await JSZip.loadAsync(file);
+  let zip: any;
+  try {
+    zip = await JSZip.loadAsync(file);
+  } catch (e) {
+    const error: WorkerError = {
+      type: "Unzip",
+      native: e,
+    };
+    throw error;
+  }
   const foundLevelDat: string[] = [];
   zip.forEach((p: string, f: JSZip.JSZipObject) => {
     if (!p.endsWith("level.dat")) {
@@ -54,8 +66,16 @@ async function extract(file: File, id: string) {
     }
     foundLevelDat.push(p);
   });
-  if (foundLevelDat.length !== 1) {
-    throw new WorkerError("NoLevelDatFound");
+  if (foundLevelDat.length === 0) {
+    const error: WorkerError = {
+      type: "NoLevelDatFound",
+    };
+    throw error;
+  } else if (foundLevelDat.length !== 1) {
+    const error: WorkerError = {
+      type: "2OrMoreLevelDatFound",
+    };
+    throw error;
   }
   const levelDatPath = foundLevelDat[0];
   const idx = levelDatPath.lastIndexOf("level.dat");
@@ -125,16 +145,9 @@ async function convert(id: string): Promise<boolean> {
   return ret === 0;
 }
 
-function failed(e: Error, id: string) {
-  let error: WorkerError;
-  if (e instanceof WorkerError) {
-    error = e;
-  } else {
-    error = new WorkerError("Other", e);
-  }
+function failed(error: WorkerError, id: string) {
   const m: FailedMessage = { type: "failed", id, error };
   self.postMessage(m);
-  console.error(e);
 }
 
 function send(id: string) {

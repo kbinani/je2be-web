@@ -40,8 +40,7 @@ export function isFailedMessage(x: any): x is FailedMessage {
   return (
     x["type"] === "failed" &&
     typeof x["id"] === "string" &&
-    !x["error"] &&
-    typeof x["error"]["type"] === "string"
+    typeof x["error"] !== "undefined"
   );
 }
 
@@ -69,10 +68,14 @@ export function isProgressMessage(x: any): x is ProgressMessage {
   );
 }
 
-type WorkerErrorType = "NoLevelDatFound" | "ConverterFailed" | "Other";
+type WorkerErrorType =
+  | "NoLevelDatFound"
+  | "2OrMoreLevelDatFound"
+  | "ConverterFailed"
+  | "Unzip"
+  | "Other";
 
-export class WorkerError extends Error {
-  constructor(readonly type: WorkerErrorType, readonly native?: Error) {
-    super();
-  }
-}
+export type WorkerError = {
+  type: WorkerErrorType;
+  native?: Error;
+};

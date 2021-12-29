@@ -6,9 +6,9 @@ import {
   isSuccessMessage,
   ProgressMessage,
   StartMessage,
+  WorkerError,
 } from "../share/messages";
 import { v4 as uuidv4 } from "uuid";
-import Bugsnag from "@bugsnag/js";
 import { Header } from "./header";
 import { Footer } from "./footer";
 import { Progress } from "./progress";
@@ -20,6 +20,7 @@ type MainComponentState = {
   compaction: number;
   zip: number;
   dl?: { id: string; filename: string };
+  error?: WorkerError;
 };
 
 const kInitComponentState: MainComponentState = {
@@ -81,8 +82,8 @@ export const MainComponent: FC = () => {
         state.current = updateProgress(state.current, msg.data);
         forceUpdate();
       } else if (isFailedMessage(msg.data)) {
-        Bugsnag.notify(msg.data.error);
-        console.error(`front: received FailedMessage; e=`, msg.data.error);
+        state.current.error = msg.data.error;
+        forceUpdate();
       }
     };
   };
@@ -120,15 +121,20 @@ export const MainComponent: FC = () => {
           </div>
           <Progress progress={compaction} label={"LevelDB Compaction"} />
           <Progress progress={zip} label={"Zip"} />
-          <div className="downloadLink">
+          <div className="message">
             {state.current.dl && (
-              <div>
+              <div className="downloadMessage">
                 {`Completed: `}
                 <a
                   href={`/dl/${state.current.dl.id}.zip?download=${state.current.dl.filename}`}
                 >
                   download {state.current.dl.filename}
                 </a>
+              </div>
+            )}
+            {state.current.error && (
+              <div className="errorMessage">
+                Failed: ErrorType={state.current.error.type}
               </div>
             )}
           </div>
