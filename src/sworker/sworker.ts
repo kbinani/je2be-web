@@ -22,7 +22,6 @@ function onActivate(ev) {
 }
 
 function onFetch(ev: FetchEvent) {
-  console.log(`[sworker] fetch`);
   const method = ev.request.method.toUpperCase();
   if (method !== "GET") {
     return;
@@ -37,7 +36,6 @@ function onFetch(ev: FetchEvent) {
 }
 
 async function respond(path: string, download: string): Promise<Response> {
-  console.log(`respond; path=${path}; download=${download}`);
   let fp: any;
   let offset = 0;
   const start = async (controller) => {

@@ -19,7 +19,7 @@ type MainComponentState = {
   convertTotal: number;
   compaction: number;
   zip: number;
-  download?: { id: string; download: string };
+  dl?: { id: string; filename: string };
 };
 
 const kInitComponentState: MainComponentState = {
@@ -71,11 +71,11 @@ export const MainComponent: FC = () => {
       if (isSuccessMessage(msg.data)) {
         const { id } = msg.data;
         const dot = file.name.lastIndexOf(".");
-        let download = "world.mcworld";
+        let filename = "world.mcworld";
         if (dot > 0) {
-          download = file.name.substring(0, dot) + ".mcworld";
+          filename = file.name.substring(0, dot) + ".mcworld";
         }
-        state.current = { ...state.current, download: { id, download } };
+        state.current = { ...state.current, dl: { id, filename } };
         forceUpdate();
       } else if (isProgressMessage(msg.data)) {
         state.current = updateProgress(state.current, msg.data);
@@ -121,13 +121,13 @@ export const MainComponent: FC = () => {
           <Progress progress={compaction} label={"LevelDB Compaction"} />
           <Progress progress={zip} label={"Zip"} />
           <div className="downloadLink">
-            {state.current.download && (
+            {state.current.dl && (
               <div>
-                Completed:{" "}
+                {`Completed: `}
                 <a
-                  href={`/dl/${state.current.download.id}.zip?download=${state.current.download.download}`}
+                  href={`/dl/${state.current.dl.id}.zip?download=${state.current.dl.filename}`}
                 >
-                  download {state.current.download.download}
+                  download {state.current.dl.filename}
                 </a>
               </div>
             )}
