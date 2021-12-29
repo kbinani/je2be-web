@@ -19,6 +19,7 @@ type MainComponentState = {
   convertTotal: number;
   compaction: number;
   zip: number;
+  download?: { id: string; download: string };
 };
 
 const kInitComponentState: MainComponentState = {
@@ -69,10 +70,13 @@ export const MainComponent: FC = () => {
     worker.onmessage = (msg: MessageEvent) => {
       if (isSuccessMessage(msg.data)) {
         const { id } = msg.data;
-        console.log(`[${id}] front: received SuccessMessage`);
-        const link = document.createElement("a");
-        link.href = `/dl/${id}.zip`;
-        link.click();
+        const dot = file.name.lastIndexOf(".");
+        let download = "world.mcworld";
+        if (dot > 0) {
+          download = file.name.substring(0, dot) + ".mcworld";
+        }
+        state.current = { ...state.current, download: { id, download } };
+        forceUpdate();
       } else if (isProgressMessage(msg.data)) {
         state.current = updateProgress(state.current, msg.data);
         forceUpdate();
@@ -116,6 +120,18 @@ export const MainComponent: FC = () => {
           </div>
           <Progress progress={compaction} label={"LevelDB Compaction"} />
           <Progress progress={zip} label={"Zip"} />
+          <div className="downloadLink">
+            {state.current.download && (
+              <div>
+                Completed:{" "}
+                <a
+                  href={`/dl/${state.current.download.id}.zip?download=${state.current.download.download}`}
+                >
+                  download {state.current.download.download}
+                </a>
+              </div>
+            )}
+          </div>
         </div>
       </div>
       <Footer />

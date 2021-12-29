@@ -1,4 +1,4 @@
-import { mkdirp, syncfs } from "../conv/fs-ext";
+import { exists, mkdirp, syncfs } from "../conv/fs-ext";
 
 self.addEventListener("install", onInstall);
 self.addEventListener("activate", onActivate);
@@ -16,6 +16,9 @@ function onActivate(ev) {
   console.log(`[sworker] activate`);
   //@ts-ignore
   ev.waitUntil(self.clients.claim());
+  mkdirp("/je2be");
+  FS.mount(IDBFS, {}, "/je2be");
+  syncfs(true).catch(console.error);
 }
 
 function onFetch(ev: FetchEvent) {
@@ -24,56 +27,72 @@ function onFetch(ev: FetchEvent) {
   if (method !== "GET") {
     return;
   }
-  const url = ev.request.url;
-  const sworker = self.location.href;
-  const idx = sworker.lastIndexOf("/sworker.js");
-  if (idx < 0) {
-    return;
-  }
-  const prefix = url.substring(0, idx);
-  const path = url.substring(prefix.length);
+  const u = new URL(ev.request.url);
+  const path = u.pathname;
+  const download = u.searchParams.get("download") ?? "world.mcworld";
   if (!path.startsWith("/dl/")) {
     return;
   }
-  ev.respondWith(respond(path));
+  ev.respondWith(respond(path, download));
 }
 
-async function respond(path: string): Promise<Response> {
-  mkdirp("/je2be");
-  FS.mount(IDBFS, {}, "/je2be");
-  await syncfs(true);
+async function respond(path: string, download: string): Promise<Response> {
+  console.log(`respond; path=${path}; download=${download}`);
   let fp: any;
   let offset = 0;
-  const start = (controller) => {
-    console.log(`[sworker] (${path}) start`);
-    fp = FS.open(`/je2be/${path}`, "r");
-    if (!fp) {
-      controller.error();
+  const start = async (controller) => {
+    try {
+      mkdirp(`/je2be`);
+      try {
+        FS.mount(IDBFS, {}, `/je2be`);
+      } catch (e) {
+        console.log(`[sworker] respond; already mounted`);
+      }
+      await syncfs(true);
+      console.log(`[sworker] (${path}) start`);
+      const p = `/je2be/${path}`;
+      if (!exists(p)) {
+        console.log(`[sworker] (${path}) start: file not found`);
+        console.error();
+        return;
+      }
+      fp = FS.open(p, "r");
+      if (!fp) {
+        controller.error();
+      }
+    } catch (e) {
+      controller.error(e);
+      console.trace(e);
     }
   };
   const pull = async (controller) => {
-    if (offset === 0) {
-      console.log(`[sworker] (${path}) pull: started`);
-    }
     try {
-      const buffer = new Uint8Array(1048576);
-      const read = FS.read(fp, buffer, 0, buffer.byteLength, offset);
-      controller.enqueue(buffer.slice(0, read));
-      if (read < buffer.byteLength) {
-        console.log(`[sworker] (${path}) pull: close`);
-        controller.close();
+      if (offset === 0) {
+        console.log(`[sworker] (${path}) pull: started`);
       }
-      offset += read;
+      try {
+        const buffer = new Uint8Array(1048576);
+        const read = FS.read(fp, buffer, 0, buffer.byteLength, offset);
+        controller.enqueue(buffer.slice(0, read));
+        if (read < buffer.byteLength) {
+          console.log(`[sworker] (${path}) pull: close`);
+          controller.close();
+        }
+        offset += read;
+      } catch (e) {
+        console.log(`[sworker] (${path}) pull: error`);
+        controller.error(e);
+      }
     } catch (e) {
-      console.log(`[sworker] (${path}) pull: error`);
       controller.error(e);
+      console.trace(e);
     }
   };
   const stream = new ReadableStream({ start, pull });
   const headers = {
     "Content-Type": "application/octet-stream",
     "Cache-Control": "no-cache",
-    "Content-Disposition": "attachment",
+    "Content-Disposition": `attachment; filename=\"${download}\"`,
   };
   return new Response(stream, {
     headers,
