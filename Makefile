@@ -25,11 +25,11 @@ public/script/core.wasm: build/core.wasm
 	mkdir -p public/script
 	cp build/core.wasm public/script/core.wasm
 
-public/script/conv.js: src/conv/conv.ts src/conv/fs-ext.ts src/conv/index.d.ts
+public/script/conv.js: src/conv/conv.ts src/conv/fs-ext.ts src/conv/index.d.ts src/share/messages.ts src/share/version.ts
 	yarn conv
 
-public/script/front.js: src/front/index.tsx src/front/main.tsx src/share/messages.ts
+public/script/front.js: src/front/index.tsx src/front/main.tsx src/share/messages.ts src/share/version.ts
 	yarn front
 
-public/sworker.js: src/sworker/sworker.ts
+public/sworker.js: src/sworker/sworker.ts src/share/messages.ts src/share/version.ts
 	yarn sworker
