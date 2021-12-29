@@ -34,10 +34,10 @@ export const MainComponent: FC = () => {
     navigator.serviceWorker
       .register("sworker.js", { scope: "/dl" })
       .then((sw) => {
-        console.log(`register done`);
+        console.log(`[front] sworker registered`);
         sw.update()
           .then(() => {
-            console.log(`update done`);
+            console.log(`[front] sworker updated`);
           })
           .catch(console.error);
       })
