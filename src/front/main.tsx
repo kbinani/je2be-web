@@ -144,7 +144,7 @@ export const MainComponent: FC = () => {
               <div className="downloadMessage">
                 {`Completed: `}
                 <a
-                  href={`/dl/${state.current.dl.id}.zip?download=${state.current.dl.filename}`}
+                  href={`/je2be-web/dl/${state.current.dl.id}.zip?download=${state.current.dl.filename}`}
                 >
                   download {state.current.dl.filename}
                 </a>
