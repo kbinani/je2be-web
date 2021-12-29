@@ -1,0 +1,36 @@
+name: build
+on: push
+env:
+  JE2BE_DOCKER_CACHE_PATH: je2be_build_wasm.docker
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - uses: actions/setup-node@v2
+        with:
+          node-version-file: .node-version
+          cache: yarn
+      - name: Cache docker image
+        uses: actions/cache@v2
+        id: cache-docker-image
+        with:
+          path: ${{ env.JE2BE_DOCKER_CACHE_PATH }}
+          key: ${{ hashFiles('Dockerfile') }}
+      - name: Build docker image
+        if: steps.cache-docker-image.outputs.cache-hit != 'true'
+        run: |
+          make build_docker_image
+          docker save je2be_build_wasm:latest -o ${JE2BE_DOCKER_CACHE_PATH}
+      - run: docker load -i ${JE2BE_DOCKER_CACHE_PATH}
+      - run: |
+          yarn install
+          make all
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        if: ${{ github.ref == 'refs/heads/main' }}
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
