@@ -19,6 +19,12 @@ jobs:
         with:
           path: ${{ env.JE2BE_DOCKER_CACHE_PATH }}
           key: ${{ hashFiles('Dockerfile') }}
+      - name: Cache build directory
+        uses: actions/cache@v2
+        id: cache-build-directory
+        with:
+          path: build
+          key: ${{ hashFiles('.gitmodules', 'src/core/core.cpp', 'CMakeLists.txt')}}
       - name: Build docker image
         if: steps.cache-docker-image.outputs.cache-hit != 'true'
         run: |
