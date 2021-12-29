@@ -23552,7 +23552,7 @@ For more info, visit https://reactjs.org/link/mock-scheduler`);
     }, state.current.dl && /* @__PURE__ */ React4.createElement("div", {
       className: "downloadMessage"
     }, `Completed: `, /* @__PURE__ */ React4.createElement("a", {
-      href: `/dl/${state.current.dl.id}.zip?download=${state.current.dl.filename}`
+      href: `/je2be-web/dl/${state.current.dl.id}.zip?download=${state.current.dl.filename}`
     }, "download ", state.current.dl.filename)), state.current.error && /* @__PURE__ */ React4.createElement("div", {
       className: "errorMessage"
     }, "Failed: ErrorType=", state.current.error.type)))), /* @__PURE__ */ React4.createElement(Footer, null));
@@ -23582,7 +23582,7 @@ For more info, visit https://reactjs.org/link/mock-scheduler`);
   var import_plugin_react = __toESM(require_bugsnag_react());
 
   // src/share/version.ts
-  var kAppVersion = "1.1.1";
+  var kAppVersion = "1.1.2";
 
   // src/front/index.tsx
   document.addEventListener("DOMContentLoaded", () => {
