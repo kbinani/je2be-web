@@ -85,28 +85,7 @@ export const MainComponent: FC = () => {
         link.click();
         URL.revokeObjectURL(url);
       } else if (isProgressMessage(msg.data)) {
-        const m: ProgressMessage = msg.data;
-        switch (m.stage) {
-          case "unzip":
-            state.current = { ...state.current, unzip: m.progress / m.total };
-            break;
-          case "convert":
-            state.current = {
-              ...state.current,
-              convert: m.progress,
-              convertTotal: m.total,
-            };
-            break;
-          case "compaction":
-            state.current = {
-              ...state.current,
-              compaction: m.progress / m.total,
-            };
-            break;
-          case "zip":
-            state.current = { ...state.current, zip: m.progress / m.total };
-            break;
-        }
+        state.current = updateProgress(state.current, msg.data);
         forceUpdate();
       } else if (isFailedMessage(msg.data)) {
         Bugsnag.notify(msg.data.error);
@@ -154,3 +133,27 @@ export const MainComponent: FC = () => {
     </div>
   );
 };
+
+function updateProgress(
+  state: MainComponentState,
+  m: ProgressMessage
+): MainComponentState {
+  switch (m.stage) {
+    case "unzip":
+      return { ...state, unzip: m.progress / m.total };
+    case "convert":
+      return {
+        ...state,
+        convert: m.progress,
+        convertTotal: m.total,
+      };
+    case "compaction":
+      return {
+        ...state,
+        compaction: m.progress / m.total,
+      };
+    case "zip":
+      return { ...state, zip: m.progress / m.total };
+  }
+  return { ...state };
+}
