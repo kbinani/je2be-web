@@ -21,4 +21,4 @@ jobs:
           make build_docker_image
           docker save je2be_build_wasm:latest -o ${JE2BE_DOCKER_CACHE_PATH}
       - run: docker load -i ${JE2BE_DOCKER_CACHE_PATH}
-      - run: make public/script/core.wasm
+      - run: make all
