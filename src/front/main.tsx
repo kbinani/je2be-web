@@ -54,6 +54,7 @@ export const MainComponent: FC = () => {
       })
       .catch(console.error);
   }, []);
+  const worker = useMemo(() => new Worker("script/conv.js"), []);
   const state = useRef<MainComponentState>({ ...kInitComponentState });
   const input = useRef<HTMLInputElement>(null);
   const forceUpdate = useForceUpdate();
@@ -63,7 +64,6 @@ export const MainComponent: FC = () => {
       console.error("no file selected, or one or more files selected");
       return;
     }
-    const worker = new Worker("script/conv.js");
     const id = uuidv4();
     const file = files.item(0);
     const message: StartMessage = { type: "start", file, id };
