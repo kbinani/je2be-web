@@ -9,6 +9,8 @@ import {
 } from "../share/messages";
 import { v4 as uuidv4 } from "uuid";
 import Bugsnag from "@bugsnag/js";
+import { Header } from "./header";
+import { Footer } from "./footer";
 
 type MainComponentState = {
   unzip: number;
@@ -105,10 +107,7 @@ export const MainComponent: FC = () => {
   const chunks = Math.floor(state.current.convert);
   return (
     <div className="main">
-      <div className="header">
-        <div className="appLabel">je2be-web</div>
-        <div className="appLabelSub">A data converter for Minecraft</div>
-      </div>
+      <Header />
       <div className="container">
         <div className="inputZip">
           <label className="inputZipLabel" htmlFor={"input_zip"}>
@@ -137,6 +136,7 @@ export const MainComponent: FC = () => {
           <Progress progress={zip} label={"Zip"} />
         </div>
       </div>
+      <Footer />
     </div>
   );
 };
