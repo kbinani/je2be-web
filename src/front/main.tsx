@@ -21,6 +21,14 @@ type MainComponentState = {
   zip: number;
 };
 
+const kInitComponentState: MainComponentState = {
+  unzip: 0,
+  convert: 0,
+  convertTotal: 1,
+  compaction: 0,
+  zip: 0,
+};
+
 export const useForceUpdate = () => {
   const [counter, setCounter] = useReducer(
     (prev: number, _: number) => prev + 1,
@@ -32,7 +40,7 @@ export const useForceUpdate = () => {
 export const MainComponent: FC = () => {
   useEffect(() => {
     navigator.serviceWorker
-      .register("sworker.js", { scope: "/dl" })
+      .register("/sworker.js", { scope: "./dl" })
       .then((sw) => {
         console.log(`[front] sworker registered`);
         sw.update()
@@ -43,13 +51,7 @@ export const MainComponent: FC = () => {
       })
       .catch(console.error);
   }, []);
-  const state = useRef<MainComponentState>({
-    unzip: 0,
-    convert: 0,
-    convertTotal: 1,
-    compaction: 0,
-    zip: 0,
-  });
+  const state = useRef<MainComponentState>({ ...kInitComponentState });
   const forceUpdate = useForceUpdate();
   const onChange = (ev: ChangeEvent<HTMLInputElement>) => {
     const files = ev.target.files;
@@ -60,30 +62,17 @@ export const MainComponent: FC = () => {
     const worker = new Worker("script/conv.js");
     const id = uuidv4();
     const file = files.item(0);
-    const message: StartMessage = { file, id };
+    const message: StartMessage = { type: "start", file, id };
     console.log(`[${id}] front: posting StartMessage`);
-    state.current = {
-      unzip: 0,
-      convert: 0,
-      convertTotal: 1,
-      compaction: 0,
-      zip: 0,
-    };
+    state.current = { ...kInitComponentState };
     worker.postMessage(message);
     worker.onmessage = (msg: MessageEvent) => {
       if (isSuccessMessage(msg.data)) {
-        const { id, url } = msg.data;
+        const { id } = msg.data;
         console.log(`[${id}] front: received SuccessMessage`);
         const link = document.createElement("a");
-        const dot = file.name.lastIndexOf(".");
-        let download = "world.mcworld";
-        if (dot > 0) {
-          download = file.name.substring(0, dot) + ".mcworld";
-        }
-        link.download = download;
-        link.href = url;
+        link.href = `/dl/${id}.zip`;
         link.click();
-        URL.revokeObjectURL(url);
       } else if (isProgressMessage(msg.data)) {
         state.current = updateProgress(state.current, msg.data);
         forceUpdate();

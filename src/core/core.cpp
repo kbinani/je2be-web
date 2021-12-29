@@ -17,6 +17,7 @@ static void Report(std::string id, std::string stage, double progress, double to
     m["stage"] = UTF8ToString($2, $3);
     m["progress"] = $4;
     m["total"] = $5;
+    m["type"] = "progress";
     self.postMessage(m);
   },
          id.c_str(), id.size(), stage.c_str(), stage.size(), progress, total);

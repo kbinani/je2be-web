@@ -76,6 +76,7 @@ async function extract(file: File, id: string) {
     promiseUnzipFileInZip({ id, zip, path, prefix }).then(() => {
       progress++;
       const m: ProgressMessage = {
+        type: "progress",
         id,
         stage: "unzip",
         progress,
@@ -131,18 +132,13 @@ function failed(e: Error, id: string) {
   } else {
     error = new WorkerError("Other", e);
   }
-  const m: FailedMessage = { id, error };
+  const m: FailedMessage = { type: "failed", id, error };
   self.postMessage(m);
   console.error(e);
 }
 
 function send(id: string) {
-  const file = `/je2be/dl/${id}.zip`;
-  const buffer: Uint8Array = FS.readFile(file);
-  FS.unlink(file);
-  const blob = new Blob([buffer]);
-  const url = URL.createObjectURL(blob);
-  const m: SuccessMessage = { id, url };
+  const m: SuccessMessage = { type: "success", id };
   self.postMessage(m);
 }
 
