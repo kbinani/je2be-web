@@ -2649,15 +2649,8 @@
     if (!x) {
       return false;
     }
-    return typeof x["id"] === "string" && x["file"] instanceof File;
+    return x["type"] === "start" && typeof x["id"] === "string" && x["file"] instanceof File;
   }
-  var WorkerError = class extends Error {
-    constructor(type, native) {
-      super();
-      this.type = type;
-      this.native = native;
-    }
-  };
 
   // src/conv/conv.ts
   var import_jszip = __toESM(require_jszip_min());
@@ -2712,8 +2705,9 @@
     const id = msg.id;
     console.log(`[${id}] converter: received StartMessage`);
     mkdirp(`/je2be`);
-    FS.mount(IDBFS, {}, `/je2be`);
+    ensureMount(id);
     await syncfs(true);
+    Module.cleanup(`/je2be`);
     mkdirp(`/je2be/${id}`);
     mkdirp(`/je2be/${id}/in`);
     mkdirp(`/je2be/${id}/out`);
@@ -2727,11 +2721,23 @@
     if (ok) {
       send(id);
     } else {
-      failed(new WorkerError("ConverterFailed"), id);
+      const e = {
+        type: "ConverterFailed"
+      };
+      throw e;
     }
   }
   async function extract(file, id) {
-    const zip = await import_jszip.default.loadAsync(file);
+    let zip;
+    try {
+      zip = await import_jszip.default.loadAsync(file);
+    } catch (e) {
+      const error = {
+        type: "Unzip",
+        native: e
+      };
+      throw error;
+    }
     const foundLevelDat = [];
     zip.forEach((p, f) => {
       if (!p.endsWith("level.dat")) {
@@ -2739,8 +2745,16 @@
       }
       foundLevelDat.push(p);
     });
-    if (foundLevelDat.length !== 1) {
-      throw new WorkerError("NoLevelDatFound");
+    if (foundLevelDat.length === 0) {
+      const error = {
+        type: "NoLevelDatFound"
+      };
+      throw error;
+    } else if (foundLevelDat.length !== 1) {
+      const error = {
+        type: "2OrMoreLevelDatFound"
+      };
+      throw error;
     }
     const levelDatPath = foundLevelDat[0];
     const idx = levelDatPath.lastIndexOf("level.dat");
@@ -2760,6 +2774,7 @@
     const promises = files.map((path) => promiseUnzipFileInZip({ id, zip, path, prefix }).then(() => {
       progress++;
       const m = {
+        type: "progress",
         id,
         stage: "unzip",
         progress,
@@ -2790,24 +2805,12 @@
     const ret = Module.core(id, `/je2be/${id}/in`, `/je2be/${id}/out`, `/je2be/dl/${id}.zip`);
     return ret === 0;
   }
-  function failed(e, id) {
-    let error;
-    if (e instanceof WorkerError) {
-      error = e;
-    } else {
-      error = new WorkerError("Other", e);
-    }
-    const m = { id, error };
+  function failed(error, id) {
+    const m = { type: "failed", id, error };
     self.postMessage(m);
-    console.error(e);
   }
   function send(id) {
-    const file = `/je2be/dl/${id}.zip`;
-    const buffer = FS.readFile(file);
-    FS.unlink(file);
-    const blob = new Blob([buffer]);
-    const url = URL.createObjectURL(blob);
-    const m = { id, url };
+    const m = { type: "success", id };
     self.postMessage(m);
   }
   function cleanup(id) {
@@ -2817,6 +2820,13 @@
     }).catch((e) => {
       console.error(`[${id}] syncfs failed`, e);
     });
+  }
+  function ensureMount(id) {
+    try {
+      FS.mount(IDBFS, {}, "/je2be");
+    } catch (e) {
+      console.log(`[${id}] already mounted`);
+    }
   }
 })();
 /*!
