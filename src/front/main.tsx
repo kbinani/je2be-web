@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ChangeEvent, FC, useEffect, useReducer, useRef } from "react";
+import { ChangeEvent, FC, useEffect, useMemo, useReducer, useRef } from "react";
 import {
   isFailedMessage,
   isProgressMessage,
@@ -21,6 +21,7 @@ type MainComponentState = {
   zip: number;
   dl?: { id: string; filename: string };
   error?: WorkerError;
+  id?: string;
 };
 
 const kInitComponentState: MainComponentState = {
@@ -54,6 +55,7 @@ export const MainComponent: FC = () => {
       .catch(console.error);
   }, []);
   const state = useRef<MainComponentState>({ ...kInitComponentState });
+  const input = useRef<HTMLInputElement>(null);
   const forceUpdate = useForceUpdate();
   const onChange = (ev: ChangeEvent<HTMLInputElement>) => {
     const files = ev.target.files;
@@ -66,9 +68,12 @@ export const MainComponent: FC = () => {
     const file = files.item(0);
     const message: StartMessage = { type: "start", file, id };
     console.log(`[${id}] front: posting StartMessage`);
-    state.current = { ...kInitComponentState };
+    state.current = { ...kInitComponentState, id };
     worker.postMessage(message);
     worker.onmessage = (msg: MessageEvent) => {
+      if (msg.data["id"] !== state.current.id) {
+        return;
+      }
       if (isSuccessMessage(msg.data)) {
         const { id } = msg.data;
         const dot = file.name.lastIndexOf(".");
@@ -76,13 +81,24 @@ export const MainComponent: FC = () => {
         if (dot > 0) {
           filename = file.name.substring(0, dot) + ".mcworld";
         }
-        state.current = { ...state.current, dl: { id, filename } };
+        state.current = {
+          ...state.current,
+          dl: { id, filename },
+          error: undefined,
+          id: undefined,
+        };
+        input.current.value = "";
         forceUpdate();
       } else if (isProgressMessage(msg.data)) {
         state.current = updateProgress(state.current, msg.data);
         forceUpdate();
       } else if (isFailedMessage(msg.data)) {
-        state.current.error = msg.data.error;
+        state.current = {
+          ...state.current,
+          error: msg.data.error,
+          id: undefined,
+        };
+        input.current.value = "";
         forceUpdate();
       }
     };
@@ -105,6 +121,8 @@ export const MainComponent: FC = () => {
             type={"file"}
             onChange={onChange}
             accept={".zip"}
+            ref={input}
+            disabled={state.current.id !== undefined}
           />
         </div>
         <div className="progressContainer">
