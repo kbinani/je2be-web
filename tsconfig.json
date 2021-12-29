@@ -3,6 +3,11 @@
     "target": "ES2018",
     "moduleResolution": "Node",
     "jsx": "react",
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "lib": [
+      "es2018",
+      "webworker",
+      "dom"
+    ]
   }
 }

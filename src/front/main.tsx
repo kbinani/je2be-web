@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ChangeEvent, FC, useReducer, useRef } from "react";
+import { ChangeEvent, FC, useEffect, useReducer, useRef } from "react";
 import {
   isFailedMessage,
   isProgressMessage,
@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from "uuid";
 import Bugsnag from "@bugsnag/js";
 import { Header } from "./header";
 import { Footer } from "./footer";
+import { Progress } from "./progress";
 
 type MainComponentState = {
   unzip: number;
@@ -29,6 +30,19 @@ export const useForceUpdate = () => {
 };
 
 export const MainComponent: FC = () => {
+  useEffect(() => {
+    navigator.serviceWorker
+      .register("sworker.js", { scope: "/dl" })
+      .then((sw) => {
+        console.log(`register done`);
+        sw.update()
+          .then(() => {
+            console.log(`update done`);
+          })
+          .catch(console.error);
+      })
+      .catch(console.error);
+  }, []);
   const state = useRef<MainComponentState>({
     unzip: 0,
     convert: 0,
@@ -137,25 +151,6 @@ export const MainComponent: FC = () => {
         </div>
       </div>
       <Footer />
-    </div>
-  );
-};
-
-const Progress: FC<{ progress: number; label: string }> = ({
-  progress,
-  label,
-}) => {
-  const p = Math.floor(progress * 100);
-  return (
-    <div className="progress">
-      <div
-        className="progressBar"
-        style={{ width: `${p}%` }}
-        data-completed={p === 100}
-      />
-      <div className="progressLabel">
-        {label}: {p}% done
-      </div>
     </div>
   );
 };
