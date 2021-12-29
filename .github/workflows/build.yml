@@ -26,11 +26,11 @@ jobs:
           docker save je2be_build_wasm:latest -o ${JE2BE_DOCKER_CACHE_PATH}
       - run: docker load -i ${JE2BE_DOCKER_CACHE_PATH}
       - run: |
-          which node || true
-          node --version || true
-          which npm || true
-          npm --version || true
-          which yarn || true
-          yarn --version || true
           yarn install
           make all
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        if: ${{ github.ref == 'refs/heads/main' }}
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
