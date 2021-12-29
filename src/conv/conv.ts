@@ -23,10 +23,10 @@ self.onmessage = (ev: MessageEvent) => {
 async function start(msg: StartMessage): Promise<void> {
   const id = msg.id;
   console.log(`[${id}] converter: received StartMessage`);
-
   mkdirp(`/je2be`);
-  FS.mount(IDBFS, {}, `/je2be`);
+  ensureMount(id);
   await syncfs(true);
+  Module.cleanup(`/je2be`);
   mkdirp(`/je2be/${id}`);
   mkdirp(`/je2be/${id}/in`);
   mkdirp(`/je2be/${id}/out`);
@@ -164,4 +164,12 @@ function cleanup(id: string) {
     .catch((e) => {
       console.error(`[${id}] syncfs failed`, e);
     });
+}
+
+function ensureMount(id: string) {
+  try {
+    FS.mount(IDBFS, {}, "/je2be");
+  } catch (e) {
+    console.log(`[${id}] already mounted`);
+  }
 }
