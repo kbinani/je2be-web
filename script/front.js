@@ -9875,10 +9875,10 @@
             var BugsnagPluginReactLazyInitializer = function() {
               throw new Error("@bugsnag/plugin-react was used incorrectly. Valid usage is as follows:\nPass React to the plugin constructor\n\n  `Bugsnag.start({ plugins: [new BugsnagPluginReact(React)] })`\nand then call `const ErrorBoundary = Bugsnag.getPlugin('react').createErrorBoundary()`\n\nOr if React is not available until after Bugsnag has started,\nconstruct the plugin with no arguments\n  `Bugsnag.start({ plugins: [new BugsnagPluginReact()] })`,\nthen pass in React when available to construct your error boundary\n  `const ErrorBoundary = Bugsnag.getPlugin('react').createErrorBoundary(React)`");
             };
-            BugsnagPluginReactLazyInitializer.createErrorBoundary = function(React3) {
-              if (!React3)
+            BugsnagPluginReactLazyInitializer.createErrorBoundary = function(React5) {
+              if (!React5)
                 throw new Error("@bugsnag/plugin-react reference to `React` was undefined");
-              return createClass(React3, client);
+              return createClass(React5, client);
             };
             return BugsnagPluginReactLazyInitializer;
           };
@@ -9893,7 +9893,7 @@
           }
           return ret;
         };
-        var createClass = function(React3, client) {
+        var createClass = function(React5, client) {
           return /* @__PURE__ */ function(_React$Component) {
             _inheritsLoose(ErrorBoundary, _React$Component);
             function ErrorBoundary(props) {
@@ -9937,7 +9937,7 @@
               if (error) {
                 var FallbackComponent = this.props.FallbackComponent;
                 if (FallbackComponent)
-                  return React3.createElement(FallbackComponent, _extends({}, this.state, {
+                  return React5.createElement(FallbackComponent, _extends({}, this.state, {
                     clearError: this.handleClearError
                   }));
                 return null;
@@ -9945,7 +9945,7 @@
               return this.props.children;
             };
             return ErrorBoundary;
-          }(React3.Component);
+          }(React5.Component);
         };
         _$src_1.formatComponentStack = formatComponentStack;
         _$src_1["default"] = _$src_1;
@@ -9955,12 +9955,12 @@
   });
 
   // src/front/index.tsx
-  var React2 = __toESM(require_react());
+  var React4 = __toESM(require_react());
   var ReactDOM = __toESM(require_react_dom());
   var import_js2 = __toESM(require_notifier());
 
   // src/front/main.tsx
-  var React = __toESM(require_react());
+  var React3 = __toESM(require_react());
   var import_react = __toESM(require_react());
 
   // src/share/messages.ts
@@ -10040,6 +10040,40 @@
 
   // src/front/main.tsx
   var import_js = __toESM(require_notifier());
+
+  // src/front/header.tsx
+  var React = __toESM(require_react());
+  var Header = () => {
+    return /* @__PURE__ */ React.createElement("div", {
+      className: "header"
+    }, /* @__PURE__ */ React.createElement("div", {
+      className: "appLabel"
+    }, "je2be-web"), /* @__PURE__ */ React.createElement("div", {
+      className: "appLabelSub"
+    }, "A data converter for Minecraft"));
+  };
+
+  // src/front/footer.tsx
+  var React2 = __toESM(require_react());
+  var Footer = () => {
+    return /* @__PURE__ */ React2.createElement("div", {
+      className: "footer"
+    }, /* @__PURE__ */ React2.createElement("div", {
+      className: "footerContent"
+    }, /* @__PURE__ */ React2.createElement("div", {
+      className: "footerRow"
+    }, /* @__PURE__ */ React2.createElement("a", {
+      href: "https://github.com/kbinani/je2be-web"
+    }, /* @__PURE__ */ React2.createElement("img", {
+      width: 20,
+      height: 20,
+      src: "image/GitHub-Mark-Light-64px.png"
+    }))), /* @__PURE__ */ React2.createElement("div", {
+      className: "footerRow"
+    }, "Copyright \xA9 kbinani")));
+  };
+
+  // src/front/main.tsx
   var useForceUpdate = () => {
     const [counter, setCounter] = (0, import_react.useReducer)((prev, _) => prev + 1, 0);
     return () => setCounter(counter + 1);
@@ -10119,59 +10153,53 @@
     const { unzip, compaction, zip } = state.current;
     const convert = Math.floor(state.current.convert / state.current.convertTotal * 100);
     const chunks = Math.floor(state.current.convert);
-    return /* @__PURE__ */ React.createElement("div", {
+    return /* @__PURE__ */ React3.createElement("div", {
       className: "main"
-    }, /* @__PURE__ */ React.createElement("div", {
-      className: "header"
-    }, /* @__PURE__ */ React.createElement("div", {
-      className: "appLabel"
-    }, "je2be-web"), /* @__PURE__ */ React.createElement("div", {
-      className: "appLabelSub"
-    }, "A data converter for Minecraft")), /* @__PURE__ */ React.createElement("div", {
+    }, /* @__PURE__ */ React3.createElement(Header, null), /* @__PURE__ */ React3.createElement("div", {
       className: "container"
-    }, /* @__PURE__ */ React.createElement("div", {
+    }, /* @__PURE__ */ React3.createElement("div", {
       className: "inputZip"
-    }, /* @__PURE__ */ React.createElement("label", {
+    }, /* @__PURE__ */ React3.createElement("label", {
       className: "inputZipLabel",
       htmlFor: "input_zip"
-    }, "Choose a zip archive of Java Edition world data"), /* @__PURE__ */ React.createElement("input", {
+    }, "Choose a zip archive of Java Edition world data"), /* @__PURE__ */ React3.createElement("input", {
       name: "input_zip",
       type: "file",
       onChange,
       accept: ".zip"
-    })), /* @__PURE__ */ React.createElement("div", {
+    })), /* @__PURE__ */ React3.createElement("div", {
       className: "progressContainer"
-    }, /* @__PURE__ */ React.createElement(Progress, {
+    }, /* @__PURE__ */ React3.createElement(Progress, {
       progress: unzip,
       label: "Unzip"
-    }), /* @__PURE__ */ React.createElement("div", {
+    }), /* @__PURE__ */ React3.createElement("div", {
       className: "progress"
-    }, /* @__PURE__ */ React.createElement("div", {
+    }, /* @__PURE__ */ React3.createElement("div", {
       className: "progressBar",
       style: { width: `${convert}%` },
       "data-completed": convert === 100
-    }), /* @__PURE__ */ React.createElement("div", {
+    }), /* @__PURE__ */ React3.createElement("div", {
       className: "progressLabel"
-    }, "Conversion: ", chunks, " chunks, ", convert, "% done")), /* @__PURE__ */ React.createElement(Progress, {
+    }, "Conversion: ", chunks, " chunks, ", convert, "% done")), /* @__PURE__ */ React3.createElement(Progress, {
       progress: compaction,
       label: "LevelDB Compaction"
-    }), /* @__PURE__ */ React.createElement(Progress, {
+    }), /* @__PURE__ */ React3.createElement(Progress, {
       progress: zip,
       label: "Zip"
-    }))));
+    }))), /* @__PURE__ */ React3.createElement(Footer, null));
   };
   var Progress = ({
     progress,
     label
   }) => {
     const p = Math.floor(progress * 100);
-    return /* @__PURE__ */ React.createElement("div", {
+    return /* @__PURE__ */ React3.createElement("div", {
       className: "progress"
-    }, /* @__PURE__ */ React.createElement("div", {
+    }, /* @__PURE__ */ React3.createElement("div", {
       className: "progressBar",
       style: { width: `${p}%` },
       "data-completed": p === 100
-    }), /* @__PURE__ */ React.createElement("div", {
+    }), /* @__PURE__ */ React3.createElement("div", {
       className: "progressLabel"
     }, label, ": ", p, "% done"));
   };
@@ -10184,8 +10212,8 @@
       plugins: [new import_plugin_react.default()],
       appVersion: "1.0.0"
     });
-    const ErrorBoundary = import_js2.default.getPlugin("react").createErrorBoundary(React2);
-    ReactDOM.render(/* @__PURE__ */ React2.createElement(ErrorBoundary, null, /* @__PURE__ */ React2.createElement(MainComponent, null)), document.getElementById("app"));
+    const ErrorBoundary = import_js2.default.getPlugin("react").createErrorBoundary(React4);
+    ReactDOM.render(/* @__PURE__ */ React4.createElement(ErrorBoundary, null, /* @__PURE__ */ React4.createElement(MainComponent, null)), document.getElementById("app"));
   });
 })();
 /*
