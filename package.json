@@ -25,6 +25,6 @@
     "conv": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/conv/conv.ts --bundle --outfile=public/script/conv.js",
     "sworker": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/sworker/sworker.ts --bundle --outfile=public/sworker.js",
     "fmt": "prettier --write 'src/**/*.ts' 'src/**/*.tsx' 'public/style/*.css'",
-    "dev": "yarn front --servedir=je2be-web --serve=3000"
+    "dev": "yarn front --servedir=public --serve=3000"
   }
 }

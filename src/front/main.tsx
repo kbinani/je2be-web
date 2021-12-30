@@ -41,7 +41,7 @@ export const useForceUpdate = () => {
 };
 
 export const MainComponent: FC = () => {
-  const worker = useMemo(() => new Worker("script/conv.js"), []);
+  const worker = useMemo(() => new Worker("./script/conv.js"), []);
   const state = useRef<MainComponentState>({ ...kInitComponentState });
   const input = useRef<HTMLInputElement>(null);
   const forceUpdate = useForceUpdate();
@@ -62,7 +62,7 @@ export const MainComponent: FC = () => {
         return;
       }
       if (isSuccessMessage(msg.data)) {
-        const { id, url } = msg.data;
+        const { url } = msg.data;
         const dot = file.name.lastIndexOf(".");
         let filename = "world.mcworld";
         if (dot > 0) {
