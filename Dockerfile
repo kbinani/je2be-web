@@ -1,5 +1,14 @@
-FROM emscripten/emsdk:latest
+ARG EMSCRIPTEN_VERSION=1.39.17
+FROM emscripten/emsdk:${EMSCRIPTEN_VERSION}
 ARG CMAKE_VERSION=3.22.1
-RUN cd /src && wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}.tar.gz
-RUN apt update && apt remove cmake -y && apt install libssl-dev -y
-RUN cd /src && tar zxf cmake-${CMAKE_VERSION}.tar.gz && cd cmake-${CMAKE_VERSION} && ./bootstrap && make -j $(nproc) && make install
+RUN apt update \
+    && apt remove cmake -y \
+    && mkdir -p /src \
+    && cd /src \
+    && wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}.tar.gz \
+    && tar zxf cmake-${CMAKE_VERSION}.tar.gz \
+    && cd cmake-${CMAKE_VERSION} \
+    && ./bootstrap --parallel=$(nproc) -- -DCMAKE_USE_OPENSSL=OFF \
+    && make -j $(nproc) \
+    && make install \
+    && rm -rf /src/cmake-${CMAKE_VERSION}
