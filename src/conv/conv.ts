@@ -151,7 +151,11 @@ function failed(error: WorkerError, id: string) {
 }
 
 function send(id: string) {
-  const m: SuccessMessage = { type: "success", id };
+  const file = `/je2be/dl/${id}.zip`;
+  const buffer: Uint8Array = FS.readFile(file);
+  const blob = new Blob([buffer]);
+  const url = URL.createObjectURL(blob);
+  const m: SuccessMessage = { type: "success", id, url };
   self.postMessage(m);
 }
 

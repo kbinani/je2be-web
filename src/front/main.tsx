@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ChangeEvent, FC, useEffect, useMemo, useReducer, useRef } from "react";
+import { ChangeEvent, FC, useMemo, useReducer, useRef } from "react";
 import {
   isFailedMessage,
   isProgressMessage,
@@ -19,7 +19,7 @@ type MainComponentState = {
   convertTotal: number;
   compaction: number;
   zip: number;
-  dl?: { id: string; filename: string };
+  dl?: { url: string; filename: string };
   error?: WorkerError;
   id?: string;
 };
@@ -41,19 +41,6 @@ export const useForceUpdate = () => {
 };
 
 export const MainComponent: FC = () => {
-  useEffect(() => {
-    navigator.serviceWorker
-      .register("/je2be-web/sworker.js", { scope: "/je2be-web/dl" })
-      .then((sw) => {
-        console.log(`[front] sworker registered`);
-        sw.update()
-          .then(() => {
-            console.log(`[front] sworker updated`);
-          })
-          .catch(console.error);
-      })
-      .catch(console.error);
-  }, []);
   const worker = useMemo(() => new Worker("script/conv.js"), []);
   const state = useRef<MainComponentState>({ ...kInitComponentState });
   const input = useRef<HTMLInputElement>(null);
@@ -75,7 +62,7 @@ export const MainComponent: FC = () => {
         return;
       }
       if (isSuccessMessage(msg.data)) {
-        const { id } = msg.data;
+        const { id, url } = msg.data;
         const dot = file.name.lastIndexOf(".");
         let filename = "world.mcworld";
         if (dot > 0) {
@@ -83,7 +70,7 @@ export const MainComponent: FC = () => {
         }
         state.current = {
           ...state.current,
-          dl: { id, filename },
+          dl: { url, filename },
           error: undefined,
           id: undefined,
         };
@@ -144,7 +131,8 @@ export const MainComponent: FC = () => {
               <div className="downloadMessage">
                 {`Completed: `}
                 <a
-                  href={`/je2be-web/dl/${state.current.dl.id}.zip?download=${state.current.dl.filename}`}
+                  href={state.current.dl.url}
+                  download={state.current.dl.filename}
                 >
                   download {state.current.dl.filename}
                 </a>
