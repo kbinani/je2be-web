@@ -23394,9 +23394,11 @@ For more info, visit https://reactjs.org/link/mock-scheduler`);
   var Header = () => {
     return /* @__PURE__ */ React.createElement("div", {
       className: "header"
+    }, /* @__PURE__ */ React.createElement("a", {
+      href: "./"
     }, /* @__PURE__ */ React.createElement("div", {
       className: "appLabel"
-    }, "je2be-web"), /* @__PURE__ */ React.createElement("div", {
+    }, "je2be-web")), /* @__PURE__ */ React.createElement("div", {
       className: "appLabelSub"
     }, "A data converter for Minecraft"));
   };
@@ -23411,7 +23413,8 @@ For more info, visit https://reactjs.org/link/mock-scheduler`);
     }, /* @__PURE__ */ React2.createElement("div", {
       className: "footerRow"
     }, /* @__PURE__ */ React2.createElement("a", {
-      href: "https://github.com/kbinani/je2be-web"
+      href: "https://github.com/kbinani/je2be-web",
+      target: "kbinani.github.io/je2be-web/github-link"
     }, /* @__PURE__ */ React2.createElement("img", {
       width: 20,
       height: 20,
@@ -23452,7 +23455,7 @@ For more info, visit https://reactjs.org/link/mock-scheduler`);
     return () => setCounter(counter + 1);
   };
   var MainComponent = () => {
-    const worker = (0, import_react.useMemo)(() => new Worker("script/conv.js"), []);
+    const worker = (0, import_react.useMemo)(() => new Worker("./script/conv.js"), []);
     const state = (0, import_react.useRef)({ ...kInitComponentState });
     const input = (0, import_react.useRef)(null);
     const forceUpdate = useForceUpdate();
@@ -23473,7 +23476,7 @@ For more info, visit https://reactjs.org/link/mock-scheduler`);
           return;
         }
         if (isSuccessMessage(msg.data)) {
-          const { id: id2, url } = msg.data;
+          const { url } = msg.data;
           const dot = file.name.lastIndexOf(".");
           let filename = "world.mcworld";
           if (dot > 0) {
@@ -23575,14 +23578,15 @@ For more info, visit https://reactjs.org/link/mock-scheduler`);
   var import_plugin_react = __toESM(require_bugsnag_react());
 
   // src/share/version.ts
-  var kAppVersion = "1.1.4";
+  var kAppVersion = "";
 
   // src/front/index.tsx
   document.addEventListener("DOMContentLoaded", () => {
+    const appVersion = kAppVersion === "" ? "0.0.0" : kAppVersion;
     import_js.default.start({
       apiKey: "0b173cbc2086cd69b797414d4cceafbb",
       plugins: [new import_plugin_react.default()],
-      appVersion: kAppVersion
+      appVersion
     });
     const ErrorBoundary = import_js.default.getPlugin("react").createErrorBoundary(React5);
     ReactDOM.render(/* @__PURE__ */ React5.createElement(ErrorBoundary, null, /* @__PURE__ */ React5.createElement(MainComponent, null)), document.getElementById("app"));

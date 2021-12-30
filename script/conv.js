@@ -2694,7 +2694,7 @@
   }
 
   // src/conv/conv.ts
-  self.importScripts("/je2be-web/script/core.js");
+  self.importScripts("./core.js");
   self.onmessage = (ev) => {
     if (isStartMessage(ev.data)) {
       const id = ev.data.id;

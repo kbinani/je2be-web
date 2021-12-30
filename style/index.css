@@ -7,6 +7,11 @@
   user-select: none;
 }
 
+a {
+  color: var(--text-bright);
+  text-decoration: none;
+}
+
 .button {
   cursor: pointer;
 }
@@ -140,8 +145,4 @@
 
 .footerRow {
   text-align: center;
-}
-
-a {
-  color: var(--text-bright);
 }
