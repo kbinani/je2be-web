@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ChangeEvent, FC, useMemo, useReducer, useRef } from "react";
+import { ChangeEvent, FC, useEffect, useMemo, useReducer, useRef } from "react";
 import {
   isFailedMessage,
   isProgressMessage,
@@ -45,6 +45,16 @@ export const MainComponent: FC = () => {
   const state = useRef<MainComponentState>({ ...kInitComponentState });
   const input = useRef<HTMLInputElement>(null);
   const forceUpdate = useForceUpdate();
+  const onBeforeUnload = (ev: BeforeUnloadEvent) => {
+    if (state.current.id === undefined) {
+      return;
+    }
+    ev.preventDefault();
+    ev.returnValue = "Converter still working. Do you really leave the page?";
+  };
+  useEffect(() => {
+    window.addEventListener("beforeunload", onBeforeUnload);
+  }, []);
   const onChange = (ev: ChangeEvent<HTMLInputElement>) => {
     const files = ev.target.files;
     if (!files || files.length !== 1) {
@@ -56,6 +66,7 @@ export const MainComponent: FC = () => {
     const message: StartMessage = { type: "start", file, id };
     console.log(`[${id}] front: posting StartMessage`);
     state.current = { ...kInitComponentState, id };
+    forceUpdate();
     worker.postMessage(message);
     worker.onmessage = (msg: MessageEvent) => {
       if (msg.data["id"] !== state.current.id) {
@@ -131,12 +142,12 @@ export const MainComponent: FC = () => {
           <div className="message">
             {state.current.dl && (
               <div className="downloadMessage">
-                {`Completed: `}
+                {`Completed: download `}
                 <a
                   href={state.current.dl.url}
                   download={state.current.dl.filename}
                 >
-                  download {state.current.dl.filename}
+                  {state.current.dl.filename}
                 </a>
               </div>
             )}
