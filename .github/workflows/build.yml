@@ -44,7 +44,7 @@ jobs:
       - run: docker load -i ${JE2BE_DOCKER_CACHE_PATH}
       - name: Build
         env:
-          JE2BE_VERSION: ${{ env.GIT_TAG }}
+          JE2BE_VERSION: ${{ github.ref_name }}
         run: |
           yarn install
           make all
