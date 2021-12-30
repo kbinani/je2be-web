@@ -95,9 +95,11 @@ export const MainComponent: FC = () => {
     (state.current.convert / state.current.convertTotal) * 100
   );
   const chunks = Math.floor(state.current.convert);
+  const disableLink =
+    state.current.id !== undefined || state.current.dl !== undefined;
   return (
     <div className="main">
-      <Header />
+      <Header disableLink={disableLink} />
       <div className="container">
         <div className="inputZip">
           <label className="inputZipLabel" htmlFor={"input_zip"}>
