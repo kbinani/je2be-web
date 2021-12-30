@@ -43,7 +43,7 @@ export const useForceUpdate = () => {
 export const MainComponent: FC = () => {
   useEffect(() => {
     navigator.serviceWorker
-      .register("/je2be-web/sworker.js", { scope: "./dl" })
+      .register("/je2be-web/sworker.js", { scope: "/je2be-web/dl" })
       .then((sw) => {
         console.log(`[front] sworker registered`);
         sw.update()

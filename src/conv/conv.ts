@@ -9,7 +9,7 @@ import {
 import JSZip from "jszip";
 import { dirname, mkdirp, syncfs } from "./fs-ext";
 
-self.importScripts("core.js");
+self.importScripts("/je2be-web/script/core.js");
 
 self.onmessage = (ev: MessageEvent) => {
   if (isStartMessage(ev.data)) {
