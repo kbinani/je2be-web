@@ -23453,7 +23453,7 @@ For more info, visit https://reactjs.org/link/mock-scheduler`);
   };
   var MainComponent = () => {
     (0, import_react.useEffect)(() => {
-      navigator.serviceWorker.register("/je2be-web/sworker.js", { scope: "./dl" }).then((sw) => {
+      navigator.serviceWorker.register("/je2be-web/sworker.js", { scope: "/je2be-web/dl" }).then((sw) => {
         console.log(`[front] sworker registered`);
         sw.update().then(() => {
           console.log(`[front] sworker updated`);
@@ -23582,7 +23582,7 @@ For more info, visit https://reactjs.org/link/mock-scheduler`);
   var import_plugin_react = __toESM(require_bugsnag_react());
 
   // src/share/version.ts
-  var kAppVersion = "1.1.2";
+  var kAppVersion = "1.1.3";
 
   // src/front/index.tsx
   document.addEventListener("DOMContentLoaded", () => {

@@ -37,7 +37,7 @@
   self.addEventListener("install", onInstall);
   self.addEventListener("activate", onActivate);
   self.addEventListener("fetch", onFetch);
-  self.importScripts("script/core.js");
+  self.importScripts("/je2be-web/script/core.js");
   function onInstall(ev) {
     console.log(`[sworker] install`);
     ev.waitUntil(self.skipWaiting());
@@ -58,7 +58,7 @@
     const u = new URL(ev.request.url);
     const path = u.pathname;
     const download = (_a = u.searchParams.get("download")) != null ? _a : "world.mcworld";
-    if (!path.startsWith("/dl/")) {
+    if (!path.startsWith("/je2be-web/dl/")) {
       return;
     }
     ev.respondWith(respond(path, download));
