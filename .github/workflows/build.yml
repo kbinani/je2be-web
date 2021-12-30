@@ -13,6 +13,15 @@ jobs:
         with:
           node-version-file: .node-version
           cache: yarn
+      - name: Cache build directory
+        uses: actions/cache@v2
+        id: cache-build-directory
+        with:
+          path: build
+          key: ${{ hashFiles('.gitmodules', 'src/core/core.cpp', 'CMakeLists.txt')}}
+      - name: Touch restored build files
+        if: steps.cache-build-directory.outputs.cache-hit == 'true'
+        run: find build -type f | xargs touch
       - name: Cache docker image
         uses: actions/cache@v2
         id: cache-docker-image
