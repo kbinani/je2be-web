@@ -18,7 +18,7 @@ const Link: FC<{ url: string; disable: boolean }> = ({
   disable,
 }) => {
   if (disable) {
-    return children;
+    return <>children</>;
   } else {
     return <a href={url}>{children}</a>;
   }
