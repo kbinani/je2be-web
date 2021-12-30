@@ -1,6 +1,5 @@
 {
   "name": "je2be-web",
-  "version": "1.1.4",
   "main": "index.js",
   "repository": "https://github.com/kbinani/je2be-web.git",
   "author": "kbinani <kbinani.bt@gmail.com>",
@@ -22,9 +21,9 @@
     "uuid": "^8.3.2"
   },
   "scripts": {
-    "front": "esbuild --define:JE2BE_VERSION=\\\"$npm_package_version\\\" src/front/index.tsx --bundle --outfile=public/script/front.js",
-    "conv": "esbuild --define:JE2BE_VERSION=\\\"$npm_package_version\\\" src/conv/conv.ts --bundle --outfile=public/script/conv.js",
-    "sworker": "esbuild --define:JE2BE_VERSION=\\\"$npm_package_version\\\" src/sworker/sworker.ts --bundle --outfile=public/sworker.js",
+    "front": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/front/index.tsx --bundle --outfile=public/script/front.js",
+    "conv": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/conv/conv.ts --bundle --outfile=public/script/conv.js",
+    "sworker": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/sworker/sworker.ts --bundle --outfile=public/sworker.js",
     "fmt": "prettier --write 'src/**/*.ts' 'src/**/*.tsx' 'public/style/*.css'",
     "dev": "yarn front --servedir=je2be-web --serve=3000"
   }
