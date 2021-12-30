@@ -6,7 +6,10 @@ export const Footer: FC = () => {
     <div className="footer">
       <div className="footerContent">
         <div className={"footerRow"}>
-          <a href={"https://github.com/kbinani/je2be-web"}>
+          <a
+            href={"https://github.com/kbinani/je2be-web"}
+            target={"kbinani.github.io/je2be-web/github-link"}
+          >
             <img
               width={20}
               height={20}
