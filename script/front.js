@@ -1056,7 +1056,7 @@
             var dispatcher = resolveDispatcher();
             return dispatcher.useRef(initialValue);
           }
-          function useEffect2(create, deps) {
+          function useEffect(create, deps) {
             var dispatcher = resolveDispatcher();
             return dispatcher.useEffect(create, deps);
           }
@@ -1626,7 +1626,7 @@
           exports.useCallback = useCallback;
           exports.useContext = useContext;
           exports.useDebugValue = useDebugValue;
-          exports.useEffect = useEffect2;
+          exports.useEffect = useEffect;
           exports.useImperativeHandle = useImperativeHandle;
           exports.useLayoutEffect = useLayoutEffect;
           exports.useMemo = useMemo2;
@@ -23319,7 +23319,7 @@ For more info, visit https://reactjs.org/link/mock-scheduler`);
     if (!x) {
       return false;
     }
-    return x["type"] === "success" && typeof x["id"] === "string";
+    return x["type"] === "success" && typeof x["id"] === "string" && typeof x["url"] === "string";
   }
   function isFailedMessage(x) {
     if (!x) {
@@ -23452,14 +23452,6 @@ For more info, visit https://reactjs.org/link/mock-scheduler`);
     return () => setCounter(counter + 1);
   };
   var MainComponent = () => {
-    (0, import_react.useEffect)(() => {
-      navigator.serviceWorker.register("/je2be-web/sworker.js", { scope: "/je2be-web/dl" }).then((sw) => {
-        console.log(`[front] sworker registered`);
-        sw.update().then(() => {
-          console.log(`[front] sworker updated`);
-        }).catch(console.error);
-      }).catch(console.error);
-    }, []);
     const worker = (0, import_react.useMemo)(() => new Worker("script/conv.js"), []);
     const state = (0, import_react.useRef)({ ...kInitComponentState });
     const input = (0, import_react.useRef)(null);
@@ -23481,7 +23473,7 @@ For more info, visit https://reactjs.org/link/mock-scheduler`);
           return;
         }
         if (isSuccessMessage(msg.data)) {
-          const { id: id2 } = msg.data;
+          const { id: id2, url } = msg.data;
           const dot = file.name.lastIndexOf(".");
           let filename = "world.mcworld";
           if (dot > 0) {
@@ -23489,7 +23481,7 @@ For more info, visit https://reactjs.org/link/mock-scheduler`);
           }
           state.current = {
             ...state.current,
-            dl: { id: id2, filename },
+            dl: { url, filename },
             error: void 0,
             id: void 0
           };
@@ -23552,7 +23544,8 @@ For more info, visit https://reactjs.org/link/mock-scheduler`);
     }, state.current.dl && /* @__PURE__ */ React4.createElement("div", {
       className: "downloadMessage"
     }, `Completed: `, /* @__PURE__ */ React4.createElement("a", {
-      href: `/je2be-web/dl/${state.current.dl.id}.zip?download=${state.current.dl.filename}`
+      href: state.current.dl.url,
+      download: state.current.dl.filename
     }, "download ", state.current.dl.filename)), state.current.error && /* @__PURE__ */ React4.createElement("div", {
       className: "errorMessage"
     }, "Failed: ErrorType=", state.current.error.type)))), /* @__PURE__ */ React4.createElement(Footer, null));
@@ -23582,7 +23575,7 @@ For more info, visit https://reactjs.org/link/mock-scheduler`);
   var import_plugin_react = __toESM(require_bugsnag_react());
 
   // src/share/version.ts
-  var kAppVersion = "1.1.3";
+  var kAppVersion = "1.1.4";
 
   // src/front/index.tsx
   document.addEventListener("DOMContentLoaded", () => {

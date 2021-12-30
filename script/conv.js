@@ -2810,7 +2810,11 @@
     self.postMessage(m);
   }
   function send(id) {
-    const m = { type: "success", id };
+    const file = `/je2be/dl/${id}.zip`;
+    const buffer = FS.readFile(file);
+    const blob = new Blob([buffer]);
+    const url = URL.createObjectURL(blob);
+    const m = { type: "success", id, url };
     self.postMessage(m);
   }
   function cleanup(id) {
