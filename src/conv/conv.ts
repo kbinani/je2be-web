@@ -7,7 +7,7 @@ import {
   WorkerError,
 } from "../share/messages";
 import JSZip from "jszip";
-import { dirname, mkdirp, syncfs } from "./fs-ext";
+import { dirname, mkdirp, mount, syncfs, umount } from "./fs-ext";
 
 self.importScripts("./core.js");
 
@@ -24,10 +24,7 @@ async function start(msg: StartMessage): Promise<void> {
   const id = msg.id;
   console.log(`[${id}] converter: received StartMessage`);
   mkdirp(`/je2be`);
-  ensureMount(id);
-  await syncfs(true);
-  Module.cleanup(`/je2be`);
-  mkdirp(`/je2be/${id}`);
+  mount("je2be");
   mkdirp(`/je2be/${id}/in`);
   mkdirp(`/je2be/${id}/out`);
   mkdirp(`/je2be/dl`);
@@ -37,7 +34,8 @@ async function start(msg: StartMessage): Promise<void> {
   console.log(`[${id}] extract done`);
   console.log(`[${id}] convert...`);
   const code = await convert(msg.id);
-  console.log(`[${id}] convert done: code=${code}`);
+  Module.cleanup(`/je2be/${id}`);
+  await syncfs(false);
   if (code > 0) {
     send(id);
   } else {
@@ -164,20 +162,5 @@ function send(id: string) {
 }
 
 function cleanup(id: string) {
-  Module.cleanup(`/je2be/${id}`);
-  syncfs(false)
-    .then(() => {
-      console.log(`[${id}] syncfs done`);
-    })
-    .catch((e) => {
-      console.error(`[${id}] syncfs failed`, e);
-    });
-}
-
-function ensureMount(id: string) {
-  try {
-    FS.mount(IDBFS, {}, "/je2be");
-  } catch (e) {
-    console.log(`[${id}] already mounted`);
-  }
+  umount("/je2be");
 }
