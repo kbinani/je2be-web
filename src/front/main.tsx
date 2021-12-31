@@ -53,8 +53,12 @@ export const MainComponent: FC = () => {
     ev.returnValue = "Converter still working. Do you really leave the page?";
   };
   useEffect(() => {
+    const { protocol, host, href } = window.location;
+    const prefix = `${protocol}//${host}/`;
+    const path = href.substring(prefix.length);
+    const scope = `${path}/dl`;
     navigator.serviceWorker
-      .register("./sworker.js", {scope: "../dl"})
+      .register("./sworker.js", { scope })
       .then((sw) => {
         console.log(`[front] sworker registered`);
         sw.update()
