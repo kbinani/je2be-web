@@ -1,10 +1,8 @@
-import { exists, mkdirp, mount, syncfs, umount } from "../conv/fs-ext";
+import { ChunksStore } from "../share/chunk-store";
 
 self.addEventListener("install", onInstall);
 self.addEventListener("activate", onActivate);
 self.addEventListener("fetch", onFetch);
-
-self.importScripts("./script/core.js");
 
 function onInstall(ev) {
   console.log(`[sworker] install`);
@@ -21,57 +19,34 @@ function onActivate(ev) {
 function onFetch(ev: FetchEvent) {
   const method = ev.request.method.toUpperCase();
   if (method !== "GET") {
-    console.log(1);
     return;
   }
   const { href, protocol, host } = location;
   const idx = href.indexOf("/sworker.js");
   const prefix = `${protocol}//${host}`;
   if (!href.startsWith(prefix)) {
-    console.log(2);
     return;
   }
   if (idx < prefix.length) {
-    console.log(3);
     return;
   }
   const sub = href.substring(prefix.length, idx);
   const u = new URL(ev.request.url);
   if (!u.href.startsWith(prefix)) {
-    console.log(4);
     return;
   }
   const pathname = u.pathname;
-  if (sub === "") {
-    if (!pathname.startsWith("/dl")) {
-      console.log(5);
-      return;
-    }
-  } else {
-    if (!pathname.startsWith(`${sub}/dl`)) {
-      console.log(6);
-      return;
-    }
+  const expected = sub === "" ? "/dl/" : `${sub}/dl/`;
+  if (!pathname.startsWith(expected)) {
+    return;
   }
-  const id = u.pathname.substring(sub.length);
+  const id = pathname.substring(expected.length);
   const download = u.searchParams.get("download") ?? "world.mcworld";
   ev.respondWith(respond(id, download));
 }
 
 async function respond(id: string, download: string): Promise<Response> {
-  mkdirp("/je2be");
-  try {
-    mount("/je2be");
-    await syncfs(true);
-  } catch (e) {
-    console.log(`[sworker] respond; already mounted`, e);
-  }
-  const p = `/je2be/${id}`;
-  if (!exists(p)) {
-    console.log(`[sworker] (${id}) start: directory not found`);
-    umount("/je2be");
-    return new Response(undefined, { status: 404 });
-  }
+  const db = new ChunksStore();
   let count = 0;
   const pull = async (controller) => {
     if (controller.desiredSize <= 0) {
@@ -80,20 +55,20 @@ async function respond(id: string, download: string): Promise<Response> {
     if (count === 0) {
       console.log(`[sworker] (${id}) pull: start`);
     }
-    const name = `/je2be/${id}/${count}.zip`;
-    if (!exists(name)) {
-      console.log(`[sworker] (${id}) pull: close`);
-      controller.close();
-      umount("/je2be");
-      return;
-    }
+    const name = `/je2be/dl/${id}/${count}.zip`;
     try {
-      const buffer = FS.readFile(name);
+      const entry = await db.chunks.get({ name });
+      if (!entry) {
+        controller.close();
+        console.log(`[sworker] (${id}) pull: close`);
+        controller.close();
+        return;
+      }
+      const buffer: Uint8Array = entry.data;
       controller.enqueue(buffer);
     } catch (e) {
       console.log(`[sworker] (${id}) pull: error`, e);
       controller.error(e);
-      umount("/je2be");
       return;
     }
     count++;

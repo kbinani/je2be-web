@@ -7,7 +7,8 @@ import {
   WorkerError,
 } from "../share/messages";
 import JSZip from "jszip";
-import { dirname, mkdirp, mount, syncfs, umount } from "./fs-ext";
+import { dirname, mkdirp, mount, umount } from "./fs-ext";
+import { ChunksStore } from "../share/chunk-store";
 
 self.importScripts("./core.js");
 
@@ -28,22 +29,24 @@ async function start(msg: StartMessage): Promise<void> {
   mkdirp(`/je2be/${id}/in`);
   mkdirp(`/je2be/${id}/out`);
   mkdirp(`/je2be/dl`);
+  const db = new ChunksStore();
+  db.delete();
 
   console.log(`[${id}] extract...`);
   await extract(msg.file, msg.id);
   console.log(`[${id}] extract done`);
   console.log(`[${id}] convert...`);
-  const code = await convert(msg.id);
-  Module.cleanup(`/je2be/${id}`);
-  await syncfs(false);
-  if (code > 0) {
-    send(id);
-  } else {
+  const code = await convert(id);
+  if (code < 1) {
     const e: WorkerError = {
       type: "ConverterFailed",
     };
     throw e;
   }
+  console.log(`[${id}] copy...`);
+  await copy(id, code);
+  console.log(`[${id}] copy done`);
+  send(id);
 }
 
 async function extract(file: File, id: string) {
@@ -149,6 +152,26 @@ async function convert(id: string): Promise<number> {
     };
     throw m;
   }
+}
+
+async function copy(id: string, count: number): Promise<void> {
+  const db = new ChunksStore();
+  for (let i = 0; i < count; i++) {
+    const name = `/je2be/dl/${id}/${i}.zip`;
+    const data: Uint8Array = FS.readFile(name);
+    try {
+      await db.chunks.add({
+        name,
+        data,
+      });
+    } catch (e) {
+      console.error(e);
+      const m: WorkerError = { type: "CopyToIdb" };
+      throw m;
+    }
+  }
+  Module.cleanup(`/je2be/${id}`);
+  Module.cleanup(`/je2be/dl/${id}`);
 }
 
 function failed(error: WorkerError, id: string) {
