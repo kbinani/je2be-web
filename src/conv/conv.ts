@@ -36,9 +36,9 @@ async function start(msg: StartMessage): Promise<void> {
   await extract(msg.file, msg.id);
   console.log(`[${id}] extract done`);
   console.log(`[${id}] convert...`);
-  const ok = await convert(msg.id);
-  console.log(`[${id}] convert done`);
-  if (ok) {
+  const code = await convert(msg.id);
+  console.log(`[${id}] convert done: code=${code}`);
+  if (code > 0) {
     send(id);
   } else {
     const e: WorkerError = {
@@ -135,15 +135,14 @@ async function promiseUnzipFileInZip({
   });
 }
 
-async function convert(id: string): Promise<boolean> {
+async function convert(id: string): Promise<number> {
   try {
-    const ret = Module.core(
+    return Module.core(
       id,
       `/je2be/${id}/in`,
       `/je2be/${id}/out`,
-      `/je2be/dl/${id}.zip`
+      `/je2be/dl/${id}`
     );
-    return ret === 0;
   } catch (e) {
     console.error(e);
     const m: WorkerError = {

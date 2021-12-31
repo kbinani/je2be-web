@@ -27,7 +27,6 @@ function onActivate(ev) {
 }
 
 function onFetch(ev: FetchEvent) {
-  console.log(`onFetch`, ev);
   const method = ev.request.method.toUpperCase();
   if (method !== "GET") {
     console.log(1);
@@ -51,7 +50,6 @@ function onFetch(ev: FetchEvent) {
     return;
   }
   const pathname = u.pathname;
-  console.log(`prefix=${prefix}; pathname=${pathname}; sub=${sub}`);
   if (sub === "") {
     if (!pathname.startsWith("/dl")) {
       console.log(5);
@@ -63,14 +61,12 @@ function onFetch(ev: FetchEvent) {
       return;
     }
   }
-  const path = u.pathname.substring(sub.length);
+  const id = u.pathname.substring(sub.length);
   const download = u.searchParams.get("download") ?? "world.mcworld";
-  ev.respondWith(respond(path, download));
+  ev.respondWith(respond(id, download));
 }
 
-async function respond(path: string, download: string): Promise<Response> {
-  let fp: any;
-  let offset = 0;
+async function respond(id: string, download: string): Promise<Response> {
   const start = async (controller) => {
     mkdirp("/je2be");
     try {
@@ -79,47 +75,35 @@ async function respond(path: string, download: string): Promise<Response> {
     } catch (e) {
       console.log(`[sworker] respond; already mounted`, e);
     }
-    console.log(`[sworker] (${path}) start`);
-    const p = `/je2be/${path}`;
+    console.log(`[sworker] (${id}) start`);
+    const p = `/je2be/${id}`;
     if (!exists(p)) {
       controller.error();
-      console.log(`[sworker] (${path}) start: file not found`);
+      console.log(`[sworker] (${id}) start: directory not found`);
       umount("/je2be");
       return;
     }
-    fp = FS.open(p, "r");
-    if (!fp) {
-      controller.error();
-      console.log(`[sworker] (${path}) start: failed opening file`);
-      umount("/je2be");
-    }
   };
+  let count = 0;
   const pull = async (controller) => {
-    if (offset === 0) {
-      console.log(`[sworker] (${path}) pull: started`);
+    console.log(`[sworker] (${id}) send chunk #${count}`);
+    const name = `/je2be/${id}/${count}.zip`;
+    if (!exists(name)) {
+      console.log(`[sworker] (${id}) pull: close`);
+      controller.close();
+      umount("/je2be");
+      return;
     }
     try {
-      const buffer = new Uint8Array(1048576);
-      const read = fread({
-        stream: fp,
-        buffer,
-        size: buffer.byteLength,
-        offset,
-      });
-      controller.enqueue(buffer.slice(0, read));
-      if (read < buffer.byteLength) {
-        console.log(`[sworker] (${path}) pull: close`);
-        controller.close();
-        fclose(fp);
-        umount("/je2be");
-      }
-      offset += read;
+      const buffer = FS.readFile(name);
+      controller.enqueue(buffer);
     } catch (e) {
-      console.log(`[sworker] (${path}) pull: error`, e);
+      console.log(`[sworker] (${id}) pull: error`, e);
       controller.error(e);
-      fclose(fp);
       umount("/je2be");
+      return;
     }
+    count++;
   };
   const stream = new ReadableStream({ start, pull });
   const headers = {

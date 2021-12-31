@@ -157,7 +157,7 @@ export const MainComponent: FC = () => {
               <div className="downloadMessage">
                 {`Completed: download `}
                 <a
-                  href={`./dl/${state.current.dl.id}.zip?download=${state.current.dl.filename}`}
+                  href={`./dl/${state.current.dl.id}?download=${state.current.dl.filename}`}
                 >
                   {state.current.dl.filename}
                 </a>
