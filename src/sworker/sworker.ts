@@ -67,27 +67,22 @@ function onFetch(ev: FetchEvent) {
 }
 
 async function respond(id: string, download: string): Promise<Response> {
-  const start = async (controller) => {
-    mkdirp("/je2be");
-    try {
-      mount("/je2be");
-      await syncfs(true);
-    } catch (e) {
-      console.log(`[sworker] respond; already mounted`, e);
-    }
-    console.log(`[sworker] (${id}) start`);
-    const p = `/je2be/${id}`;
-    if (!exists(p)) {
-      controller.error();
-      console.log(`[sworker] (${id}) start: directory not found`);
-      umount("/je2be");
-      return;
-    }
-  };
+  mkdirp("/je2be");
+  try {
+    mount("/je2be");
+    await syncfs(true);
+  } catch (e) {
+    console.log(`[sworker] respond; already mounted`, e);
+  }
+  const p = `/je2be/${id}`;
+  if (!exists(p)) {
+    console.log(`[sworker] (${id}) start: directory not found`);
+    umount("/je2be");
+    return new Response(undefined, { status: 404 });
+  }
   let count = 0;
   const pull = async (controller) => {
     console.log(`pull: desiredSize=${controller.desiredSize}`);
-    console.log(controller.byobRequest);
     if (controller.desiredSize <= 0) {
       return;
     }
@@ -110,7 +105,7 @@ async function respond(id: string, download: string): Promise<Response> {
     }
     count++;
   };
-  const stream = new ReadableStream({ start, pull });
+  const stream = new ReadableStream({ pull });
   const headers = {
     "Content-Type": "application/octet-stream",
     "Cache-Control": "no-cache",
