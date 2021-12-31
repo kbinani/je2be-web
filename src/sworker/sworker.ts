@@ -61,7 +61,6 @@ async function respond(id: string, download: string): Promise<Response> {
       if (!entry) {
         controller.close();
         console.log(`[sworker] (${id}) pull: close`);
-        controller.close();
         return;
       }
       const buffer: Uint8Array = entry.data;
