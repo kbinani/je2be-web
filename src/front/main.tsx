@@ -53,6 +53,17 @@ export const MainComponent: FC = () => {
     ev.returnValue = "Converter still working. Do you really leave the page?";
   };
   useEffect(() => {
+    navigator.serviceWorker
+      .register("./sworker.js", {scope: "../dl"})
+      .then((sw) => {
+        console.log(`[front] sworker registered`);
+        sw.update()
+          .then(() => {
+            console.log(`[front] sworker updated`);
+          })
+          .catch(console.error);
+      })
+      .catch(console.error);
     window.addEventListener("beforeunload", onBeforeUnload);
   }, []);
   const onChange = (ev: ChangeEvent<HTMLInputElement>) => {
