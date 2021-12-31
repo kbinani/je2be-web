@@ -110,7 +110,8 @@ async function respond(id: string, download: string): Promise<Response> {
     }
     count++;
   };
-  const stream = new ReadableStream({ start, pull });
+  //@ts-ignore
+  const stream = new ReadableStream({ start, pull, type: "bytes" });
   const headers = {
     "Content-Type": "application/octet-stream",
     "Cache-Control": "no-cache",
