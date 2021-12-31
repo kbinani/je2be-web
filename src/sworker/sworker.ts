@@ -58,7 +58,7 @@ function onFetch(ev: FetchEvent) {
       return;
     }
   } else {
-    if (!pathname.startsWith(`/${sub}/dl`)) {
+    if (!pathname.startsWith(`${sub}/dl`)) {
       console.log(6);
       return;
     }
