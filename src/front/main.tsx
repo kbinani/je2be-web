@@ -19,7 +19,7 @@ type MainComponentState = {
   convertTotal: number;
   compaction: number;
   zip: number;
-  dl?: { url: string; filename: string };
+  dl?: { id: string; filename: string };
   error?: WorkerError;
   id?: string;
 };
@@ -88,7 +88,7 @@ export const MainComponent: FC = () => {
         return;
       }
       if (isSuccessMessage(msg.data)) {
-        const { url } = msg.data;
+        const { id } = msg.data;
         const dot = file.name.lastIndexOf(".");
         let filename = "world.mcworld";
         if (dot > 0) {
@@ -96,7 +96,7 @@ export const MainComponent: FC = () => {
         }
         state.current = {
           ...state.current,
-          dl: { url, filename },
+          dl: { id, filename },
           error: undefined,
           id: undefined,
         };
@@ -159,8 +159,7 @@ export const MainComponent: FC = () => {
               <div className="downloadMessage">
                 {`Completed: download `}
                 <a
-                  href={state.current.dl.url}
-                  download={state.current.dl.filename}
+                  href={`./dl/${state.current.dl.id}.zip?download=${state.current.dl.filename}`}
                 >
                   {state.current.dl.filename}
                 </a>

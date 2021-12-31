@@ -18,18 +18,13 @@ export function isStartMessage(x: any): x is StartMessage {
 export type SuccessMessage = {
   type: "success";
   id: string;
-  url: string;
 };
 
 export function isSuccessMessage(x: any): x is SuccessMessage {
   if (!x) {
     return false;
   }
-  return (
-    x["type"] === "success" &&
-    typeof x["id"] === "string" &&
-    typeof x["url"] === "string"
-  );
+  return x["type"] === "success" && typeof x["id"] === "string";
 }
 
 export type FailedMessage = {

@@ -1,4 +1,12 @@
-import { exists, mkdirp, syncfs } from "../conv/fs-ext";
+import {
+  exists,
+  fclose,
+  fread,
+  mkdirp,
+  mount,
+  syncfs,
+  umount,
+} from "../conv/fs-ext";
 
 self.addEventListener("install", onInstall);
 self.addEventListener("activate", onActivate);
@@ -16,9 +24,6 @@ function onActivate(ev) {
   console.log(`[sworker] activate`);
   //@ts-ignore
   ev.waitUntil(self.clients.claim());
-  mkdirp("/je2be");
-  FS.mount(IDBFS, {}, "/je2be");
-  syncfs(true).catch(console.error);
 }
 
 function onFetch(ev: FetchEvent) {
@@ -26,12 +31,34 @@ function onFetch(ev: FetchEvent) {
   if (method !== "GET") {
     return;
   }
-  const u = new URL(ev.request.url);
-  const path = u.pathname;
-  const download = u.searchParams.get("download") ?? "world.mcworld";
-  if (!path.startsWith("/je2be-web/dl/")) {
+  const { href, protocol, host } = location;
+  const idx = href.indexOf("/sworker.js");
+  const prefix = `${protocol}//${host}`;
+  if (!href.startsWith(prefix)) {
     return;
   }
+  if (idx < prefix.length) {
+    return;
+  }
+  const sub = href.substring(prefix.length, idx);
+  const u = new URL(ev.request.url);
+  if (!u.href.startsWith(prefix)) {
+    return;
+  }
+  const pathname = u.pathname;
+  if (sub === "") {
+    if (!pathname.startsWith("/dl")) {
+      console.log(2);
+      return;
+    }
+  } else {
+    if (!pathname.startsWith(`/${sub}/dl`)) {
+      console.log(3);
+      return;
+    }
+  }
+  const path = u.pathname.substring(sub.length);
+  const download = u.searchParams.get("download") ?? "world.mcworld";
   ev.respondWith(respond(path, download));
 }
 
@@ -42,16 +69,16 @@ async function respond(path: string, download: string): Promise<Response> {
     try {
       mkdirp(`/je2be`);
       try {
-        FS.mount(IDBFS, {}, `/je2be`);
+        mount(`/je2be`);
+        await syncfs(true);
       } catch (e) {
-        console.log(`[sworker] respond; already mounted`);
+        console.log(`[sworker] respond; already mounted`, e);
       }
-      await syncfs(true);
       console.log(`[sworker] (${path}) start`);
       const p = `/je2be/${path}`;
       if (!exists(p)) {
         console.log(`[sworker] (${path}) start: file not found`);
-        console.error();
+        umount(`/je2be`);
         return;
       }
       fp = FS.open(p, "r");
@@ -70,15 +97,22 @@ async function respond(path: string, download: string): Promise<Response> {
       }
       try {
         const buffer = new Uint8Array(1048576);
-        const read = FS.read(fp, buffer, 0, buffer.byteLength, offset);
+        const read = fread({
+          stream: fp,
+          buffer,
+          size: buffer.byteLength,
+          offset,
+        });
         controller.enqueue(buffer.slice(0, read));
         if (read < buffer.byteLength) {
           console.log(`[sworker] (${path}) pull: close`);
           controller.close();
+          fclose(fp);
+          umount(`/je2be`);
         }
         offset += read;
       } catch (e) {
-        console.log(`[sworker] (${path}) pull: error`);
+        console.log(`[sworker] (${path}) pull: error`, e);
         controller.error(e);
       }
     } catch (e) {

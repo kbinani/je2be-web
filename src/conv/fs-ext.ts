@@ -37,3 +37,55 @@ export async function syncfs(populate: boolean): Promise<void> {
     });
   });
 }
+
+export function umount(p: string): boolean {
+  try {
+    FS.unmount(p);
+    return true;
+  } catch (e) {
+    console.error(e);
+  }
+  return false;
+}
+
+export function fclose(fp: any): boolean {
+  try {
+    FS.close(fp);
+    return true;
+  } catch (e) {
+    console.error(e);
+  }
+  return false;
+}
+
+export function mount(p: string): boolean {
+  try {
+    FS.mount(IDBFS, {}, p);
+    return true;
+  } catch (e) {
+    console.error(e);
+  }
+  return false;
+}
+
+export function fread({
+  stream,
+  buffer,
+  size,
+  offset,
+}: {
+  stream: any;
+  buffer: Uint8Array;
+  size: number;
+  offset: number;
+}) {
+  if (size > buffer.byteLength) {
+    return false;
+  }
+  try {
+    return FS.read(stream, buffer, 0, size, offset);
+  } catch (e) {
+    console.error(e);
+  }
+  return 0;
+}
