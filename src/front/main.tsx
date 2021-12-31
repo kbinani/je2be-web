@@ -139,6 +139,9 @@ export const MainComponent: FC = () => {
             disabled={state.current.id !== undefined}
           />
         </div>
+        <a href={"/dl/d74bd9dc-14dd-48d6-9e66-57baaef07518?download=a.mcworld"}>
+          dl
+        </a>
         <div className="progressContainer">
           <Progress progress={unzip} label={"Unzip"} />
           <div className="progress">
