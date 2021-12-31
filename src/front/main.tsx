@@ -19,7 +19,7 @@ type MainComponentState = {
   convertTotal: number;
   compaction: number;
   zip: number;
-  dl?: { url: string; filename: string };
+  dl?: { id: string; filename: string };
   error?: WorkerError;
   id?: string;
 };
@@ -53,6 +53,22 @@ export const MainComponent: FC = () => {
     ev.returnValue = "Converter still working. Do you really leave the page?";
   };
   useEffect(() => {
+    const { protocol, host, href } = window.location;
+    const prefix = `${protocol}//${host}/`;
+    const path = href.substring(prefix.length);
+    const scope = `/${path}dl`;
+    console.log(`scope=${scope}`);
+    navigator.serviceWorker
+      .register("./sworker.js", { scope })
+      .then((sw) => {
+        console.log(`[front] sworker registered`);
+        sw.update()
+          .then(() => {
+            console.log(`[front] sworker updated`);
+          })
+          .catch(console.error);
+      })
+      .catch(console.error);
     window.addEventListener("beforeunload", onBeforeUnload);
   }, []);
   const onChange = (ev: ChangeEvent<HTMLInputElement>) => {
@@ -73,7 +89,7 @@ export const MainComponent: FC = () => {
         return;
       }
       if (isSuccessMessage(msg.data)) {
-        const { url } = msg.data;
+        const { id } = msg.data;
         const dot = file.name.lastIndexOf(".");
         let filename = "world.mcworld";
         if (dot > 0) {
@@ -81,7 +97,7 @@ export const MainComponent: FC = () => {
         }
         state.current = {
           ...state.current,
-          dl: { url, filename },
+          dl: { id, filename },
           error: undefined,
           id: undefined,
         };
@@ -144,8 +160,7 @@ export const MainComponent: FC = () => {
               <div className="downloadMessage">
                 {`Completed: download `}
                 <a
-                  href={state.current.dl.url}
-                  download={state.current.dl.filename}
+                  href={`./dl/${state.current.dl.id}?download=${state.current.dl.filename}`}
                 >
                   {state.current.dl.filename}
                 </a>

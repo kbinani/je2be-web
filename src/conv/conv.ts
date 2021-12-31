@@ -7,7 +7,7 @@ import {
   WorkerError,
 } from "../share/messages";
 import JSZip from "jszip";
-import { dirname, mkdirp, syncfs } from "./fs-ext";
+import { dirname, mkdirp, mount, syncfs, umount } from "./fs-ext";
 
 self.importScripts("./core.js");
 
@@ -24,10 +24,7 @@ async function start(msg: StartMessage): Promise<void> {
   const id = msg.id;
   console.log(`[${id}] converter: received StartMessage`);
   mkdirp(`/je2be`);
-  ensureMount(id);
-  await syncfs(true);
-  Module.cleanup(`/je2be`);
-  mkdirp(`/je2be/${id}`);
+  mount("je2be");
   mkdirp(`/je2be/${id}/in`);
   mkdirp(`/je2be/${id}/out`);
   mkdirp(`/je2be/dl`);
@@ -36,9 +33,10 @@ async function start(msg: StartMessage): Promise<void> {
   await extract(msg.file, msg.id);
   console.log(`[${id}] extract done`);
   console.log(`[${id}] convert...`);
-  const ok = await convert(msg.id);
-  console.log(`[${id}] convert done`);
-  if (ok) {
+  const code = await convert(msg.id);
+  Module.cleanup(`/je2be/${id}`);
+  await syncfs(false);
+  if (code > 0) {
     send(id);
   } else {
     const e: WorkerError = {
@@ -135,15 +133,14 @@ async function promiseUnzipFileInZip({
   });
 }
 
-async function convert(id: string): Promise<boolean> {
+async function convert(id: string): Promise<number> {
   try {
-    const ret = Module.core(
+    return Module.core(
       id,
       `/je2be/${id}/in`,
       `/je2be/${id}/out`,
-      `/je2be/dl/${id}.zip`
+      `/je2be/dl/${id}`
     );
-    return ret === 0;
   } catch (e) {
     console.error(e);
     const m: WorkerError = {
@@ -160,29 +157,10 @@ function failed(error: WorkerError, id: string) {
 }
 
 function send(id: string) {
-  const file = `/je2be/dl/${id}.zip`;
-  const buffer: Uint8Array = FS.readFile(file);
-  const blob = new Blob([buffer]);
-  const url = URL.createObjectURL(blob);
-  const m: SuccessMessage = { type: "success", id, url };
+  const m: SuccessMessage = { type: "success", id };
   self.postMessage(m);
 }
 
 function cleanup(id: string) {
-  Module.cleanup(`/je2be/${id}`);
-  syncfs(false)
-    .then(() => {
-      console.log(`[${id}] syncfs done`);
-    })
-    .catch((e) => {
-      console.error(`[${id}] syncfs failed`, e);
-    });
-}
-
-function ensureMount(id: string) {
-  try {
-    FS.mount(IDBFS, {}, "/je2be");
-  } catch (e) {
-    console.log(`[${id}] already mounted`);
-  }
+  umount("/je2be");
 }

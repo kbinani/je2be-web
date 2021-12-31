@@ -1,5 +1,5 @@
 .PHONY: all
-all: public/script/core.js public/script/conv.js public/script/front.js
+all: public/script/core.js public/script/conv.js public/script/front.js public/sworker.js
 
 .PHONY: clean
 clean:
@@ -26,3 +26,6 @@ public/script/conv.js: src/conv/conv.ts src/conv/fs-ext.ts src/conv/index.d.ts s
 
 public/script/front.js: src/front/index.tsx src/front/main.tsx src/front/footer.tsx src/front/header.tsx src/front/progress.tsx src/share/messages.ts src/share/version.ts
 	yarn front --minify
+
+public/sworker.js: src/sworker/sworker.ts src/share/messages.ts src/share/version.ts
+	yarn sworker
