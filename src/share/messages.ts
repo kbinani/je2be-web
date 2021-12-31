@@ -73,6 +73,7 @@ type WorkerErrorType =
   | "2OrMoreLevelDatFound"
   | "ConverterFailed"
   | "Unzip"
+  | "CopyToIdb"
   | "Other";
 
 export type WorkerError = {
