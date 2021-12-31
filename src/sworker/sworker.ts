@@ -29,31 +29,36 @@ function onActivate(ev) {
 function onFetch(ev: FetchEvent) {
   const method = ev.request.method.toUpperCase();
   if (method !== "GET") {
+    console.log(1);
     return;
   }
   const { href, protocol, host } = location;
   const idx = href.indexOf("/sworker.js");
   const prefix = `${protocol}//${host}`;
   if (!href.startsWith(prefix)) {
+    console.log(2);
     return;
   }
   if (idx < prefix.length) {
+    console.log(3);
     return;
   }
   const sub = href.substring(prefix.length, idx);
   const u = new URL(ev.request.url);
   if (!u.href.startsWith(prefix)) {
+    console.log(4);
     return;
   }
   const pathname = u.pathname;
+  console.log(`prefix=${prefix}; pathname=${pathname}; sub=${sub}`);
   if (sub === "") {
     if (!pathname.startsWith("/dl")) {
-      console.log(2);
+      console.log(5);
       return;
     }
   } else {
     if (!pathname.startsWith(`/${sub}/dl`)) {
-      console.log(3);
+      console.log(6);
       return;
     }
   }
