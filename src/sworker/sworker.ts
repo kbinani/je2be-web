@@ -85,10 +85,12 @@ async function respond(path: string, download: string): Promise<Response> {
       if (!exists(p)) {
         console.log(`[sworker] (${path}) start: file not found`);
         umount(`/je2be`);
+        controller.error();
         return;
       }
       fp = FS.open(p, "r");
       if (!fp) {
+        console.log(`[sworker] (${path}) start: failed opening file`);
         controller.error();
       }
     } catch (e) {
