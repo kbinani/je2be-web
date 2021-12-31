@@ -72,60 +72,53 @@ async function respond(path: string, download: string): Promise<Response> {
   let fp: any;
   let offset = 0;
   const start = async (controller) => {
+    mkdirp("/je2be");
     try {
-      mkdirp(`/je2be`);
-      try {
-        mount(`/je2be`);
-        await syncfs(true);
-      } catch (e) {
-        console.log(`[sworker] respond; already mounted`, e);
-      }
-      console.log(`[sworker] (${path}) start`);
-      const p = `/je2be/${path}`;
-      if (!exists(p)) {
-        console.log(`[sworker] (${path}) start: file not found`);
-        umount(`/je2be`);
-        controller.error();
-        return;
-      }
-      fp = FS.open(p, "r");
-      if (!fp) {
-        console.log(`[sworker] (${path}) start: failed opening file`);
-        controller.error();
-      }
+      mount("/je2be");
+      await syncfs(true);
     } catch (e) {
-      controller.error(e);
-      console.trace(e);
+      console.log(`[sworker] respond; already mounted`, e);
+    }
+    console.log(`[sworker] (${path}) start`);
+    const p = `/je2be/${path}`;
+    if (!exists(p)) {
+      controller.error();
+      console.log(`[sworker] (${path}) start: file not found`);
+      umount("/je2be");
+      return;
+    }
+    fp = FS.open(p, "r");
+    if (!fp) {
+      controller.error();
+      console.log(`[sworker] (${path}) start: failed opening file`);
+      umount("/je2be");
     }
   };
   const pull = async (controller) => {
+    if (offset === 0) {
+      console.log(`[sworker] (${path}) pull: started`);
+    }
     try {
-      if (offset === 0) {
-        console.log(`[sworker] (${path}) pull: started`);
+      const buffer = new Uint8Array(1048576);
+      const read = fread({
+        stream: fp,
+        buffer,
+        size: buffer.byteLength,
+        offset,
+      });
+      controller.enqueue(buffer.slice(0, read));
+      if (read < buffer.byteLength) {
+        console.log(`[sworker] (${path}) pull: close`);
+        controller.close();
+        fclose(fp);
+        umount("/je2be");
       }
-      try {
-        const buffer = new Uint8Array(1048576);
-        const read = fread({
-          stream: fp,
-          buffer,
-          size: buffer.byteLength,
-          offset,
-        });
-        controller.enqueue(buffer.slice(0, read));
-        if (read < buffer.byteLength) {
-          console.log(`[sworker] (${path}) pull: close`);
-          controller.close();
-          fclose(fp);
-          umount(`/je2be`);
-        }
-        offset += read;
-      } catch (e) {
-        console.log(`[sworker] (${path}) pull: error`, e);
-        controller.error(e);
-      }
+      offset += read;
     } catch (e) {
+      console.log(`[sworker] (${path}) pull: error`, e);
       controller.error(e);
-      console.trace(e);
+      fclose(fp);
+      umount("/je2be");
     }
   };
   const stream = new ReadableStream({ start, pull });
