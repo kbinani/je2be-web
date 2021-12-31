@@ -136,13 +136,22 @@ async function promiseUnzipFileInZip({
 }
 
 async function convert(id: string): Promise<boolean> {
-  const ret = Module.core(
-    id,
-    `/je2be/${id}/in`,
-    `/je2be/${id}/out`,
-    `/je2be/dl/${id}.zip`
-  );
-  return ret === 0;
+  try {
+    const ret = Module.core(
+      id,
+      `/je2be/${id}/in`,
+      `/je2be/${id}/out`,
+      `/je2be/dl/${id}.zip`
+    );
+    return ret === 0;
+  } catch (e) {
+    console.error(e);
+    const m: WorkerError = {
+      type: "ConverterFailed",
+      native: e,
+    };
+    throw m;
+  }
 }
 
 function failed(error: WorkerError, id: string) {
