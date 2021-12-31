@@ -27,6 +27,7 @@ function onActivate(ev) {
 }
 
 function onFetch(ev: FetchEvent) {
+  console.log(`onFetch`, ev);
   const method = ev.request.method.toUpperCase();
   if (method !== "GET") {
     console.log(1);

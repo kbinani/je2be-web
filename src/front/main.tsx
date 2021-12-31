@@ -57,6 +57,7 @@ export const MainComponent: FC = () => {
     const prefix = `${protocol}//${host}/`;
     const path = href.substring(prefix.length);
     const scope = `${path}/dl`;
+    console.log(`scope=${scope}`);
     navigator.serviceWorker
       .register("./sworker.js", { scope })
       .then((sw) => {
