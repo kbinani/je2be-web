@@ -74,11 +74,12 @@ async function respond(id: string, download: string): Promise<Response> {
   }
   let count = 0;
   const pull = async (controller) => {
-    console.log(`pull: desiredSize=${controller.desiredSize}`);
     if (controller.desiredSize <= 0) {
       return;
     }
-    console.log(`[sworker] (${id}) send chunk #${count}`);
+    if (count === 0) {
+      console.log(`[sworker] (${id}) pull: start`);
+    }
     const name = `/je2be/${id}/${count}.zip`;
     if (!exists(name)) {
       console.log(`[sworker] (${id}) pull: close`);
