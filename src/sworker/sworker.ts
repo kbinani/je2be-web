@@ -1,12 +1,4 @@
-import {
-  exists,
-  fclose,
-  fread,
-  mkdirp,
-  mount,
-  syncfs,
-  umount,
-} from "../conv/fs-ext";
+import { exists, mkdirp, mount, syncfs, umount } from "../conv/fs-ext";
 
 self.addEventListener("install", onInstall);
 self.addEventListener("activate", onActivate);
