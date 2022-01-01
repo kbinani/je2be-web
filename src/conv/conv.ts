@@ -49,7 +49,7 @@ async function start(msg: StartMessage): Promise<void> {
   send(id);
 }
 
-async function clearDb() : Promise<void> {
+async function clearDb(): Promise<void> {
   const db = new ChunksStore();
   await db.chunks.clear();
   db.close();
@@ -170,6 +170,14 @@ async function copy(id: string, count: number): Promise<void> {
         name,
         data,
       });
+      const m: ProgressMessage = {
+        type: "progress",
+        stage: "copy",
+        id,
+        progress: i + 1,
+        total: count,
+      };
+      self.postMessage(m);
     } catch (e) {
       console.error(e);
       db.close();

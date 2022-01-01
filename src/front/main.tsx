@@ -20,6 +20,7 @@ type MainComponentState = {
   convertTotal: number;
   compaction: number;
   zip: number;
+  copy: number;
   dl?: { id: string; filename: string };
   error?: WorkerError;
   id?: string;
@@ -31,6 +32,7 @@ const kInitComponentState: MainComponentState = {
   convertTotal: 1,
   compaction: 0,
   zip: 0,
+  copy: 0,
 };
 
 export const useForceUpdate = () => {
@@ -124,7 +126,7 @@ export const MainComponent: FC = () => {
       }
     };
   };
-  const { unzip, compaction, zip } = state.current;
+  const { unzip, compaction, zip, copy } = state.current;
   const convert = Math.floor(
     (state.current.convert / state.current.convertTotal) * 100
   );
@@ -162,6 +164,7 @@ export const MainComponent: FC = () => {
           </div>
           <Progress progress={compaction} label={"LevelDB Compaction"} />
           <Progress progress={zip} label={"Zip"} />
+          <Progress progress={copy} label={"Copy"} />
           <div className="message">
             {state.current.dl && (
               <div className="downloadMessage">
@@ -206,6 +209,8 @@ function updateProgress(
       };
     case "zip":
       return { ...state, zip: m.progress / m.total };
+    case "copy":
+      return { ...state, copy: m.progress / m.total };
   }
   return { ...state };
 }

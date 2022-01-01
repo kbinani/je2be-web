@@ -47,7 +47,7 @@ export function isFailedMessage(x: any): x is FailedMessage {
 export type ProgressMessage = {
   type: "progress";
   id: string;
-  stage: "unzip" | "convert" | "compaction" | "zip";
+  stage: "unzip" | "convert" | "compaction" | "zip" | "copy";
   progress: number;
   total: number;
 };
