@@ -29,7 +29,3 @@ public/script/front.js: src/front/index.tsx src/front/main.tsx src/front/footer.
 
 public/sworker.js: src/sworker/sworker.ts src/share/messages.ts src/share/version.ts
 	yarn sworker
-
-.PHONY: dev
-dev:
-	(yarn sworker --watch & yarn conv --watch & yarn dev)
