@@ -165,6 +165,7 @@ async function copy(id: string, count: number): Promise<void> {
   for (let i = 0; i < count; i++) {
     const name = `/je2be/dl/${id}/${i}.bin`;
     const data: Uint8Array = FS.readFile(name);
+    FS.unlink(name);
     try {
       await db.chunks.add({
         name,
