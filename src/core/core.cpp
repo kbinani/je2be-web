@@ -126,7 +126,7 @@ int core(std::string id, std::string in, std::string out, std::string zipDir) {
       fclose(fp);
       return -9;
     }
-    auto name = fs::path(zipDir) / (to_string(fileIndex) + ".zip");
+    auto name = fs::path(zipDir) / (to_string(fileIndex) + ".bin");
     FILE *t = File::Open(name, File::Mode::Write);
     if (!t) {
       fclose(fp);

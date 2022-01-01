@@ -163,7 +163,7 @@ async function convert(id: string): Promise<number> {
 async function copy(id: string, count: number): Promise<void> {
   const db = new ChunksStore();
   for (let i = 0; i < count; i++) {
-    const name = `/je2be/dl/${id}/${i}.zip`;
+    const name = `/je2be/dl/${id}/${i}.bin`;
     const data: Uint8Array = FS.readFile(name);
     try {
       await db.chunks.add({

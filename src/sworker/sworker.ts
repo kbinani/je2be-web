@@ -61,7 +61,7 @@ async function respondDownload(
     if (count === 0) {
       console.log(`[sworker] (${id}) pull: start`);
     }
-    const name = `/je2be/dl/${id}/${count}.zip`;
+    const name = `/je2be/dl/${id}/${count}.bin`;
     try {
       const entry = await db.chunks.get({ name });
       if (!entry) {
