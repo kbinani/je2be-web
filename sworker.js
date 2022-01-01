@@ -4748,10 +4748,13 @@
       return;
     }
     const id = pathname.substring(expected.length);
-    const download = (_a = u.searchParams.get("download")) != null ? _a : "world.mcworld";
-    ev.respondWith(respond(id, download));
+    const action = u.searchParams.get("action");
+    if (action === "download") {
+      const filename = (_a = u.searchParams.get("filename")) != null ? _a : "world.mcworld";
+      ev.respondWith(respondDownload(id, filename));
+    }
   }
-  async function respond(id, download) {
+  async function respondDownload(id, filename) {
     const db = new ChunksStore();
     let count = 0;
     const pull = async (controller) => {
@@ -4761,12 +4764,13 @@
       if (count === 0) {
         console.log(`[sworker] (${id}) pull: start`);
       }
-      const name = `/je2be/dl/${id}/${count}.zip`;
+      const name = `/je2be/dl/${id}/${count}.bin`;
       try {
         const entry = await db.chunks.get({ name });
         if (!entry) {
-          controller.close();
           console.log(`[sworker] (${id}) pull: close`);
+          controller.close();
+          db.close();
           return;
         }
         const buffer = entry.data;
@@ -4774,6 +4778,7 @@
       } catch (e) {
         console.log(`[sworker] (${id}) pull: error`, e);
         controller.error(e);
+        db.close();
         return;
       }
       count++;
@@ -4782,7 +4787,7 @@
     const headers = {
       "Content-Type": "application/octet-stream",
       "Cache-Control": "no-cache",
-      "Content-Disposition": `attachment; filename="${download}"`
+      "Content-Disposition": `attachment; filename="${filename}"`
     };
     return new Response(stream, {
       headers
