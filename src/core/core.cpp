@@ -76,14 +76,14 @@ int core(std::string id, std::string in, std::string out, std::string zipDir) {
       continue;
     }
     auto rel = fs::relative(it.path(), out);
-    int ret = zipOpenNewFileInZip(file,                   // file
-                                  rel.string().c_str(),   // filename
-                                  nullptr,                // zipfi
-                                  nullptr, 0,             // extrafield_local, size_extrafield_local
-                                  nullptr, 0,             // extrafield_global, size_extrafield_global
-                                  nullptr,                // comment
-                                  0,                      // method
-                                  Z_DEFAULT_COMPRESSION); // level
+    int ret = zipOpenNewFileInZip(file,                 // file
+                                  rel.string().c_str(), // filename
+                                  nullptr,              // zipfi
+                                  nullptr, 0,           // extrafield_local, size_extrafield_local
+                                  nullptr, 0,           // extrafield_global, size_extrafield_global
+                                  nullptr,              // comment
+                                  Z_DEFLATED,           // method
+                                  Z_BEST_COMPRESSION);  // level
     if (ret != 0) {
       zipClose(file, nullptr);
       return -3;
