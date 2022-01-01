@@ -29,14 +29,14 @@ async function start(msg: StartMessage): Promise<void> {
   mkdirp(`/je2be/${id}/in`);
   mkdirp(`/je2be/${id}/out`);
   mkdirp(`/je2be/dl`);
-  const db = new ChunksStore();
-  db.delete();
+  await clearDb();
 
   console.log(`[${id}] extract...`);
   await extract(msg.file, msg.id);
   console.log(`[${id}] extract done`);
   console.log(`[${id}] convert...`);
   const code = await convert(id);
+  console.log(`[${id}] convert done`);
   if (code < 1) {
     const e: WorkerError = {
       type: "ConverterFailed",
@@ -47,6 +47,12 @@ async function start(msg: StartMessage): Promise<void> {
   await copy(id, code);
   console.log(`[${id}] copy done`);
   send(id);
+}
+
+async function clearDb() : Promise<void> {
+  const db = new ChunksStore();
+  await db.chunks.clear();
+  db.close();
 }
 
 async function extract(file: File, id: string) {
@@ -166,10 +172,12 @@ async function copy(id: string, count: number): Promise<void> {
       });
     } catch (e) {
       console.error(e);
+      db.close();
       const m: WorkerError = { type: "CopyToIdb" };
       throw m;
     }
   }
+  db.close();
   Module.cleanup(`/je2be/${id}`);
   Module.cleanup(`/je2be/dl/${id}`);
 }

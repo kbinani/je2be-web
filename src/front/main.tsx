@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from "uuid";
 import { Header } from "./header";
 import { Footer } from "./footer";
 import { Progress } from "./progress";
+import { ChunksStore } from "../share/chunk-store";
 
 type MainComponentState = {
   unzip: number;
@@ -57,7 +58,6 @@ export const MainComponent: FC = () => {
     const prefix = `${protocol}//${host}/`;
     const path = href.substring(prefix.length);
     const scope = `/${path}dl`;
-    console.log(`scope=${scope}`);
     navigator.serviceWorker
       .register("./sworker.js", { scope })
       .then((sw) => {
@@ -70,6 +70,13 @@ export const MainComponent: FC = () => {
       })
       .catch(console.error);
     window.addEventListener("beforeunload", onBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", onBeforeUnload);
+      const id = state.current.id;
+      if (id) {
+        cleanup(id);
+      }
+    };
   }, []);
   const onChange = (ev: ChangeEvent<HTMLInputElement>) => {
     const files = ev.target.files;
@@ -160,7 +167,7 @@ export const MainComponent: FC = () => {
               <div className="downloadMessage">
                 {`Completed: download `}
                 <a
-                  href={`./dl/${state.current.dl.id}?download=${state.current.dl.filename}`}
+                  href={`./dl/${state.current.dl.id}?action=download&filename=${state.current.dl.filename}`}
                 >
                   {state.current.dl.filename}
                 </a>
@@ -201,4 +208,23 @@ function updateProgress(
       return { ...state, zip: m.progress / m.total };
   }
   return { ...state };
+}
+
+async function cleanup(id: string) {
+  const db = new ChunksStore();
+  try {
+    const keys: string[] = [];
+    await db.chunks.each((item) => {
+      const { name } = item;
+      if (name.startsWith(`/je2be/dl/${id}/`)) {
+        keys.push(name);
+      }
+    });
+    await db.chunks.bulkDelete(keys);
+  } catch (e) {
+    db.close();
+    console.error(e);
+    throw e;
+  }
+  db.close();
 }

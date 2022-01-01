@@ -41,11 +41,17 @@ function onFetch(ev: FetchEvent) {
     return;
   }
   const id = pathname.substring(expected.length);
-  const download = u.searchParams.get("download") ?? "world.mcworld";
-  ev.respondWith(respond(id, download));
+  const action = u.searchParams.get("action");
+  if (action === "download") {
+    const filename = u.searchParams.get("filename") ?? "world.mcworld";
+    ev.respondWith(respondDownload(id, filename));
+  }
 }
 
-async function respond(id: string, download: string): Promise<Response> {
+async function respondDownload(
+  id: string,
+  filename: string
+): Promise<Response> {
   const db = new ChunksStore();
   let count = 0;
   const pull = async (controller) => {
@@ -59,8 +65,9 @@ async function respond(id: string, download: string): Promise<Response> {
     try {
       const entry = await db.chunks.get({ name });
       if (!entry) {
-        controller.close();
         console.log(`[sworker] (${id}) pull: close`);
+        controller.close();
+        db.close();
         return;
       }
       const buffer: Uint8Array = entry.data;
@@ -68,6 +75,7 @@ async function respond(id: string, download: string): Promise<Response> {
     } catch (e) {
       console.log(`[sworker] (${id}) pull: error`, e);
       controller.error(e);
+      db.close();
       return;
     }
     count++;
@@ -76,7 +84,7 @@ async function respond(id: string, download: string): Promise<Response> {
   const headers = {
     "Content-Type": "application/octet-stream",
     "Cache-Control": "no-cache",
-    "Content-Disposition": `attachment; filename=\"${download}\"`,
+    "Content-Disposition": `attachment; filename=\"${filename}\"`,
   };
   return new Response(stream, {
     headers,
