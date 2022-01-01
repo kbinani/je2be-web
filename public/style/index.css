@@ -122,6 +122,9 @@ a {
 
 .downloadMessage {
   color: white;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .errorMessage {
