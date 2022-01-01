@@ -62,7 +62,8 @@ export function isProgressMessage(x: any): x is ProgressMessage {
     (x["stage"] === "unzip" ||
       x["stage"] === "convert" ||
       x["stage"] === "compaction" ||
-      x["stage"] === "zip") &&
+      x["stage"] === "zip" ||
+      x["stage"] === "copy") &&
     typeof x["progress"] === "number" &&
     typeof x["total"] === "number"
   );
