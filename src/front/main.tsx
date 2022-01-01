@@ -93,6 +93,7 @@ export const MainComponent: FC = () => {
     state.current = { ...kInitComponentState, id };
     forceUpdate();
     worker.postMessage(message);
+    let lastUpdate = Date.now();
     worker.onmessage = (msg: MessageEvent) => {
       if (msg.data["id"] !== state.current.id) {
         return;
@@ -114,7 +115,11 @@ export const MainComponent: FC = () => {
         forceUpdate();
       } else if (isProgressMessage(msg.data)) {
         state.current = updateProgress(state.current, msg.data);
-        forceUpdate();
+        const now = Date.now();
+        if (lastUpdate + 1000.0 / 60.0 <= now) {
+          lastUpdate = now;
+          forceUpdate();
+        }
       } else if (isFailedMessage(msg.data)) {
         state.current = {
           ...state.current,
