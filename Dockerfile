@@ -8,7 +8,7 @@ RUN apt update \
     && wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}.tar.gz \
     && tar zxf cmake-${CMAKE_VERSION}.tar.gz \
     && cd cmake-${CMAKE_VERSION} \
-    && ./bootstrap --parallel=$(nproc) -- -DCMAKE_USE_OPENSSL=OFF \
+    && ./bootstrap --parallel=$(nproc) -- -DCMAKE_USE_OPENSSL=OFF -DBUILD_TESTING=OFF \
     && make -j $(nproc) \
     && make install \
-    && rm -rf /src/cmake-${CMAKE_VERSION}
+    && rm -rf /src/cmake-${CMAKE_VERSION} /src/cmake-${CMAKE_VERSION}.tar.gz
