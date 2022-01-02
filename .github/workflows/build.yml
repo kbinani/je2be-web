@@ -11,9 +11,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          echo ref_type=${{ github.ref_type }}
-          echo ref_name=${{ github.ref_name }}
       - uses: actions/checkout@v2
         with:
           submodules: recursive
@@ -26,7 +23,7 @@ jobs:
         id: cache-build-directory
         with:
           path: build
-          key: ${{ hashFiles('.gitmodules', 'src/core/core.cpp', 'CMakeLists.txt')}}
+          key: ${{ hashFiles('src/core/core.cpp', 'CMakeLists.txt', 'deps/**/*')}}
       - name: Touch restored build files
         if: steps.cache-build-directory.outputs.cache-hit == 'true'
         run: find build -type f | xargs touch
