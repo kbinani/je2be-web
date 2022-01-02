@@ -5,10 +5,6 @@ RUN apt update \
     && apt remove cmake -y \
     && mkdir -p /src \
     && cd /src \
-    && wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}.tar.gz \
-    && tar zxf cmake-${CMAKE_VERSION}.tar.gz \
-    && cd cmake-${CMAKE_VERSION} \
-    && ./bootstrap --parallel=$(nproc) -- -DCMAKE_USE_OPENSSL=OFF -DBUILD_TESTING=OFF \
-    && make -j $(nproc) \
-    && make install \
-    && rm -rf /src/cmake-${CMAKE_VERSION} /src/cmake-${CMAKE_VERSION}.tar.gz
+    && wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.sh \
+    && sh ./cmake-${CMAKE_VERSION}-linux-x86_64.sh --skip-license --prefix=/usr/local --exclude-subdir \
+    && rm -f /src/cmake-${CMAKE_VERSION}-linux-x86_64.sh
