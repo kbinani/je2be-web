@@ -23,7 +23,7 @@ jobs:
         id: cache-build-directory
         with:
           path: build
-          key: ${{ hashFiles('src/core/core.cpp', 'CMakeLists.txt', 'deps/**/*')}}
+          key: ${{ hashFiles('src/core/core.cpp', 'CMakeLists.txt', 'deps/**/*', 'Dockerfile')}}
       - name: Touch restored build files
         if: steps.cache-build-directory.outputs.cache-hit == 'true'
         run: find build -type f | xargs touch
