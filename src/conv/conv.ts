@@ -23,7 +23,7 @@ self.onmessage = (ev: MessageEvent) => {
 
 async function start(msg: StartMessage): Promise<void> {
   const id = msg.id;
-  console.log(`[${id}] converter: received StartMessage`);
+  console.log(`[conv] (${id}) received StartMessage`);
   mkdirp(`/je2be`);
   mount("je2be");
   mkdirp(`/je2be/${id}/in`);
@@ -31,21 +31,21 @@ async function start(msg: StartMessage): Promise<void> {
   mkdirp(`/je2be/dl`);
   await clearDb();
 
-  console.log(`[${id}] extract...`);
+  console.log(`[conv] (${id}) extract...`);
   await extract(msg.file, msg.id);
-  console.log(`[${id}] extract done`);
-  console.log(`[${id}] convert...`);
+  console.log(`[conv] (${id}) extract done`);
+  console.log(`[conv] (${id}) convert...`);
   const code = await convert(id);
-  console.log(`[${id}] convert done`);
+  console.log(`[conv] (${id}) convert done`);
   if (code < 1) {
     const e: WorkerError = {
       type: "ConverterFailed",
     };
     throw e;
   }
-  console.log(`[${id}] copy...`);
+  console.log(`[conv] (${id}) copy...`);
   await copy(id, code);
-  console.log(`[${id}] copy done`);
+  console.log(`[conv] (${id}) copy done`);
   send(id);
 }
 

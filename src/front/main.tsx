@@ -89,7 +89,7 @@ export const MainComponent: FC = () => {
     const id = uuidv4();
     const file = files.item(0);
     const message: StartMessage = { type: "start", file, id };
-    console.log(`[${id}] front: posting StartMessage`);
+    console.log(`[front] (${id}) posting StartMessage`);
     state.current = { ...kInitComponentState, id, unzip: -1 };
     forceUpdate();
     worker.postMessage(message);
