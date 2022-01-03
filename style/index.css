@@ -88,13 +88,40 @@ a {
 }
 
 .progressBar {
-  background-color: var(--text-dark);
   position: absolute;
   top: 0;
   left: 0;
   height: 36px;
   border-top-left-radius: 3px;
   border-bottom-left-radius: 3px;
+}
+
+.progressBar[data-intermediate="false"] {
+  background-color: var(--text-dark);
+}
+
+.progressBar[data-intermediate="true"] {
+  background-size: 60px 60px;
+  background-image: linear-gradient(
+    45deg,
+    var(--text-dark) 25%,
+    transparent 25%,
+    transparent 50%,
+    var(--text-dark) 50%,
+    var(--text-dark) 75%,
+    transparent 75%,
+    transparent
+  );
+  animation: animateStripes 1s linear infinite;
+}
+
+@keyframes animateStripes {
+  from {
+    background-position: 0 60px;
+  }
+  to {
+    background-position: 0 0;
+  }
 }
 
 .progressBar[data-completed="true"] {
