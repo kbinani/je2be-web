@@ -2,8 +2,13 @@ import * as React from "react";
 import { ChangeEvent, FC, useEffect, useMemo, useReducer, useRef } from "react";
 import {
   isFailedMessage,
+  isPocChunkConvertDoneMessage,
+  isPocConvertChunkMessage,
+  isPocConvertQueueingFinishedMessage,
+  isPocPostDoneMessage,
   isProgressMessage,
   isSuccessMessage,
+  PocYourNameMessage,
   ProgressMessage,
   StartMessage,
   WorkerError,
@@ -13,15 +18,6 @@ import { Header } from "./header";
 import { Footer } from "./footer";
 import { Progress } from "./progress";
 import { ChunksStore } from "../share/chunk-store";
-import {
-  isPocConvertChunkMessage,
-  isPocConvertQueueingFinishedMessage,
-} from "../conv/pre";
-import {
-  isPocChunkConvertDoneMessage,
-  PocYourNameMessage,
-} from "../conv/chunk";
-import { isPocPostDoneMessage } from "../conv/post";
 import { ConvertSession } from "../conv/convert-session";
 
 type MainComponentState = {

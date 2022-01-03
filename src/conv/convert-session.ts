@@ -1,5 +1,8 @@
-import { PocConvertChunkMessage, PocStartPreMessage } from "./pre";
-import { PocStartPostMessage } from "./post";
+import {
+  PocConvertChunkMessage,
+  PocStartPostMessage,
+  PocStartPreMessage,
+} from "../share/messages";
 
 export class ConvertSession {
   private count = 0;

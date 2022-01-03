@@ -29,7 +29,7 @@
     "pre": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/conv/pre.ts --bundle --outfile=public/script/pre.js",
     "post": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/conv/post.ts --bundle --outfile=public/script/post.js",
     "chunk": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/conv/chunk.ts --bundle --outfile=public/script/chunk.js",
-    "chunk-prefix": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/chunk/prefix.ts --bundle --outfile=build/chunk-prefix.js",
+    "chunk-core-prefix": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/chunk/chunk-core-prefix.ts --bundle --outfile=build/chunk-core-prefix.js",
     "fmt": "prettier --write 'src/**/*.ts' 'src/**/*.tsx' 'public/style/*.css'",
     "dev": "yarn front --servedir=public --serve=3000"
   }
