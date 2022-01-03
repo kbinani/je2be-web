@@ -24,6 +24,15 @@ public/script/core.js: build/core.js
 public/script/conv.js: src/conv/conv.ts src/conv/fs-ext.ts src/conv/index.d.ts src/share/messages.ts src/share/version.ts
 	yarn conv --minify
 
+public/script/pre.js: src/conv/pre.ts src/conv/fs-ext.ts src/conv/index.d.ts src/share/messages.ts src/share/version.ts
+	yarn pre --minify
+
+public/script/chunk.js: src/conv/chunk.ts src/conv/fs-ext.ts src/conv/index.d.ts src/share/messages.ts src/share/version.ts
+	yarn chunk --minify
+
+public/script/post.js: src/conv/post.ts src/conv/fs-ext.ts src/conv/index.d.ts src/share/messages.ts src/share/version.ts
+	yarn post --minify
+
 public/script/front.js: src/front/index.tsx src/front/main.tsx src/front/footer.tsx src/front/header.tsx src/front/progress.tsx src/share/messages.ts src/share/version.ts
 	yarn front --minify
 

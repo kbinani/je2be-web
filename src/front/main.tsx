@@ -13,6 +13,16 @@ import { Header } from "./header";
 import { Footer } from "./footer";
 import { Progress } from "./progress";
 import { ChunksStore } from "../share/chunk-store";
+import {
+  isPocConvertChunkMessage,
+  isPocConvertQueueingFinishedMessage,
+  PocConvertChunkMessage,
+  PocStartMessage,
+} from "../conv/pre";
+import {
+  isPocChunkConvertDoneMessage,
+  PocYourNameMessage,
+} from "../conv/chunk";
 
 type MainComponentState = {
   unzip: number;
@@ -35,6 +45,44 @@ const kInitComponentState: MainComponentState = {
   copy: 0,
 };
 
+class ConvertSession {
+  private count = 0;
+  private finalCount = 0;
+  private done = 0;
+
+  constructor(
+    readonly id: string,
+    readonly pre: Worker,
+    readonly workers: Worker[],
+    readonly post: Worker
+  ) {}
+
+  start() {
+    console.log(`[front] (${this.id}) start`);
+    const start: PocStartMessage = { type: "start", id: this.id };
+    this.pre.postMessage(start);
+  }
+
+  roundRobin(m: PocConvertChunkMessage) {
+    const index = this.count % this.workers.length;
+    this.workers[index].postMessage(m);
+    this.count++;
+  }
+
+  markQueueingFinished() {
+    console.log(`[front] (${this.id}) all queueing finished`);
+    this.finalCount = this.count;
+  }
+
+  incrementDone() {
+    this.done++;
+    if (this.finalCount === this.done) {
+      //TODO:
+      console.log(`[front] (${this.id}) all chunk conversion finished`);
+    }
+  }
+}
+
 export const useForceUpdate = () => {
   const [counter, setCounter] = useReducer(
     (prev: number, _: number) => prev + 1,
@@ -47,6 +95,7 @@ export const MainComponent: FC = () => {
   const worker = useMemo(() => new Worker("./script/conv.js"), []);
   const state = useRef<MainComponentState>({ ...kInitComponentState });
   const input = useRef<HTMLInputElement>(null);
+  const session = useRef<ConvertSession>(null);
   const forceUpdate = useForceUpdate();
   const onBeforeUnload = (ev: BeforeUnloadEvent) => {
     if (state.current.id === undefined) {
@@ -134,10 +183,56 @@ export const MainComponent: FC = () => {
   const { unzip, compaction, zip, copy, convert, convertTotal } = state.current;
   const disableLink =
     state.current.id !== undefined || state.current.dl !== undefined;
+  const pre = useMemo(() => {
+    const w = new Worker("./script/pre.js");
+    w.onmessage = (ev: MessageEvent) => {
+      if (isPocConvertChunkMessage(ev.data)) {
+        if (ev.data.id === session.current?.id) {
+          session.current.roundRobin(ev.data);
+        }
+      } else if (isPocConvertQueueingFinishedMessage(ev.data)) {
+        if (ev.data.id === session.current?.id) {
+          session.current.markQueueingFinished();
+        }
+      }
+    };
+    return w;
+  }, []);
+  const post = useMemo(() => {
+    return new Worker("./script/post.js");
+  }, []);
+  const workers = useMemo(() => {
+    const num = navigator.hardwareConcurrency;
+    const a: Worker[] = [];
+    for (let i = 0; i < num; i++) {
+      const w = new Worker("./script/chunk.js");
+      const name: PocYourNameMessage = {
+        type: "your_name",
+        name: `${i}`,
+      };
+      w.onmessage = (ev: MessageEvent) => {
+        if (isPocChunkConvertDoneMessage(ev.data)) {
+          if (session.current?.id === ev.data.id) {
+            session.current.incrementDone();
+          }
+        }
+      };
+      w.postMessage(name);
+      a.push(w);
+    }
+    return a;
+  }, []);
+  const onStartPoc = () => {
+    const id = uuidv4();
+    const s = new ConvertSession(id, pre, workers, post);
+    session.current = s;
+    s.start();
+  };
   return (
     <div className="main">
       <Header disableLink={disableLink} />
       <div className="container">
+        <div onClick={onStartPoc}>start debug</div>
         <div className="inputZip">
           <label className="inputZipLabel" htmlFor={"input_zip"}>
             Choose a zip archive of Java Edition world data
