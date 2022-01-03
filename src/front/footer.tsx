@@ -1,5 +1,6 @@
 import * as React from "react";
 import { FC } from "react";
+import { kAppVersion } from "../share/version";
 
 export const Footer: FC = () => {
   return (
@@ -16,6 +17,9 @@ export const Footer: FC = () => {
               src={"image/GitHub-Mark-Light-64px.png"}
             />
           </a>
+        </div>
+        <div className="footerRow">
+          je2be-web {kAppVersion === "" ? "(local)" : kAppVersion}
         </div>
         <div className="footerRow">Copyright © kbinani</div>
       </div>
