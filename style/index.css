@@ -124,7 +124,7 @@ a {
   }
 }
 
-.progressBar[data-completed="true"] {
+.progressBar[data-fullwidth="true"] {
   border-top-right-radius: 3px;
   border-bottom-right-radius: 3px;
 }
