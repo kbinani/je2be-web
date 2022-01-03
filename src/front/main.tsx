@@ -17,12 +17,13 @@ import {
   isPocConvertChunkMessage,
   isPocConvertQueueingFinishedMessage,
   PocConvertChunkMessage,
-  PocStartMessage,
+  PocStartPreMessage,
 } from "../conv/pre";
 import {
   isPocChunkConvertDoneMessage,
   PocYourNameMessage,
 } from "../conv/chunk";
+import { isPocPostDoneMessage, PocStartPostMessage } from "../conv/post";
 
 type MainComponentState = {
   unzip: number;
@@ -59,7 +60,7 @@ class ConvertSession {
 
   start() {
     console.log(`[front] (${this.id}) start`);
-    const start: PocStartMessage = { type: "start", id: this.id };
+    const start: PocStartPreMessage = { type: "pre", id: this.id };
     this.pre.postMessage(start);
   }
 
@@ -77,9 +78,17 @@ class ConvertSession {
   incrementDone() {
     this.done++;
     if (this.finalCount === this.done) {
-      //TODO:
       console.log(`[front] (${this.id}) all chunk conversion finished`);
+      const m: PocStartPostMessage = {
+        type: "post",
+        id: this.id,
+      };
+      this.post.postMessage(m);
     }
+  }
+
+  markPostDone() {
+    console.log(`[front] (${this.id}) post done`);
   }
 }
 
@@ -199,7 +208,15 @@ export const MainComponent: FC = () => {
     return w;
   }, []);
   const post = useMemo(() => {
-    return new Worker("./script/post.js");
+    const w = new Worker("./script/post.js");
+    w.onmessage = (ev: MessageEvent) => {
+      if (isPocPostDoneMessage(ev.data)) {
+        if (session.current.id === ev.data.id) {
+          session.current.markPostDone();
+        }
+      }
+    };
+    return w;
   }, []);
   const workers = useMemo(() => {
     const num = navigator.hardwareConcurrency;

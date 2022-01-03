@@ -1,17 +1,17 @@
-export type PocStartMessage = {
-  type: "start";
+export type PocStartPreMessage = {
+  type: "pre";
   id: string;
 };
 
-export function isPocStartMessage(x: any): x is PocStartMessage {
+export function isPocStartPreMessage(x: any): x is PocStartPreMessage {
   if (!x) {
     return false;
   }
-  return x["type"] === "start" && typeof x["id"] === "string";
+  return x["type"] === "pre" && typeof x["id"] === "string";
 }
 
 self.onmessage = (ev: MessageEvent) => {
-  if (isPocStartMessage(ev.data)) {
+  if (isPocStartPreMessage(ev.data)) {
     start(ev.data);
   }
 };
@@ -51,7 +51,7 @@ export function isPocConvertQueueingFinishedMessage(
   return x["type"] === "queueing_finished" && typeof x["id"] === "string";
 }
 
-async function start(m: PocStartMessage): Promise<void> {
+async function start(m: PocStartPreMessage): Promise<void> {
   console.log(`[pre] (${m.id}) start`);
   const { id } = m;
   const minChunkX = -16;
