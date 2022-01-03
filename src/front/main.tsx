@@ -90,7 +90,7 @@ export const MainComponent: FC = () => {
     const file = files.item(0);
     const message: StartMessage = { type: "start", file, id };
     console.log(`[${id}] front: posting StartMessage`);
-    state.current = { ...kInitComponentState, id };
+    state.current = { ...kInitComponentState, id, unzip: -1 };
     forceUpdate();
     worker.postMessage(message);
     let lastUpdate = Date.now();
@@ -131,11 +131,7 @@ export const MainComponent: FC = () => {
       }
     };
   };
-  const { unzip, compaction, zip, copy } = state.current;
-  const convert = Math.floor(
-    (state.current.convert / state.current.convertTotal) * 100
-  );
-  const chunks = Math.floor(state.current.convert);
+  const { unzip, compaction, zip, copy, convert, convertTotal } = state.current;
   const disableLink =
     state.current.id !== undefined || state.current.dl !== undefined;
   return (
@@ -156,20 +152,20 @@ export const MainComponent: FC = () => {
           />
         </div>
         <div className="progressContainer">
-          <Progress progress={unzip} label={"Unzip"} />
-          <div className="progress">
-            <div
-              className="progressBar"
-              style={{ width: `${convert}%` }}
-              data-completed={convert === 100}
-            />
-            <div className="progressLabel">
-              Conversion: {chunks} chunks, {convert}% done
-            </div>
-          </div>
-          <Progress progress={compaction} label={"LevelDB Compaction"} />
-          <Progress progress={zip} label={"Zip"} />
-          <Progress progress={copy} label={"Copy"} />
+          <Progress progress={unzip} total={1} label={"Unzip"} />
+          <Progress
+            progress={Math.floor(convert)}
+            total={convertTotal}
+            unit={"chunks"}
+            label={"Conversion"}
+          />
+          <Progress
+            progress={compaction}
+            total={1}
+            label={"LevelDB Compaction"}
+          />
+          <Progress progress={zip} total={1} label={"Zip"} />
+          <Progress progress={copy} total={1} label={"Copy"} />
           <div className="message">
             {state.current.dl && (
               <div className="downloadMessage">
@@ -198,9 +194,10 @@ function updateProgress(
   state: MainComponentState,
   m: ProgressMessage
 ): MainComponentState {
+  const p = m.progress / m.total;
   switch (m.stage) {
     case "unzip":
-      return { ...state, unzip: m.progress / m.total };
+      return { ...state, unzip: p };
     case "convert":
       return {
         ...state,
@@ -208,14 +205,11 @@ function updateProgress(
         convertTotal: m.total,
       };
     case "compaction":
-      return {
-        ...state,
-        compaction: m.progress / m.total,
-      };
+      return { ...state, compaction: p };
     case "zip":
-      return { ...state, zip: m.progress / m.total };
+      return { ...state, zip: p };
     case "copy":
-      return { ...state, copy: m.progress / m.total };
+      return { ...state, copy: p };
   }
   return { ...state };
 }
