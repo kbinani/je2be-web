@@ -144,7 +144,7 @@ async function promiseUnzipFileInZip({
 
 async function convert(id: string): Promise<number> {
   try {
-    return Module.core(
+    return Module.Core(
       id,
       `/je2be/${id}/in`,
       `/je2be/${id}/out`,

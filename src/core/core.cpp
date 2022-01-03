@@ -1,5 +1,7 @@
+#if defined(EMSCRIPTEN)
 #include <emscripten.h>
 #include <emscripten/bind.h>
+#endif
 #include <je2be.hpp>
 #include <zip.h>
 
@@ -11,6 +13,7 @@ using namespace mcfile;
 namespace fs = std::filesystem;
 
 static void Report(std::string id, std::string stage, double progress, double total) {
+#if defined(EMSCRIPTEN)
   EM_ASM({
     const m = {};
     m["id"] = UTF8ToString($0, $1);
@@ -21,6 +24,7 @@ static void Report(std::string id, std::string stage, double progress, double to
     self.postMessage(m);
   },
          id.c_str(), id.size(), stage.c_str(), stage.size(), progress, total);
+#endif
 }
 
 class ProgressRepoter : public je2be::Progress {
@@ -45,7 +49,7 @@ public:
   std::string const fId;
 };
 
-int core(std::string id, std::string in, std::string out, std::string zipDir) {
+int Core(std::string id, std::string in, std::string out, std::string zipDir) {
   fs::create_directories(fs::path(out));
   fs::create_directories(fs::path(zipDir));
 
@@ -147,12 +151,14 @@ int core(std::string id, std::string in, std::string out, std::string zipDir) {
   return fileIndex;
 }
 
-void cleanup(std::string dir) {
+void Cleanup(std::string dir) {
   error_code ec;
   fs::remove_all(fs::path(dir), ec);
 }
 
+#if defined(EMSCRIPTEN)
 EMSCRIPTEN_BINDINGS(core_module) {
-  emscripten::function("core", &core);
-  emscripten::function("cleanup", &cleanup);
+  emscripten::function("Core", &Core);
+  emscripten::function("Cleanup", &Cleanup);
 }
+#endif

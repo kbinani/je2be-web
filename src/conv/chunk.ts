@@ -1,5 +1,7 @@
 import { isPocConvertChunkMessage, PocConvertChunkMessage } from "./pre";
 
+self.importScripts("./chunk-core.js");
+
 let sName: string;
 
 self.onmessage = (ev: MessageEvent) => {
