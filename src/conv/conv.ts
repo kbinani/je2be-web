@@ -1,3 +1,4 @@
+/*
 import {
   FailedMessage,
   isStartMessage,
@@ -204,3 +205,4 @@ function send(id: string) {
 function cleanup(id: string) {
   umount("/je2be");
 }
+*/

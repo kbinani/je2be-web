@@ -50,7 +50,6 @@ export const useForceUpdate = () => {
 };
 
 export const MainComponent: FC = () => {
-  const worker = useMemo(() => new Worker("./script/conv.js"), []);
   const state = useRef<MainComponentState>({ ...kInitComponentState });
   const input = useRef<HTMLInputElement>(null);
   const session = useRef<ConvertSession>(null);
@@ -81,63 +80,8 @@ export const MainComponent: FC = () => {
     window.addEventListener("beforeunload", onBeforeUnload);
     return () => {
       window.removeEventListener("beforeunload", onBeforeUnload);
-      const id = state.current.id;
-      if (id) {
-        cleanup(id);
-      }
     };
   }, []);
-  const onChange = (ev: ChangeEvent<HTMLInputElement>) => {
-    const files = ev.target.files;
-    if (!files || files.length !== 1) {
-      console.error("no file selected, or one or more files selected");
-      return;
-    }
-    const id = uuidv4();
-    const file = files.item(0);
-    const message: StartMessage = { type: "start", file, id };
-    console.log(`[front] (${id}) posting StartMessage`);
-    state.current = { ...kInitComponentState, id, unzip: -1 };
-    forceUpdate();
-    worker.postMessage(message);
-    let lastUpdate = Date.now();
-    worker.onmessage = (msg: MessageEvent) => {
-      if (msg.data["id"] !== state.current.id) {
-        return;
-      }
-      if (isSuccessMessage(msg.data)) {
-        const { id } = msg.data;
-        const dot = file.name.lastIndexOf(".");
-        let filename = "world.mcworld";
-        if (dot > 0) {
-          filename = file.name.substring(0, dot) + ".mcworld";
-        }
-        state.current = {
-          ...state.current,
-          dl: { id, filename },
-          error: undefined,
-          id: undefined,
-        };
-        input.current.value = "";
-        forceUpdate();
-      } else if (isProgressMessage(msg.data)) {
-        state.current = updateProgress(state.current, msg.data);
-        const now = Date.now();
-        if (lastUpdate + 1000.0 / 60.0 <= now) {
-          lastUpdate = now;
-          forceUpdate();
-        }
-      } else if (isFailedMessage(msg.data)) {
-        state.current = {
-          ...state.current,
-          error: msg.data.error,
-          id: undefined,
-        };
-        input.current.value = "";
-        forceUpdate();
-      }
-    };
-  };
   const { unzip, compaction, zip, copy, convert, convertTotal } = state.current;
   const disableLink =
     state.current.id !== undefined || state.current.dl !== undefined;
@@ -281,23 +225,4 @@ function updateProgress(
       return { ...state, copy: p };
   }
   return { ...state };
-}
-
-async function cleanup(id: string) {
-  const db = new ChunksStore();
-  try {
-    const keys: string[] = [];
-    await db.chunks.each((item) => {
-      const { name } = item;
-      if (name.startsWith(`/je2be/dl/${id}/`)) {
-        keys.push(name);
-      }
-    });
-    await db.chunks.bulkDelete(keys);
-  } catch (e) {
-    db.close();
-    console.error(e);
-    throw e;
-  }
-  db.close();
 }

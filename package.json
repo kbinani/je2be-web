@@ -24,7 +24,6 @@
   },
   "scripts": {
     "front": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/front/index.tsx --bundle --outfile=public/script/front.js",
-    "conv": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/conv/conv.ts --bundle --outfile=public/script/conv.js",
     "sworker": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/sworker/sworker.ts --bundle --outfile=public/sworker.js",
     "pre": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/conv/pre.ts --bundle --outfile=public/script/pre.js",
     "post": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/conv/post.ts --bundle --outfile=public/script/post.js",

@@ -26,20 +26,16 @@ async function convertChunk(m: PocConvertChunkMessage): Promise<void> {
   console.log(
     `[chunk#${sName}] (${id}) start: cx=${cx}; cz=${cz}; dim=${dim}; javaEditionMap.length=${javaEditionMap.length}`
   );
-  setTimeout(() => {
-    const storage = Module._malloc(javaEditionMap.length * 4);
-    for (let i = 0; i < javaEditionMap.length; i++) {
-      Module.HEAPI32[i + storage] = javaEditionMap[i];
-    }
-    Module.ConvertChunk(id, cx, cz, dim, storage, javaEditionMap.length);
-    const done: PocChunkConvertDoneMessage = {
-      type: "chunk_done",
-      id,
-      data: "foo!",
-    };
-    console.log(
-      `[chunk#${sName}] (${id}) done: cx=${cx}; cz=${cz}; dim=${dim}`
-    );
-    self.postMessage(done);
-  }, 1000);
+  const storage = Module._malloc(javaEditionMap.length * 4);
+  for (let i = 0; i < javaEditionMap.length; i++) {
+    Module.HEAPI32[i + storage] = javaEditionMap[i];
+  }
+  Module.ConvertChunk(id, cx, cz, dim, storage, javaEditionMap.length);
+  const done: PocChunkConvertDoneMessage = {
+    type: "chunk_done",
+    id,
+    data: "foo!",
+  };
+  console.log(`[chunk#${sName}] (${id}) done: cx=${cx}; cz=${cz}; dim=${dim}`);
+  self.postMessage(done);
 }

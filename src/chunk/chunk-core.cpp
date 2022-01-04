@@ -3,9 +3,9 @@
 #include <emscripten/bind.h>
 #endif
 
-#include <je2be.hpp>
-
 #include <iostream>
+
+#include <je2be.hpp>
 
 #include "db.hpp"
 
@@ -26,15 +26,25 @@ void ConvertChunk(string id, int cx, int cz, int dim, intptr_t javaEditionMap, i
     entries[key] = value;
   }
   free(ptr);
-  JavaEditionMap jem(entries);
 
   ::Db db;
-  string value = "bar";
-  db.put("foo", value);
+  InputOption io;
+  JavaEditionMap jem(entries);
+  Dimension d = static_cast<Dimension>(dim);
+  fs::path worldDir = io.getWorldDirectory(fs::path("/je2be") / id / "in", d);
+  mcfile::je::World w(worldDir);
+  int rx = Coordinate::RegionFromChunk(cx);
+  int rz = Coordinate::RegionFromChunk(cz);
+  auto region = w.region(rx, rz);
+  if (!region) {
+    cout << "region is null" << endl;
+    return;
+  }
+  auto result = Chunk::Convert(d, ref(db), *region, cx, cz, jem);
 }
 
 #if defined(EMSCRIPTEN)
 EMSCRIPTEN_BINDINGS(core_module) {
-  emscripten::function("ConvertChunk", &ConvertChunk, emscripten::allow_raw_pointers());
+  emscripten::function("ConvertChunk", &ConvertChunk);
 }
 #endif

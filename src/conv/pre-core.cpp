@@ -3,9 +3,9 @@
 #include <emscripten/bind.h>
 #endif
 
-#include <je2be.hpp>
-
 #include <iostream>
+
+#include <je2be.hpp>
 
 using namespace std;
 using namespace mcfile;
