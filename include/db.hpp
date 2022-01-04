@@ -15,8 +15,14 @@ public:
     std::string v = value.ToString();
 #if defined(EMSCRIPTEN)
     EM_ASM({
-      const key = UTF8ToString($0, $1);
-      const value = UTF8ToString($2, $3);
+      const key = new Uint8Array($1);
+      for (let i = 0; i < $1; i++) {
+        key[i] = Module.HEAPU8[$0 + i];
+      }
+      const value = new Uint8Array($3);
+      for (let i = 0; i < $3; i++) {
+        value[i] = Module.HEAPU8[$2 + i];
+      }
       PutToDb(key, value);
     },
            key.c_str(), key.size(), v.c_str(), v.size());

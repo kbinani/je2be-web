@@ -1,23 +1,18 @@
 import * as React from "react";
 import { ChangeEvent, FC, useEffect, useMemo, useReducer, useRef } from "react";
 import {
-  isFailedMessage,
   isPocChunkConvertDoneMessage,
   isPocConvertChunkMessage,
   isPocConvertQueueingFinishedMessage,
   isPocPostDoneMessage,
   isProgressMessage,
-  isSuccessMessage,
-  PocYourNameMessage,
   ProgressMessage,
-  StartMessage,
   WorkerError,
 } from "../share/messages";
 import { v4 as uuidv4 } from "uuid";
 import { Header } from "./header";
 import { Footer } from "./footer";
 import { Progress } from "./progress";
-import { ChunksStore } from "../share/chunk-store";
 import { ConvertSession } from "../conv/convert-session";
 
 type MainComponentState = {
@@ -86,7 +81,7 @@ export const MainComponent: FC = () => {
   const disableLink =
     state.current.id !== undefined || state.current.dl !== undefined;
   const pre = useMemo(() => {
-    const w = new Worker("./script/pre.js");
+    const w = new Worker("./script/pre.js", { name: "pre" });
     w.onmessage = (ev: MessageEvent) => {
       if (isPocConvertChunkMessage(ev.data)) {
         if (ev.data.id === session.current?.id) {
@@ -104,7 +99,7 @@ export const MainComponent: FC = () => {
     return w;
   }, []);
   const post = useMemo(() => {
-    const w = new Worker("./script/post.js");
+    const w = new Worker("./script/post.js", { name: "pre" });
     w.onmessage = (ev: MessageEvent) => {
       if (isPocPostDoneMessage(ev.data)) {
         if (session.current.id === ev.data.id) {
@@ -115,14 +110,10 @@ export const MainComponent: FC = () => {
     return w;
   }, []);
   const workers = useMemo(() => {
-    const num = navigator.hardwareConcurrency;
+    const num = 3; //TODO: navigator.hardwareConcurrency;
     const a: Worker[] = [];
     for (let i = 0; i < num; i++) {
-      const w = new Worker("./script/chunk.js");
-      const name: PocYourNameMessage = {
-        type: "your_name",
-        name: `${i}`,
-      };
+      const w = new Worker("./script/chunk.js", { name: `chunk#${i}` });
       w.onmessage = (ev: MessageEvent) => {
         if (isPocChunkConvertDoneMessage(ev.data)) {
           if (session.current?.id === ev.data.id) {
@@ -130,7 +121,6 @@ export const MainComponent: FC = () => {
           }
         }
       };
-      w.postMessage(name);
       a.push(w);
     }
     return a;

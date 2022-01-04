@@ -37,10 +37,10 @@ void ConvertChunk(string id, int cx, int cz, int dim, intptr_t javaEditionMap, i
   int rz = Coordinate::RegionFromChunk(cz);
   auto region = w.region(rx, rz);
   if (!region) {
-    cout << "region is null" << endl;
     return;
   }
   auto result = Chunk::Convert(d, ref(db), *region, cx, cz, jem);
+  //TODO:
 }
 
 #if defined(EMSCRIPTEN)

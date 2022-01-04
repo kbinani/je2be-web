@@ -1,12 +1,16 @@
 import {
   isPocStartPreMessage,
+  PocConvertChunkMessage,
   PocConvertQueueingFinishedMessage,
   PocStartPreMessage,
   ProgressMessage,
   WorkerError,
 } from "../share/messages";
-import { dirname, mkdirp, mount } from "./fs-ext";
+import { dirname, mkdirp, mount, syncfs } from "./fs-ext";
 import JSZip from "jszip";
+import { FileStorage } from "../share/file-storage";
+import { Point } from "../share/cg";
+import { ReadI32 } from "../share/heap";
 
 self.onmessage = (ev: MessageEvent) => {
   if (isPocStartPreMessage(ev.data)) {
@@ -15,6 +19,11 @@ self.onmessage = (ev: MessageEvent) => {
 };
 
 self.importScripts("./pre-core.js");
+
+type Region = {
+  dim: number;
+  region: Point;
+};
 
 async function start(m: PocStartPreMessage): Promise<void> {
   console.log(`[pre] (${m.id}) start`);
@@ -27,17 +36,37 @@ async function start(m: PocStartPreMessage): Promise<void> {
   mkdirp(`/je2be/dl`);
 
   console.log(`[pre] (${id}) extract...`);
-  await extract(file, id);
+  const regions = await extract(file, id);
+  await syncfs(false);
   console.log(`[pre] (${id}) extract done`);
 
+  console.log(`[pre] (${id}) pre...`);
   const levelStructure = 0; //TODO: 0 = vanilla, 1 = spigot/paper
-  const num = Module.Pre(
+  const storage = Module._malloc(4);
+  const javaEditionMapSize = Module.Pre(
     id,
     `/je2be/${id}/in`,
     `/je2be/${id}/out`,
-    levelStructure
+    levelStructure,
+    storage
   );
-  console.log(`[pre] (${id}) queueing finished: queue length=${num}`);
+  await syncfs(false);
+  console.log(`[pre] (${id}) pre done`);
+
+  console.log(`[pre] (${id}) queue...`);
+  const javaEditionMap = [];
+  const ptr = ReadI32(storage);
+  for (let i = 0; i + 1 < javaEditionMapSize; i += 2) {
+    const key = ReadI32(ptr + i * 4);
+    const value = ReadI32(ptr + i * 4 + 4);
+    javaEditionMap.push(key);
+    javaEditionMap.push(value);
+  }
+  Module._free(ptr);
+  Module._free(storage);
+  queue(id, regions, javaEditionMap);
+  const num = regions.length * 32 * 32;
+  console.log(`[pre] (${id}) queue done: queue length=${num}`);
   const last: PocConvertQueueingFinishedMessage = {
     id,
     type: "queueing_finished",
@@ -46,7 +75,7 @@ async function start(m: PocStartPreMessage): Promise<void> {
   self.postMessage(last);
 }
 
-async function extract(file: File, id: string) {
+async function extract(file: File, id: string): Promise<Region[]> {
   let zip: any;
   try {
     zip = await JSZip.loadAsync(file);
@@ -79,6 +108,7 @@ async function extract(file: File, id: string) {
   const idx = levelDatPath.lastIndexOf("level.dat");
   const prefix = levelDatPath.substring(0, idx);
   const files: string[] = [];
+  const regions: string[] = [];
   zip.forEach((path: string, f: JSZip.JSZipObject) => {
     if (!path.startsWith(prefix)) {
       return;
@@ -86,49 +116,97 @@ async function extract(file: File, id: string) {
     if (f.dir) {
       return;
     }
-    files.push(path);
+    if (
+      path.endsWith(".mca") &&
+      path.includes("/region/") &&
+      !path.includes("/entities/")
+    ) {
+      regions.push(path);
+    } else {
+      files.push(path);
+    }
   });
   let progress = 0;
   const total = files.length;
-  const promises = files.map((path) =>
-    promiseUnzipFileInZip({ id, zip, path, prefix }).then(() => {
-      progress++;
-      const m: ProgressMessage = {
-        type: "progress",
-        id,
-        stage: "unzip",
-        progress,
-        total,
-      };
-      self.postMessage(m);
-    })
-  );
-  await Promise.all(promises);
-}
-
-async function promiseUnzipFileInZip({
-  id,
-  zip,
-  path,
-  prefix,
-}: {
-  id: string;
-  zip: JSZip;
-  path: string;
-  prefix: string;
-}): Promise<void> {
-  return new Promise<void>((resolve, reject) => {
+  const unzip = files.map(async (path) => {
     const rel = path.substring(prefix.length);
     const target = `/je2be/${id}/in/${rel}`;
     const directory = dirname(target);
     mkdirp(directory);
+    const buffer = await promiseUnzipFileInZip({ zip, path });
+    FS.writeFile(target, buffer);
+
+    progress++;
+    const m: ProgressMessage = {
+      type: "progress",
+      id,
+      stage: "unzip",
+      progress,
+      total,
+    };
+    self.postMessage(m);
+  });
+  await Promise.all(unzip);
+
+  const fs = new FileStorage();
+  const copy = regions.map(async (path) => {
+    const rel = path.substring(prefix.length);
+    const target = `/je2be/${id}/in/${rel}`;
+    const buffer = await promiseUnzipFileInZip({ zip, path });
+    await fs.files.put({ path: target, data: buffer });
+  });
+  await Promise.all(copy);
+
+  return regions.map((path) => {
+    let dim = 0;
+    if (path.includes("/DIM1/")) {
+      dim = 2;
+    } else if (path.includes("/DIM-1/")) {
+      dim = 1;
+    }
+    const s = path.split("/").pop();
+    const token = s.split(".");
+    const rx = parseInt(token[1], 10);
+    const rz = parseInt(token[2], 10);
+    return { dim, region: new Point(rx, rz) };
+  });
+}
+
+async function promiseUnzipFileInZip({
+  zip,
+  path,
+}: {
+  zip: JSZip;
+  path: string;
+}): Promise<Uint8Array> {
+  return new Promise<Uint8Array>((resolve, reject) => {
     zip
       .file(path)
       .async("uint8array")
       .then((buffer) => {
-        FS.writeFile(target, buffer);
-        resolve();
+        resolve(buffer);
       })
       .catch(reject);
   });
+}
+
+function queue(id: string, regions: Region[], javaEditionMap: number[]) {
+  for (const r of regions) {
+    const { region, dim } = r;
+    for (let x = 0; x < 32; x++) {
+      for (let z = 0; z < 32; z++) {
+        const cx = region.x * 32 + x;
+        const cz = region.z * 32 + z;
+        const m: PocConvertChunkMessage = {
+          type: "chunk",
+          id,
+          cx,
+          cz,
+          dim,
+          javaEditionMap,
+        };
+        self.postMessage(m);
+      }
+    }
+  }
 }

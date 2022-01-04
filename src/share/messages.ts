@@ -165,18 +165,6 @@ export function isPocPostDoneMessage(x: any): x is PocPostDoneMessage {
   return x["type"] === "post_done" && typeof x["id"] === "string";
 }
 
-export type PocYourNameMessage = {
-  type: "your_name";
-  name: string;
-};
-
-export function isPocYourNameMessage(x: any): x is PocYourNameMessage {
-  if (!x) {
-    return false;
-  }
-  return x["type"] === "your_name" && typeof x["name"] === "string";
-}
-
 export type PocChunkConvertDoneMessage = {
   type: "chunk_done";
   id: string;

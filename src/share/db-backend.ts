@@ -1,8 +1,8 @@
 import Dexie, { Table } from "dexie";
 
 export interface Pair {
-  key: string;
-  value: string;
+  key: Uint8Array;
+  value: Uint8Array;
 }
 
 export class DbBackend extends Dexie {
