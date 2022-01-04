@@ -1,5 +1,5 @@
 import {
-  PocConvertChunkMessage,
+  PocConvertRegionMessage,
   PocStartPostMessage,
   PocStartPreMessage,
 } from "../share/messages";
@@ -10,7 +10,7 @@ export class ConvertSession {
   private done_ = 0;
   private queued = 0;
   private readonly active: boolean[];
-  private buffer: PocConvertChunkMessage[] = [];
+  private buffer: PocConvertRegionMessage[] = [];
   private _numTotalChunks = -1;
 
   constructor(
@@ -39,7 +39,7 @@ export class ConvertSession {
     this.pre.postMessage(start);
   }
 
-  queue(m: PocConvertChunkMessage) {
+  queue(m: PocConvertRegionMessage) {
     this.buffer.push(m);
     this.enqueue();
     this.count++;

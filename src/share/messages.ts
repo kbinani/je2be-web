@@ -99,24 +99,26 @@ export function isPocStartPreMessage(x: any): x is PocStartPreMessage {
   );
 }
 
-export type PocConvertChunkMessage = {
-  type: "chunk";
+export type PocConvertRegionMessage = {
+  type: "region";
   id: string;
-  cx: number;
-  cz: number;
+  rx: number;
+  rz: number;
   dim: number;
   javaEditionMap: number[];
 };
 
-export function isPocConvertChunkMessage(x: any): x is PocConvertChunkMessage {
+export function isPocConvertRegionMessage(
+  x: any
+): x is PocConvertRegionMessage {
   if (!x) {
     return false;
   }
   return (
-    x["type"] === "chunk" &&
+    x["type"] === "region" &&
     typeof x["id"] === "string" &&
-    typeof x["cx"] === "number" &&
-    typeof x["cz"] === "number" &&
+    typeof x["rx"] === "number" &&
+    typeof x["rz"] === "number" &&
     typeof x["dim"] === "number" &&
     !!x["javaEditionMap"]
   );
@@ -160,20 +162,20 @@ export function isPocPostDoneMessage(x: any): x is PocPostDoneMessage {
   return x["type"] === "post_done" && typeof x["id"] === "string";
 }
 
-export type PocChunkConvertDoneMessage = {
-  type: "chunk_done";
+export type PocConvertRegionDoneMessage = {
+  type: "region_done";
   id: string;
   data: string;
 };
 
-export function isPocChunkConvertDoneMessage(
+export function isPocConvertRegionDoneMessage(
   x: any
-): x is PocChunkConvertDoneMessage {
+): x is PocConvertRegionDoneMessage {
   if (!x) {
     return false;
   }
   return (
-    x["type"] === "chunk_done" &&
+    x["type"] === "region_done" &&
     typeof x["id"] === "string" &&
     typeof x["data"] === "string"
   );

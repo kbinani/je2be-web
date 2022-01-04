@@ -1,8 +1,8 @@
 import {
   ExportDoneMessage,
   isPocStartPreMessage,
-  PocConvertChunkMessage,
   PocConvertQueueingFinishedMessage,
+  PocConvertRegionMessage,
   PocStartPreMessage,
   ProgressMessage,
   WorkerError,
@@ -199,20 +199,14 @@ async function promiseUnzipFileInZip({
 function queue(id: string, regions: Region[], javaEditionMap: number[]) {
   for (const r of regions) {
     const { region, dim } = r;
-    for (let x = 0; x < 32; x++) {
-      for (let z = 0; z < 32; z++) {
-        const cx = region.x * 32 + x;
-        const cz = region.z * 32 + z;
-        const m: PocConvertChunkMessage = {
-          type: "chunk",
-          id,
-          cx,
-          cz,
-          dim,
-          javaEditionMap,
-        };
-        self.postMessage(m);
-      }
-    }
+    const m: PocConvertRegionMessage = {
+      type: "region",
+      id,
+      rx: region.x,
+      rz: region.z,
+      dim,
+      javaEditionMap,
+    };
+    self.postMessage(m);
   }
 }

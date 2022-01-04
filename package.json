@@ -27,8 +27,8 @@
     "sworker": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/sworker/sworker.ts --bundle --outfile=public/sworker.js",
     "pre": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/conv/pre.ts --bundle --outfile=public/script/pre.js",
     "post": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/conv/post.ts --bundle --outfile=public/script/post.js",
-    "chunk": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/conv/chunk.ts --bundle --outfile=public/script/chunk.js",
-    "chunk-core-prefix": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/chunk/chunk-core-prefix.ts --bundle --outfile=build/chunk-core-prefix.js",
+    "region": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/conv/region.ts --bundle --outfile=public/script/region.js",
+    "region-core-prefix": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/region/region-core-prefix.ts --bundle --outfile=build/region-core-prefix.js",
     "fmt": "prettier --write 'src/**/*.ts' 'src/**/*.tsx' 'public/style/*.css'",
     "dev": "yarn front --servedir=public --serve=3000"
   }

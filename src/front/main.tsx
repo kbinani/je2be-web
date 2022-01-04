@@ -2,9 +2,9 @@ import * as React from "react";
 import { ChangeEvent, FC, useEffect, useMemo, useReducer, useRef } from "react";
 import {
   isExportDoneMessage,
-  isPocChunkConvertDoneMessage,
-  isPocConvertChunkMessage,
   isPocConvertQueueingFinishedMessage,
+  isPocConvertRegionDoneMessage,
+  isPocConvertRegionMessage,
   isPocPostDoneMessage,
   isProgressMessage,
   ProgressMessage,
@@ -85,7 +85,7 @@ export const MainComponent: FC = () => {
     const w = new Worker("./script/pre.js", { name: "pre" });
     w.onmessage = (ev: MessageEvent) => {
       const id = session.current?.id;
-      if (isPocConvertChunkMessage(ev.data) && ev.data.id === id) {
+      if (isPocConvertRegionMessage(ev.data) && ev.data.id === id) {
         session.current.queue(ev.data);
       } else if (
         isPocConvertQueueingFinishedMessage(ev.data) &&
@@ -116,15 +116,15 @@ export const MainComponent: FC = () => {
     const num = navigator.hardwareConcurrency;
     const a: Worker[] = [];
     for (let i = 0; i < num; i++) {
-      const w = new Worker("./script/chunk.js", { name: `chunk#${i}` });
+      const w = new Worker("./script/region.js", { name: `region#${i}` });
       w.onmessage = (ev: MessageEvent) => {
         const target = ev.target;
         if (!(target instanceof Worker)) {
           return;
         }
         const id = session.current?.id;
-        if (isPocChunkConvertDoneMessage(ev.data) && ev.data.id === id) {
-          const progress = session.current.done(target);
+        if (isPocConvertRegionDoneMessage(ev.data) && ev.data.id === id) {
+          const progress = session.current.done(target) * 32 * 32;
           const total = session.current.numTotalChunks;
           const m: ProgressMessage = {
             id,
