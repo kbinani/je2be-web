@@ -14,7 +14,6 @@ self.onmessage = (ev: MessageEvent) => {
     startChunkConvert(ev.data);
   } else if (isPocYourNameMessage(ev.data)) {
     sName = ev.data.name;
-    console.log(`[chunk#${sName}] my name is "${sName}"`);
   }
 };
 
@@ -23,10 +22,16 @@ function startChunkConvert(m: PocConvertChunkMessage) {
 }
 
 async function convertChunk(m: PocConvertChunkMessage): Promise<void> {
-  const { id, cx, cz, dim } = m;
-  console.log(`[chunk#${sName}] (${id}) start: cx=${cx}; cz=${cz}; dim=${dim}`);
+  const { id, cx, cz, dim, javaEditionMap } = m;
+  console.log(
+    `[chunk#${sName}] (${id}) start: cx=${cx}; cz=${cz}; dim=${dim}; javaEditionMap.length=${javaEditionMap.length}`
+  );
   setTimeout(() => {
-    Module.ConvertChunk();
+    const storage = Module._malloc(javaEditionMap.length * 4);
+    for (let i = 0; i < javaEditionMap.length; i++) {
+      Module.HEAPI32[i + storage] = javaEditionMap[i];
+    }
+    Module.ConvertChunk(id, cx, cz, dim, storage, javaEditionMap.length);
     const done: PocChunkConvertDoneMessage = {
       type: "chunk_done",
       id,

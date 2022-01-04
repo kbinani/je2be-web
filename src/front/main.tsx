@@ -152,6 +152,9 @@ export const MainComponent: FC = () => {
         if (ev.data.id === session.current?.id) {
           session.current.markQueueingFinished();
         }
+      } else if (isProgressMessage(ev.data)) {
+        state.current = updateProgress(state.current, ev.data);
+        forceUpdate();
       }
     };
     return w;
@@ -188,17 +191,22 @@ export const MainComponent: FC = () => {
     }
     return a;
   }, []);
-  const onStartPoc = () => {
+  const onStartPoc = (ev: ChangeEvent<HTMLInputElement>) => {
+    const files = ev.target.files;
+    if (!files || files.length !== 1) {
+      console.error("no file selected, or one or more files selected");
+      return;
+    }
     const id = uuidv4();
+    const file = files.item(0);
     const s = new ConvertSession(id, pre, workers, post);
     session.current = s;
-    s.start();
+    s.start(file);
   };
   return (
     <div className="main">
       <Header disableLink={disableLink} />
       <div className="container">
-        <div onClick={onStartPoc}>start debug</div>
         <div className="inputZip">
           <label className="inputZipLabel" htmlFor={"input_zip"}>
             Choose a zip archive of Java Edition world data
@@ -206,7 +214,7 @@ export const MainComponent: FC = () => {
           <input
             name={"input_zip"}
             type={"file"}
-            onChange={onChange}
+            onChange={onStartPoc}
             accept={".zip"}
             ref={input}
             disabled={state.current.id !== undefined}

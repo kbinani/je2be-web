@@ -16,9 +16,9 @@ export class ConvertSession {
     readonly post: Worker
   ) {}
 
-  start() {
+  start(file: File) {
     console.log(`[front] (${this.id}) start`);
-    const start: PocStartPreMessage = { type: "pre", id: this.id };
+    const start: PocStartPreMessage = { type: "pre", id: this.id, file };
     this.pre.postMessage(start);
   }
 

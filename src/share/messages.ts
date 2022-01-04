@@ -85,13 +85,18 @@ export type WorkerError = {
 export type PocStartPreMessage = {
   type: "pre";
   id: string;
+  file: File;
 };
 
 export function isPocStartPreMessage(x: any): x is PocStartPreMessage {
   if (!x) {
     return false;
   }
-  return x["type"] === "pre" && typeof x["id"] === "string";
+  return (
+    x["type"] === "pre" &&
+    typeof x["id"] === "string" &&
+    x["file"] instanceof File
+  );
 }
 
 export type PocConvertChunkMessage = {
@@ -100,6 +105,7 @@ export type PocConvertChunkMessage = {
   cx: number;
   cz: number;
   dim: number;
+  javaEditionMap: number[];
 };
 
 export function isPocConvertChunkMessage(x: any): x is PocConvertChunkMessage {
@@ -111,13 +117,15 @@ export function isPocConvertChunkMessage(x: any): x is PocConvertChunkMessage {
     typeof x["id"] === "string" &&
     typeof x["cx"] === "number" &&
     typeof x["cz"] === "number" &&
-    typeof x["dim"] === "number"
+    typeof x["dim"] === "number" &&
+    !!x["javaEditionMap"]
   );
 }
 
 export type PocConvertQueueingFinishedMessage = {
   id: string;
   type: "queueing_finished";
+  queueLength: number;
 };
 
 export function isPocConvertQueueingFinishedMessage(
@@ -126,7 +134,11 @@ export function isPocConvertQueueingFinishedMessage(
   if (!x) {
     return false;
   }
-  return x["type"] === "queueing_finished" && typeof x["id"] === "string";
+  return (
+    x["type"] === "queueing_finished" &&
+    typeof x["id"] === "string" &&
+    typeof x["queueLength"] === "number"
+  );
 }
 
 export type PocStartPostMessage = {
