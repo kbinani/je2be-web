@@ -21,7 +21,6 @@ function startChunkConvert(m: PocConvertChunkMessage) {
 
 async function convertChunk(m: PocConvertChunkMessage): Promise<void> {
   const { id, cx, cz, dim, javaEditionMap } = m;
-  console.log(`[${self.name}] (${id}) start: cx=${cx}; cz=${cz}; dim=${dim}`);
   const fs = new FileStorage();
   const root = `/je2be/${id}/in`;
   let worldDir: string;
@@ -58,6 +57,5 @@ async function convertChunk(m: PocConvertChunkMessage): Promise<void> {
     id,
     data: "foo!",
   };
-  console.log(`[${self.name}] (${id}) done: cx=${cx}; cz=${cz}; dim=${dim}`);
   self.postMessage(done);
 }

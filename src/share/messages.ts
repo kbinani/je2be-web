@@ -125,7 +125,6 @@ export function isPocConvertChunkMessage(x: any): x is PocConvertChunkMessage {
 export type PocConvertQueueingFinishedMessage = {
   id: string;
   type: "queueing_finished";
-  queueLength: number;
 };
 
 export function isPocConvertQueueingFinishedMessage(
@@ -134,11 +133,7 @@ export function isPocConvertQueueingFinishedMessage(
   if (!x) {
     return false;
   }
-  return (
-    x["type"] === "queueing_finished" &&
-    typeof x["id"] === "string" &&
-    typeof x["queueLength"] === "number"
-  );
+  return x["type"] === "queueing_finished" && typeof x["id"] === "string";
 }
 
 export type PocStartPostMessage = {
@@ -181,5 +176,22 @@ export function isPocChunkConvertDoneMessage(
     x["type"] === "chunk_done" &&
     typeof x["id"] === "string" &&
     typeof x["data"] === "string"
+  );
+}
+
+export type ExportDoneMessage = {
+  type: "export_done";
+  id: string;
+  numTotalChunks: number;
+};
+
+export function isExportDoneMessage(x: any): x is ExportDoneMessage {
+  if (!x) {
+    return false;
+  }
+  return (
+    x["type"] === "export_done" &&
+    typeof x["id"] === "string" &&
+    typeof x["numTotalChunks"] === "number"
   );
 }

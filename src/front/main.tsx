@@ -1,6 +1,7 @@
 import * as React from "react";
 import { ChangeEvent, FC, useEffect, useMemo, useReducer, useRef } from "react";
 import {
+  isExportDoneMessage,
   isPocChunkConvertDoneMessage,
   isPocConvertChunkMessage,
   isPocConvertQueueingFinishedMessage,
@@ -83,17 +84,19 @@ export const MainComponent: FC = () => {
   const pre = useMemo(() => {
     const w = new Worker("./script/pre.js", { name: "pre" });
     w.onmessage = (ev: MessageEvent) => {
-      if (isPocConvertChunkMessage(ev.data)) {
-        if (ev.data.id === session.current?.id) {
-          session.current.roundRobin(ev.data);
-        }
-      } else if (isPocConvertQueueingFinishedMessage(ev.data)) {
-        if (ev.data.id === session.current?.id) {
-          session.current.markQueueingFinished();
-        }
-      } else if (isProgressMessage(ev.data)) {
+      const id = session.current?.id;
+      if (isPocConvertChunkMessage(ev.data) && ev.data.id === id) {
+        session.current.queue(ev.data);
+      } else if (
+        isPocConvertQueueingFinishedMessage(ev.data) &&
+        ev.data.id === id
+      ) {
+        session.current.markQueueingFinished();
+      } else if (isProgressMessage(ev.data) && ev.data.id === id) {
         state.current = updateProgress(state.current, ev.data);
         forceUpdate();
+      } else if (isExportDoneMessage(ev.data) && ev.data.id === id) {
+        session.current.setNumTotalChunks(ev.data.numTotalChunks);
       }
     };
     return w;
@@ -110,15 +113,28 @@ export const MainComponent: FC = () => {
     return w;
   }, []);
   const workers = useMemo(() => {
-    const num = 3; //TODO: navigator.hardwareConcurrency;
+    const num = navigator.hardwareConcurrency;
     const a: Worker[] = [];
     for (let i = 0; i < num; i++) {
       const w = new Worker("./script/chunk.js", { name: `chunk#${i}` });
       w.onmessage = (ev: MessageEvent) => {
-        if (isPocChunkConvertDoneMessage(ev.data)) {
-          if (session.current?.id === ev.data.id) {
-            session.current.incrementDone();
-          }
+        const target = ev.target;
+        if (!(target instanceof Worker)) {
+          return;
+        }
+        const id = session.current?.id;
+        if (isPocChunkConvertDoneMessage(ev.data) && ev.data.id === id) {
+          const progress = session.current.done(target);
+          const total = session.current.numTotalChunks;
+          const m: ProgressMessage = {
+            id,
+            type: "progress",
+            stage: "convert",
+            progress,
+            total,
+          };
+          state.current = updateProgress(state.current, m);
+          forceUpdate();
         }
       };
       a.push(w);

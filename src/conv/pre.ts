@@ -1,4 +1,5 @@
 import {
+  ExportDoneMessage,
   isPocStartPreMessage,
   PocConvertChunkMessage,
   PocConvertQueueingFinishedMessage,
@@ -37,6 +38,13 @@ async function start(m: PocStartPreMessage): Promise<void> {
 
   console.log(`[pre] (${id}) extract...`);
   const regions = await extract(file, id);
+  const numTotalChunks = regions.length * 32 * 32;
+  const exportDone: ExportDoneMessage = {
+    type: "export_done",
+    id,
+    numTotalChunks,
+  };
+  self.postMessage(exportDone);
   await syncfs(false);
   console.log(`[pre] (${id}) extract done`);
 
@@ -65,12 +73,10 @@ async function start(m: PocStartPreMessage): Promise<void> {
   Module._free(ptr);
   Module._free(storage);
   queue(id, regions, javaEditionMap);
-  const num = regions.length * 32 * 32;
-  console.log(`[pre] (${id}) queue done: queue length=${num}`);
+  console.log(`[pre] (${id}) queue done: queue length=${numTotalChunks}`);
   const last: PocConvertQueueingFinishedMessage = {
     id,
     type: "queueing_finished",
-    queueLength: num,
   };
   self.postMessage(last);
 }

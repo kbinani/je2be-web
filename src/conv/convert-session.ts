@@ -7,14 +7,31 @@ import {
 export class ConvertSession {
   private count = 0;
   private finalCount = 0;
-  private done = 0;
+  private done_ = 0;
+  private queued = 0;
+  private readonly active: boolean[];
+  private buffer: PocConvertChunkMessage[] = [];
+  private _numTotalChunks = -1;
 
   constructor(
     readonly id: string,
     readonly pre: Worker,
     readonly workers: Worker[],
     readonly post: Worker
-  ) {}
+  ) {
+    this.active = [];
+    for (let i = 0; i < workers.length; i++) {
+      this.active.push(false);
+    }
+  }
+
+  get numTotalChunks(): number {
+    return this._numTotalChunks;
+  }
+
+  setNumTotalChunks(n: number) {
+    this._numTotalChunks = n;
+  }
 
   start(file: File) {
     console.log(`[front] (${this.id}) start`);
@@ -22,10 +39,33 @@ export class ConvertSession {
     this.pre.postMessage(start);
   }
 
-  roundRobin(m: PocConvertChunkMessage) {
-    const index = this.count % this.workers.length;
-    this.workers[index].postMessage(m);
+  queue(m: PocConvertChunkMessage) {
+    this.buffer.push(m);
+    this.enqueue();
     this.count++;
+  }
+
+  private enqueue() {
+    if (this.buffer.length === 0) {
+      return;
+    }
+    const length = this.workers.length;
+    const index = this.queued % length;
+    let queue = -1;
+    for (let i = 0; i < length; i++) {
+      const idx = (i + index) % length;
+      if (!this.active[idx]) {
+        queue = idx;
+        break;
+      }
+    }
+    if (queue < 0) {
+      return;
+    }
+    const m = this.buffer.shift();
+    this.workers[queue].postMessage(m);
+    this.active[queue] = true;
+    this.queued++;
   }
 
   markQueueingFinished() {
@@ -33,9 +73,16 @@ export class ConvertSession {
     this.finalCount = this.count;
   }
 
-  incrementDone() {
-    this.done++;
-    if (this.finalCount === this.done) {
+  done(worker: Worker): number {
+    this.done_++;
+    for (let i = 0; i < this.workers.length; i++) {
+      if (worker === this.workers[i]) {
+        this.active[i] = false;
+        break;
+      }
+    }
+    this.enqueue();
+    if (this.finalCount === this.done_) {
       console.log(`[front] (${this.id}) all chunk conversion finished`);
       const m: PocStartPostMessage = {
         type: "post",
@@ -43,6 +90,7 @@ export class ConvertSession {
       };
       this.post.postMessage(m);
     }
+    return this.done_;
   }
 
   markPostDone() {

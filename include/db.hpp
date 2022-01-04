@@ -2,16 +2,11 @@
 
 class Db : public je2be::tobe::DbInterface {
 public:
-  Db() {
-    std::cout << __FUNCTION__ << std::endl;
-  }
-
   bool valid() const override {
     return true;
   }
 
   void put(std::string const &key, leveldb::Slice const &value) override {
-    std::cout << __FUNCTION__ << "; key=\"" << key << "\"; value.size=" << value.size() << std::endl;
     std::string v = value.ToString();
 #if defined(EMSCRIPTEN)
     EM_ASM({
