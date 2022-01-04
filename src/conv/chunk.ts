@@ -5,7 +5,7 @@ import {
 } from "../share/messages";
 import { FileStorage } from "../share/file-storage";
 import { WriteI32 } from "../share/heap";
-import { dirname, mkdirp } from "./fs-ext";
+import { dirname, exists, mkdirp } from "./fs-ext";
 
 self.importScripts("./chunk-core.js");
 
@@ -39,19 +39,20 @@ async function convertChunk(m: PocConvertChunkMessage): Promise<void> {
   const rx = cx >> 5;
   const rz = cz >> 5;
   const path = `${worldDir}/region/r.${rx}.${rz}.mca`;
-  const file = await fs.files.get({ path });
-  if (!file) {
-    return;
+  if (!exists(path)) {
+    const file = await fs.files.get({ path });
+    if (!file) {
+      return;
+    }
+    const dir = dirname(path);
+    mkdirp(dir);
+    FS.writeFile(path, file.data);
   }
-  const dir = dirname(path);
-  mkdirp(dir);
-  FS.writeFile(path, file.data);
   const storage = Module._malloc(javaEditionMap.length * 4);
   for (let i = 0; i < javaEditionMap.length; i++) {
     WriteI32(storage + i, javaEditionMap[i]);
   }
   Module.ConvertChunk(id, cx, cz, dim, storage, javaEditionMap.length);
-  FS.unlink(path);
   const done: PocChunkConvertDoneMessage = {
     type: "chunk_done",
     id,
