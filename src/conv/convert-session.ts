@@ -12,6 +12,8 @@ export class ConvertSession {
   private readonly active: boolean[];
   private buffer: PocConvertRegionMessage[] = [];
   private _numTotalChunks = -1;
+  numDoneChunks = 0;
+  lastProgressUpdate: number = 0;
 
   constructor(
     readonly id: string,
@@ -73,7 +75,7 @@ export class ConvertSession {
     this.finalCount = this.count;
   }
 
-  done(worker: Worker): number {
+  done(worker: Worker) {
     this.done_++;
     for (let i = 0; i < this.workers.length; i++) {
       if (worker === this.workers[i]) {
@@ -90,7 +92,6 @@ export class ConvertSession {
       };
       this.post.postMessage(m);
     }
-    return this.done_;
   }
 
   markPostDone() {

@@ -197,3 +197,22 @@ export function isExportDoneMessage(x: any): x is ExportDoneMessage {
     typeof x["numTotalChunks"] === "number"
   );
 }
+
+export type ConvertProgressDeltaMessage = {
+  type: "convert_progress_delta";
+  id: string;
+  delta: number;
+};
+
+export function isConvertProgressDeltaMessage(
+  x: any
+): x is ConvertProgressDeltaMessage {
+  if (!x) {
+    return false;
+  }
+  return (
+    x["type"] === "convert_progress_delta" &&
+    typeof x["id"] === "string" &&
+    typeof x["delta"] === "number"
+  );
+}

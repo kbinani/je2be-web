@@ -1,6 +1,7 @@
 import * as React from "react";
 import { ChangeEvent, FC, useEffect, useMemo, useReducer, useRef } from "react";
 import {
+  isConvertProgressDeltaMessage,
   isExportDoneMessage,
   isPocConvertQueueingFinishedMessage,
   isPocConvertRegionDoneMessage,
@@ -124,7 +125,13 @@ export const MainComponent: FC = () => {
         }
         const id = session.current?.id;
         if (isPocConvertRegionDoneMessage(ev.data) && ev.data.id === id) {
-          const progress = session.current.done(target) * 32 * 32;
+          session.current.done(target);
+        } else if (
+          isConvertProgressDeltaMessage(ev.data) &&
+          ev.data.id === id
+        ) {
+          session.current.numDoneChunks += ev.data.delta;
+          const progress = session.current.numDoneChunks;
           const total = session.current.numTotalChunks;
           const m: ProgressMessage = {
             id,
@@ -134,7 +141,11 @@ export const MainComponent: FC = () => {
             total,
           };
           state.current = updateProgress(state.current, m);
-          forceUpdate();
+          const now = Date.now();
+          if (session.current.lastProgressUpdate + 1000.0 / 60.0 <= now) {
+            session.current.lastProgressUpdate = now;
+            forceUpdate();
+          }
         }
       };
       a.push(w);

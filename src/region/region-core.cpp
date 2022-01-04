@@ -16,18 +16,17 @@ using namespace je2be::tobe;
 using namespace leveldb;
 namespace fs = std::filesystem;
 
-static void Report(std::string id, std::string stage, double progress, double total) {
+static void Report(std::string id, int delta) {
 #if defined(EMSCRIPTEN)
   EM_ASM({
+    //ConvertProgressDeltaMessage
     const m = {};
+    m["type"] = "convert_progress_delta";
     m["id"] = UTF8ToString($0, $1);
-    m["stage"] = UTF8ToString($2, $3);
-    m["progress"] = $4;
-    m["total"] = $5;
-    m["type"] = "progress";
+    m["delta"] = $2;
     self.postMessage(m);
   },
-         id.c_str(), id.size(), stage.c_str(), stage.size(), progress, total);
+         id.c_str(), id.size(), delta);
 #endif
 }
 
@@ -54,9 +53,12 @@ bool ConvertRegion(string id, int cx, int cz, int dim, intptr_t javaEditionMap, 
   if (!region) {
     return true;
   }
+  auto last = chrono::high_resolution_clock::now();
   for (int cx = region->minChunkX(); cx <= region->maxChunkX(); cx++) {
     for (int cz = region->minChunkZ(); cz <= region->maxChunkZ(); cz++) {
       auto result = Chunk::Convert(d, db, *region, cx, cz, jem);
+      auto now = chrono::high_resolution_clock::now();
+      Report(id, 1);
       if (!result.fData) {
         continue;
       }
