@@ -67,5 +67,5 @@ public/script/front.js: src/front/index.tsx src/front/main.tsx src/front/footer.
 public/sworker.js: src/sworker/sworker.ts src/share/messages.ts src/share/version.ts
 	yarn sworker
 
-build/chunk-core-prefix.js: src/chunk/chunk-core-prefix.ts
+build/chunk-core-prefix.js: src/chunk/chunk-core-prefix.ts src/share/db-backend.ts
 	yarn chunk-core-prefix

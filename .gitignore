@@ -2,5 +2,6 @@
 /node_modules
 /.idea
 /public
+/xcode
 *.mcworld
 *.zip
