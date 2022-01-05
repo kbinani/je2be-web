@@ -15,7 +15,6 @@ using namespace je2be;
 using namespace je2be::tobe;
 namespace fs = std::filesystem;
 
-
 bool Post(string id) {
   fs::path inputDir = fs::path("/je2be") / id / "in";
   fs::path outputDir = fs::path("/je2be") / id / "out";
@@ -38,7 +37,7 @@ bool Post(string id) {
   bool ok = Datapacks::Import(inputDir, outputDir);
 
   auto levelData = make_unique<LevelData>(inputDir, io);
-  
+
   auto worldDataDir = fs::path("/je2be") / id / "wd";
   for (Dimension dim : {Dimension::Overworld, Dimension::Nether, Dimension::End}) {
     auto dir = worldDataDir / to_string(static_cast<uint8_t>(dim));
@@ -59,7 +58,7 @@ bool Post(string id) {
   }
 
   ::Db db(fs::path("/je2be") / id / "ldb", "level");
-  
+
   auto localPlayerData = Converter::LocalPlayerData(*data, *levelData);
   if (localPlayerData) {
     auto k = mcfile::be::DbKey::LocalPlayer();
@@ -73,6 +72,9 @@ bool Post(string id) {
       ok = levelData->put(db, *data);
     }
   }
+
+  ec.clear();
+  fs::remove_all(inputDir, ec);
 
   return true;
 }
