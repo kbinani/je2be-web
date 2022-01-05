@@ -2,9 +2,7 @@ name: build
 on:
   push:
     branches:
-      - main
-    tags:
-      - '[0-9]+.[0-9]+.[0-9]+'
+      - threading
 env:
   JE2BE_DOCKER_CACHE_PATH: je2be_build_wasm.docker
 jobs:
