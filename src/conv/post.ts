@@ -20,14 +20,22 @@ self.importScripts("./post-core.js");
 function startPost(m: PocStartPostMessage) {
   const { id } = m;
   console.log(`[post] (${id}) start`);
-  post(m).then(() => {
-    const done: PocPostDoneMessage = {
-      type: "post_done",
-      id,
-    };
-    console.log(`[post] (${id}) done`);
-    self.postMessage(done);
-  });
+  post(m)
+    .then(() => {
+      const done: PocPostDoneMessage = {
+        type: "post_done",
+        id,
+      };
+      console.log(`[post] (${id}) done`);
+      self.postMessage(done);
+    })
+    .finally(() => {
+      const fs = new FileStorage();
+      fs.files
+        .clear()
+        .then(() => console.log(`[post] (${id}) file storage cleared`))
+        .catch(console.error);
+    });
 }
 
 async function post(m: PocStartPostMessage): Promise<void> {
@@ -36,7 +44,9 @@ async function post(m: PocStartPostMessage): Promise<void> {
   await extract(id, file, levelDirectory);
   await loadWorldData(id, fs);
   const ok: boolean = Module.Post(id);
-  console.log(`ok=${ok}`);
+  if (!ok) {
+    return;
+  }
 }
 
 async function extract(
