@@ -141,13 +141,20 @@ export function isPocConvertQueueingFinishedMessage(
 export type PocStartPostMessage = {
   type: "post";
   id: string;
+  file: File;
+  levelDirectory: string;
 };
 
 export function isPocStartPostMessage(x: any): x is PocStartPostMessage {
   if (!x) {
     return false;
   }
-  return x["type"] === "post" && typeof x["id"] === "string";
+  return (
+    x["type"] === "post" &&
+    typeof x["id"] === "string" &&
+    x["file"] instanceof File &&
+    typeof x["levelDirectory"] === "string"
+  );
 }
 
 export type PocPostDoneMessage = {
@@ -185,6 +192,7 @@ export type ExportDoneMessage = {
   type: "export_done";
   id: string;
   numTotalChunks: number;
+  levelDirectory: string;
 };
 
 export function isExportDoneMessage(x: any): x is ExportDoneMessage {
@@ -194,7 +202,8 @@ export function isExportDoneMessage(x: any): x is ExportDoneMessage {
   return (
     x["type"] === "export_done" &&
     typeof x["id"] === "string" &&
-    typeof x["numTotalChunks"] === "number"
+    typeof x["numTotalChunks"] === "number" &&
+    typeof x["levelDirectory"] === "string"
   );
 }
 

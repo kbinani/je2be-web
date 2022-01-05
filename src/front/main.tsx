@@ -98,6 +98,7 @@ export const MainComponent: FC = () => {
         forceUpdate();
       } else if (isExportDoneMessage(ev.data) && ev.data.id === id) {
         session.current.setNumTotalChunks(ev.data.numTotalChunks);
+        session.current.levelDirectory = ev.data.levelDirectory;
       }
     };
     return w;
@@ -160,7 +161,7 @@ export const MainComponent: FC = () => {
     }
     const id = uuidv4();
     const file = files.item(0);
-    const s = new ConvertSession(id, pre, workers, post);
+    const s = new ConvertSession(id, pre, workers, post, file);
     session.current = s;
     s.start(file);
   };

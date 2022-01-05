@@ -12,10 +12,14 @@ import JSZip from "jszip";
 import { FileStorage } from "../share/file-storage";
 import { Point } from "../share/cg";
 import { ReadI32 } from "../share/heap";
+import { promiseUnzipFileInZip } from "../share/zip-ext";
 
 self.onmessage = (ev: MessageEvent) => {
   if (isPocStartPreMessage(ev.data)) {
-    start(ev.data);
+    const { id } = ev.data;
+    start(ev.data).finally(() => {
+      Module.RemoveAll(`/je2be/${id}`);
+    });
   }
 };
 
@@ -33,15 +37,15 @@ async function start(m: PocStartPreMessage): Promise<void> {
   mkdirp(`/je2be`);
   mkdirp(`/je2be/${id}/in`);
   mkdirp(`/je2be/${id}/out`);
-  mkdirp(`/je2be/dl`);
 
   console.log(`[pre] (${id}) extract...`);
-  const regions = await extract(file, id);
+  const { regions, levelDirectory } = await extract(file, id);
   const numTotalChunks = regions.length * 32 * 32;
   const exportDone: ExportDoneMessage = {
     type: "export_done",
     id,
     numTotalChunks,
+    levelDirectory,
   };
   self.postMessage(exportDone);
   console.log(`[pre] (${id}) extract done`);
@@ -78,7 +82,10 @@ async function start(m: PocStartPreMessage): Promise<void> {
   self.postMessage(last);
 }
 
-async function extract(file: File, id: string): Promise<Region[]> {
+async function extract(
+  file: File,
+  id: string
+): Promise<{ regions: Region[]; levelDirectory: string }> {
   let zip: any;
   try {
     zip = await JSZip.loadAsync(file);
@@ -90,7 +97,7 @@ async function extract(file: File, id: string): Promise<Region[]> {
     throw error;
   }
   const foundLevelDat: string[] = [];
-  zip.forEach((p: string, f: JSZip.JSZipObject) => {
+  zip.forEach((p: string) => {
     if (!p.endsWith("level.dat")) {
       return;
     }
@@ -180,7 +187,7 @@ async function extract(file: File, id: string): Promise<Region[]> {
   });
   await Promise.all(unzipToIdb);
 
-  return mca.map((path) => {
+  const regions = mca.map((path) => {
     let dim = 0;
     if (path.includes("/DIM1/")) {
       dim = 2;
@@ -193,24 +200,8 @@ async function extract(file: File, id: string): Promise<Region[]> {
     const rz = parseInt(token[2], 10);
     return { dim, region: new Point(rx, rz) };
   });
-}
-
-async function promiseUnzipFileInZip({
-  zip,
-  path,
-}: {
-  zip: JSZip;
-  path: string;
-}): Promise<Uint8Array> {
-  return new Promise<Uint8Array>((resolve, reject) => {
-    zip
-      .file(path)
-      .async("uint8array")
-      .then((buffer) => {
-        resolve(buffer);
-      })
-      .catch(reject);
-  });
+  const levelDirectory = dirname(levelDatPath);
+  return { regions, levelDirectory };
 }
 
 function queue(id: string, regions: Region[], javaEditionMap: number[]) {

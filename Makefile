@@ -1,9 +1,9 @@
 .PHONY: all
-all: public/script/front.js public/sworker.js public/script/region.js public/script/region-core.js public/script/pre.js public/script/pre-core.js public/script/post.js
+all: public/script/front.js public/sworker.js public/script/region.js public/script/region-core.js public/script/pre.js public/script/pre-core.js public/script/post.js public/script/post-core.js
 
 .PHONY: clean
 clean:
-	rm -rf build/pre-core.js build/region-core.js public/script
+	rm -rf build/pre-core.js build/region-core.js build/post-core.js public/script
 
 .PHONY: build_docker_image
 build_docker_image:
@@ -36,6 +36,20 @@ build/pre-core.js: src/conv/pre-core.cpp CMakeLists.txt
 public/script/pre-core.js: build/pre-core.js
 	mkdir -p public/script
 	cp build/pre-core.js public/script/pre-core.js
+
+
+.PHONY: build_post_core_wasm
+build_post_core_wasm:
+	cd build && emcmake cmake .. && make -j $$(nproc) post-core
+
+build/post-core.js: src/conv/post-core.cpp CMakeLists.txt
+	mkdir -p build
+	docker run --rm -v $$(pwd):/src/je2be-web -u $$(id -u):$$(id -g) -w /src/je2be-web je2be_build_wasm make build_post_core_wasm
+	touch build/post-core.js
+
+public/script/post-core.js: build/post-core.js
+	mkdir -p public/script
+	cp build/post-core.js public/script/post-core.js
 
 
 public/script/pre.js: src/conv/pre.ts src/conv/fs-ext.ts src/conv/index.d.ts src/share/messages.ts src/share/version.ts

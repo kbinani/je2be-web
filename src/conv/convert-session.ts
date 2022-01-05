@@ -14,12 +14,14 @@ export class ConvertSession {
   private _numTotalChunks = -1;
   numDoneChunks = 0;
   lastProgressUpdate: number = 0;
+  levelDirectory: string = "";
 
   constructor(
     readonly id: string,
     readonly pre: Worker,
     readonly workers: Worker[],
-    readonly post: Worker
+    readonly post: Worker,
+    readonly file: File
   ) {
     this.active = [];
     for (let i = 0; i < workers.length; i++) {
@@ -89,6 +91,8 @@ export class ConvertSession {
       const m: PocStartPostMessage = {
         type: "post",
         id: this.id,
+        file: this.file,
+        levelDirectory: this.levelDirectory,
       };
       this.post.postMessage(m);
     }

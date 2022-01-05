@@ -51,8 +51,14 @@ int Pre(std::string id, std::string input, std::string output, int levelStructur
   return length;
 }
 
+void RemoveAll(string dir) {
+  error_code ec;
+  fs::remove_all(fs::path(dir), ec);
+}
+
 #if defined(EMSCRIPTEN)
 EMSCRIPTEN_BINDINGS() {
   emscripten::function("Pre", &Pre);
+  emscripten::function("RemoveAll", &RemoveAll);
 }
 #endif
