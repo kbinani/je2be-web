@@ -48,8 +48,31 @@ async function convertRegion(m: PocConvertRegionMessage): Promise<void> {
   for (let i = 0; i < javaEditionMap.length; i++) {
     WriteI32(storage + i, javaEditionMap[i]);
   }
-  Module.ConvertRegion(id, rx, rz, dim, storage, javaEditionMap.length);
+  const outDir = `/je2be/${id}/ldb/${dim}`;
+  mkdirp(outDir);
+  const numFiles = Module.ConvertRegion(
+    id,
+    rx,
+    rz,
+    dim,
+    storage,
+    javaEditionMap.length
+  );
   FS.unlink(path);
+  if (numFiles < 0) {
+    // error
+    return;
+  }
+  if (numFiles === 0) {
+    // do nothing
+    return;
+  }
+  for (let i = 0; i < numFiles; i++) {
+    const ldb = `${outDir}/r.${rx}.${rz}.ldb.${i}`;
+    const buffer = FS.readFile(ldb);
+    await fs.files.put({ path: ldb, data: buffer });
+    FS.unlink(ldb);
+  }
   const done: PocConvertRegionDoneMessage = {
     type: "region_done",
     id,

@@ -7,7 +7,7 @@ import {
   ProgressMessage,
   WorkerError,
 } from "../share/messages";
-import { dirname, mkdirp, mount, syncfs } from "./fs-ext";
+import { dirname, mkdirp, syncfs } from "./fs-ext";
 import JSZip from "jszip";
 import { FileStorage } from "../share/file-storage";
 import { Point } from "../share/cg";
@@ -31,7 +31,6 @@ async function start(m: PocStartPreMessage): Promise<void> {
   const { id, file } = m;
 
   mkdirp(`/je2be`);
-  mount("je2be");
   mkdirp(`/je2be/${id}/in`);
   mkdirp(`/je2be/${id}/out`);
   mkdirp(`/je2be/dl`);

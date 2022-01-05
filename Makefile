@@ -3,7 +3,7 @@ all: public/script/front.js public/sworker.js public/script/region.js public/scr
 
 .PHONY: clean
 clean:
-	rm -rf build/pre-core.js build/region-core.js build/region-core-prefix.js public/script
+	rm -rf build/pre-core.js build/region-core.js public/script
 
 .PHONY: build_docker_image
 build_docker_image:
@@ -17,10 +17,11 @@ build_region_core_wasm:
 build/region-core.js: src/region/region-core.cpp include/db.hpp CMakeLists.txt
 	mkdir -p build
 	docker run --rm -v $$(pwd):/src/je2be-web -u $$(id -u):$$(id -g) -w /src/je2be-web je2be_build_wasm make build_region_core_wasm
+	touch build/region-core.js
 
-public/script/region-core.js: build/region-core-prefix.js build/region-core.js
+public/script/region-core.js: build/region-core.js
 	mkdir -p public/script
-	cat build/region-core-prefix.js build/region-core.js > public/script/region-core.js
+	cp build/region-core.js public/script/region-core.js
 
 
 .PHONY: build_pre_core_wasm
@@ -30,6 +31,7 @@ build_pre_core_wasm:
 build/pre-core.js: src/conv/pre-core.cpp CMakeLists.txt
 	mkdir -p build
 	docker run --rm -v $$(pwd):/src/je2be-web -u $$(id -u):$$(id -g) -w /src/je2be-web je2be_build_wasm make build_pre_core_wasm
+	touch build/pre-core.js
 
 public/script/pre-core.js: build/pre-core.js
 	mkdir -p public/script
@@ -49,7 +51,4 @@ public/script/front.js: src/front/index.tsx src/front/main.tsx src/front/footer.
 	yarn front --minify
 
 public/sworker.js: src/sworker/sworker.ts src/share/messages.ts src/share/version.ts
-	yarn sworker
-
-build/region-core-prefix.js: src/region/region-core-prefix.ts src/share/db-backend.ts
-	yarn region-core-prefix
+	yarn sworker --minify

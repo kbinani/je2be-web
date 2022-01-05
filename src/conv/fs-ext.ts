@@ -38,29 +38,9 @@ export async function syncfs(populate: boolean): Promise<void> {
   });
 }
 
-export function umount(p: string): boolean {
-  try {
-    FS.unmount(p);
-    return true;
-  } catch (e) {
-    console.error(e);
-  }
-  return false;
-}
-
 export function fclose(fp: any): boolean {
   try {
     FS.close(fp);
-    return true;
-  } catch (e) {
-    console.error(e);
-  }
-  return false;
-}
-
-export function mount(p: string): boolean {
-  try {
-    FS.mount(IDBFS, {}, p);
     return true;
   } catch (e) {
     console.error(e);

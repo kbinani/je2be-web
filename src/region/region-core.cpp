@@ -31,7 +31,7 @@ static void Report(std::string id, int delta) {
 }
 
 //id, rx, rz, dim, storage, javaEditionMap.length
-bool ConvertRegion(string id, int cx, int cz, int dim, intptr_t javaEditionMap, int javaEditionMapSize) {
+int ConvertRegion(string id, int rx, int rz, int dim, intptr_t javaEditionMap, int javaEditionMapSize) {
   std::unordered_map<int32_t, int8_t> entries;
   int32_t *ptr = (int32_t *)javaEditionMap;
   for (int i = 0; i + 1 < javaEditionMapSize; i += 2) {
@@ -41,17 +41,17 @@ bool ConvertRegion(string id, int cx, int cz, int dim, intptr_t javaEditionMap, 
   }
   free(ptr);
 
-  ::Db db;
+  string basename("r." + to_string(rx) + "." + to_string(rz));
+  auto dir = fs::path("/je2be") / id / "ldb" / to_string(dim);
+  ::Db db(dir, basename);
   InputOption io;
   JavaEditionMap jem(entries);
   Dimension d = static_cast<Dimension>(dim);
   fs::path worldDir = io.getWorldDirectory(fs::path("/je2be") / id / "in", d);
   mcfile::je::World w(worldDir);
-  int rx = Coordinate::RegionFromChunk(cx);
-  int rz = Coordinate::RegionFromChunk(cz);
   auto region = w.region(rx, rz);
   if (!region) {
-    return true;
+    return 0;
   }
   auto last = chrono::high_resolution_clock::now();
   for (int cx = region->minChunkX(); cx <= region->maxChunkX(); cx++) {
@@ -64,12 +64,15 @@ bool ConvertRegion(string id, int cx, int cz, int dim, intptr_t javaEditionMap, 
       }
       //TODO: result.fData->drain(ld);
       if (!result.fOk) {
-        return false;
+        return -1;
       }
     }
   }
+  if (!db.flush()) {
+    return -1;
+  }
   //TODO:
-  return true;
+  return db.fNumFiles;
 }
 
 #if defined(EMSCRIPTEN)

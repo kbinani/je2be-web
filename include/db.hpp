@@ -2,26 +2,21 @@
 
 class Db : public je2be::tobe::DbInterface {
 public:
+  explicit Db(std::filesystem::path dir, std::string basename) : fDir(dir), fBasename(basename) {}
+
   bool valid() const override {
-    return true;
+    return fValid;
   }
 
   void put(std::string const &key, leveldb::Slice const &value) override {
+    if (!fValid) {
+      return;
+    }
     std::string v = value.ToString();
-#if defined(EMSCRIPTEN)
-    EM_ASM({
-      const key = new Uint8Array($1);
-      for (let i = 0; i < $1; i++) {
-        key[i] = Module.HEAPU8[$0 + i];
-      }
-      const value = new Uint8Array($3);
-      for (let i = 0; i < $3; i++) {
-        value[i] = Module.HEAPU8[$2 + i];
-      }
-      PutToDb(key, value);
-    },
-           key.c_str(), key.size(), v.c_str(), v.size());
-#endif
+    fBuffer.push_back(std::make_pair(key, v));
+    if (fBuffer.size() >= 512) {
+      fValid = flush();
+    }
   }
 
   void del(std::string const &key) override {
@@ -35,4 +30,49 @@ public:
   void abandon() override {
     // nop
   }
+
+  bool flush() {
+    using namespace std;
+    using namespace leveldb;
+    namespace fs = std::filesystem;
+    auto env = Env::Default();
+    WritableFile *ptr = nullptr;
+    auto path = fDir / (fBasename + ".ldb." + to_string(fNumFiles));
+    vector<pair<string, string>> buffer;
+    buffer.swap(fBuffer);
+    auto st = env->NewWritableFile(path, &ptr);
+    if (!st.ok()) {
+      return false;
+    }
+    unique_ptr<WritableFile> wf(ptr);
+    Options o;
+    o.compression = kZlibRawCompression;
+    TableBuilder tb(o, wf.get());
+    sort(buffer.begin(), buffer.end(), [](auto const &a, auto const &b) {
+      Comparator const *comp = BytewiseComparator();
+      return comp->Compare(a.first, b.first) < 0;
+    });
+    for (auto const &pair : buffer) {
+      tb.Add(pair.first, pair.second);
+    }
+    st = tb.Finish();
+    if (!st.ok()) {
+      return false;
+    }
+    st = wf->Close();
+    if (!st.ok()) {
+      return false;
+    }
+    fNumFiles++;
+    return true;
+  }
+
+public:
+  int fNumFiles = 0;
+
+private:
+  bool fValid = true;
+  std::filesystem::path fDir;
+  std::string fBasename;
+  std::vector<std::pair<std::string, std::string>> fBuffer;
 };
