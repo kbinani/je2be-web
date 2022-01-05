@@ -3,7 +3,7 @@ import {
   PocConvertRegionDoneMessage,
   PocConvertRegionMessage,
 } from "../share/messages";
-import { FileStorage } from "../share/file-storage";
+import { FileStorage, File } from "../share/file-storage";
 import { ReadI32, WriteI32 } from "../share/heap";
 import { dirname, mkdirp } from "./fs-ext";
 
@@ -36,14 +36,25 @@ async function convertRegion(m: PocConvertRegionMessage): Promise<void> {
       worldDir = `${root}`;
       break;
   }
-  const path = `${worldDir}/region/r.${rx}.${rz}.mca`;
-  const file = await fs.files.get({ path });
-  if (!file) {
+
+  const region = `${worldDir}/region/r.${rx}.${rz}.mca`;
+  let regionFile: File | undefined = await fs.files.get({ path: region });
+  if (!regionFile) {
     return;
   }
-  const dir = dirname(path);
-  mkdirp(dir);
-  FS.writeFile(path, file.data);
+  mkdirp(dirname(region));
+  FS.writeFile(region, regionFile.data);
+  regionFile = undefined;
+
+  const entities = `${worldDir}/entities/r.${rx}.${rz}.mca`;
+  let entitiesFile: File | undefined = await fs.files.get({ path: entities });
+  const entitiesFileExists = entitiesFile !== undefined;
+  if (entitiesFile) {
+    mkdirp(dirname(entities));
+    FS.writeFile(entities, entitiesFile.data);
+  }
+  entitiesFile = undefined;
+
   const storage = Module._malloc(javaEditionMap.length * 4);
   for (let i = 0; i < javaEditionMap.length; i++) {
     WriteI32(storage + i, javaEditionMap[i]);
@@ -63,7 +74,10 @@ async function convertRegion(m: PocConvertRegionMessage): Promise<void> {
     javaEditionMap.length,
     numLdbFilesPtr
   );
-  FS.unlink(path);
+  FS.unlink(region);
+  if (entitiesFileExists) {
+    FS.unlink(entities);
+  }
   const numLdbFiles = ReadI32(numLdbFilesPtr);
   if (!ok) {
     return;

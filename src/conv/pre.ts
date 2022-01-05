@@ -110,8 +110,8 @@ async function extract(file: File, id: string): Promise<Region[]> {
   const levelDatPath = foundLevelDat[0];
   const idx = levelDatPath.lastIndexOf("level.dat");
   const prefix = levelDatPath.substring(0, idx);
-  const files: string[] = [];
-  const regions: string[] = [];
+  const other: string[] = [];
+  const mca: string[] = [];
   zip.forEach((path: string, f: JSZip.JSZipObject) => {
     if (!path.startsWith(prefix)) {
       return;
@@ -121,16 +121,15 @@ async function extract(file: File, id: string): Promise<Region[]> {
     }
     if (
       path.endsWith(".mca") &&
-      path.includes("/region/") &&
-      !path.includes("/entities/")
+      (path.includes("/region/") || path.includes("/entities/"))
     ) {
-      regions.push(path);
+      mca.push(path);
     } else {
-      files.push(path);
+      other.push(path);
     }
   });
 
-  const total = files.length + regions.length;
+  const total = other.length + mca.length;
   const m: ProgressMessage = {
     type: "progress",
     id,
@@ -144,7 +143,7 @@ async function extract(file: File, id: string): Promise<Region[]> {
   await fs.files.clear();
 
   let progress = 0;
-  const unzip = files.map(async (path) => {
+  const unzipToMemory = other.map(async (path) => {
     const rel = path.substring(prefix.length);
     const target = `/je2be/${id}/in/${rel}`;
     const directory = dirname(target);
@@ -162,9 +161,9 @@ async function extract(file: File, id: string): Promise<Region[]> {
     };
     self.postMessage(m);
   });
-  await Promise.all(unzip);
+  await Promise.all(unzipToMemory);
 
-  const copy = regions.map(async (path) => {
+  const unzipToIdb = mca.map(async (path) => {
     const rel = path.substring(prefix.length);
     const target = `/je2be/${id}/in/${rel}`;
     const buffer = await promiseUnzipFileInZip({ zip, path });
@@ -179,9 +178,9 @@ async function extract(file: File, id: string): Promise<Region[]> {
     };
     self.postMessage(m);
   });
-  await Promise.all(copy);
+  await Promise.all(unzipToIdb);
 
-  return regions.map((path) => {
+  return mca.map((path) => {
     let dim = 0;
     if (path.includes("/DIM1/")) {
       dim = 2;
