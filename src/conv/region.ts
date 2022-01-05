@@ -3,7 +3,7 @@ import {
   PocConvertRegionDoneMessage,
   PocConvertRegionMessage,
 } from "../share/messages";
-import { FileStorage, File } from "../share/file-storage";
+import { File, FileStorage } from "../share/file-storage";
 import { ReadI32, WriteI32 } from "../share/heap";
 import { dirname, mkdirp } from "./fs-ext";
 

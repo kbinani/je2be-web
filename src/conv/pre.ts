@@ -119,6 +119,7 @@ async function extract(
   const prefix = levelDatPath.substring(0, idx);
   const other: string[] = [];
   const mca: string[] = [];
+  const entities: string[] = [];
   zip.forEach((path: string, f: JSZip.JSZipObject) => {
     if (!path.startsWith(prefix)) {
       return;
@@ -126,17 +127,19 @@ async function extract(
     if (f.dir) {
       return;
     }
-    if (
-      path.endsWith(".mca") &&
-      (path.includes("/region/") || path.includes("/entities/"))
-    ) {
-      mca.push(path);
-    } else {
-      other.push(path);
+    if (path.endsWith(".mca")) {
+      if (path.includes("/region/")) {
+        mca.push(path);
+        return;
+      } else if (path.includes("/entities/")) {
+        entities.push(path);
+        return;
+      }
     }
+    other.push(path);
   });
 
-  const total = other.length + mca.length;
+  const total = other.length + mca.length + entities.length;
   const m: ProgressMessage = {
     type: "progress",
     id,
@@ -170,7 +173,7 @@ async function extract(
   });
   await Promise.all(unzipToMemory);
 
-  const unzipToIdb = mca.map(async (path) => {
+  const unzipToIdb = [...mca, ...entities].map(async (path) => {
     const rel = path.substring(prefix.length);
     const target = `/je2be/${id}/in/${rel}`;
     const buffer = await promiseUnzipFileInZip({ zip, path });
