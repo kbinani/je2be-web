@@ -35,7 +35,8 @@ async function post(m: PocStartPostMessage): Promise<void> {
   const fs = new FileStorage();
   await extract(id, file, levelDirectory);
   await loadWorldData(id, fs);
-  Module.Post(id);
+  const ok: boolean = Module.Post(id);
+  console.log(`ok=${ok}`);
 }
 
 async function extract(
@@ -83,14 +84,11 @@ async function loadWorldData(id: string, fs: FileStorage): Promise<void> {
   mkdirp(`${prefix}/0`);
   mkdirp(`${prefix}/1`);
   mkdirp(`${prefix}/2`);
-  let size = 0;
   await fs.files
     .where("path")
     .startsWith(`${prefix}/`)
     .each((file: File) => {
       const { path, data } = file;
       FS.writeFile(path, data);
-      size += data.byteLength;
     });
-  console.log(`${size} bytes copied to FS`);
 }

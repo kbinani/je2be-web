@@ -42,7 +42,7 @@ public/script/pre-core.js: build/pre-core.js
 build_post_core_wasm:
 	cd build && emcmake cmake .. && make -j $$(nproc) post-core
 
-build/post-core.js: src/conv/post-core.cpp CMakeLists.txt
+build/post-core.js: src/conv/post-core.cpp include/db.hpp CMakeLists.txt
 	mkdir -p build
 	docker run --rm -v $$(pwd):/src/je2be-web -u $$(id -u):$$(id -g) -w /src/je2be-web je2be_build_wasm make build_post_core_wasm
 	touch build/post-core.js
