@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -flto")
+
 add_subdirectory(deps/je2be EXCLUDE_FROM_ALL)
 
 # add_executable(core src/core/core.cpp deps/zlib/contrib/minizip/zip.c deps/zlib/contrib/minizip/ioapi.c)
@@ -24,7 +26,8 @@ set(je2be_common_em_link_options
   -sINLINING_LIMIT=1
   -sENVIRONMENT=worker
   -sINVOKE_RUN=0
-  -O3)
+  -O3
+  -flto)
 
 add_executable(region-core
   src/region/region-core.cpp
