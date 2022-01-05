@@ -8,8 +8,12 @@ export async function promiseUnzipFileInZip({
   path: string;
 }): Promise<Uint8Array> {
   return new Promise<Uint8Array>((resolve, reject) => {
-    zip
-      .file(path)
+    const file = zip.file(path);
+    if (!file) {
+      reject();
+      return;
+    }
+    file
       .async("uint8array")
       .then((buffer) => {
         resolve(buffer);
