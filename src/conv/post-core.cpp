@@ -27,6 +27,7 @@ bool Post(string id) {
       }
     }
   }
+  return true;
 }
 
 #if defined(EMSCRIPTEN)

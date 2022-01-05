@@ -5,7 +5,7 @@ import {
   WorkerError,
 } from "../share/messages";
 import { File, FileStorage } from "../share/file-storage";
-import { mkdirp } from "./fs-ext";
+import { dirname, mkdirp } from "./fs-ext";
 import JSZip from "jszip";
 import { promiseUnzipFileInZip } from "../share/zip-ext";
 
@@ -35,6 +35,7 @@ async function post(m: PocStartPostMessage): Promise<void> {
   const fs = new FileStorage();
   await extract(id, file, levelDirectory);
   await loadWorldData(id, fs);
+  Module.Post(id);
 }
 
 async function extract(
@@ -55,7 +56,10 @@ async function extract(
   mkdirp(`/je2be/${id}/in`);
   const files: string[] = [];
   const prefix = `${levelDirectory}/`;
-  zip.forEach((p: string) => {
+  zip.forEach((p: string, f: JSZip.JSZipObject) => {
+    if (f.dir) {
+      return;
+    }
     if (!p.startsWith(prefix)) {
       return;
     }
@@ -64,10 +68,11 @@ async function extract(
     }
     files.push(p);
   });
-  const promises = files.map(async (path: string) => {
+  const promises = files.map(async (path) => {
     const buffer = await promiseUnzipFileInZip({ zip, path });
     const rel = path.substring(prefix.length);
     const target = `/je2be/${id}/in/${rel}`;
+    mkdirp(dirname(target));
     FS.writeFile(target, buffer);
   });
   await Promise.all(promises);
