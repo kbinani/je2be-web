@@ -70,17 +70,15 @@ async function convertRegion(m: PocConvertRegionMessage): Promise<void> {
   }
   const copy: Promise<void>[] = [];
   for (let i = 0; i < numLdbFiles; i++) {
-    const ldb = `${ldbDir}/r.${rx}.${rz}.${i}.ldb`;
-    const buffer = FS.readFile(ldb);
-    copy.push(
-      fs.files.put({ path: ldb, data: buffer }).then(() => FS.unlink(ldb))
-    );
+    const path = `${ldbDir}/r.${rx}.${rz}.${i}.ldb`;
+    const data = FS.readFile(path);
+    copy.push(fs.files.put({ path, data }).then(FS.unlink(path)));
   }
-  const nbt = `${wdDir}/r.${rx}.${rz}.nbt`;
-  const buffer = FS.readFile(nbt);
-  copy.push(
-    fs.files.put({ path: nbt, data: buffer }).then(() => FS.unlink(nbt))
-  );
+  {
+    const path = `${wdDir}/r.${rx}.${rz}.nbt`;
+    const data = FS.readFile(path);
+    copy.push(fs.files.put({ path, data }).then(FS.unlink(path)));
+  }
   await Promise.all(copy);
   const done: PocConvertRegionDoneMessage = {
     type: "region_done",

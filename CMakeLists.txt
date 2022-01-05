@@ -14,13 +14,30 @@ add_subdirectory(deps/je2be EXCLUDE_FROM_ALL)
 # target_compile_definitions(core PRIVATE NOCRYPT)
 # target_compile_options(core PRIVATE -Wno-unused-value -Wno-unknown-attributes -g2 -fexceptions)
 
-add_executable(region-core src/region/region-core.cpp ./include/db.hpp)
+set(je2be_common_em_compile_and_link_options
+  -g2
+  -fexceptions)
+set(je2be_common_em_link_options
+  --bind
+  -sSINGLE_FILE=1
+  -sALLOW_MEMORY_GROWTH=1
+  -sINLINING_LIMIT=1
+  -sENVIRONMENT=worker
+  -sINVOKE_RUN=0)
+
+add_executable(region-core
+  src/region/region-core.cpp
+  include/db.hpp)
 target_link_libraries(region-core je2be)
-target_link_options(region-core PRIVATE --bind -s SINGLE_FILE=1 -g2 -fexceptions)
 target_include_directories(region-core PRIVATE ./include)
-target_compile_options(region-core PRIVATE -g2 -fexceptions)
+target_compile_options(region-core PRIVATE ${je2be_common_em_compile_and_link_options})
+target_link_options(region-core PRIVATE
+  ${je2be_common_em_compile_and_link_options}
+  ${je2be_common_em_link_options})
 
 add_executable(pre-core src/conv/pre-core.cpp)
 target_link_libraries(pre-core je2be)
-target_link_options(pre-core PRIVATE --bind -s SINGLE_FILE=1 -g2 -fexceptions)
-target_compile_options(pre-core PRIVATE -g2 -fexceptions)
+target_compile_options(pre-core PRIVATE ${je2be_common_em_compile_and_link_options})
+target_link_options(pre-core PRIVATE
+  ${je2be_common_em_compile_and_link_options}
+  ${je2be_common_em_link_options})

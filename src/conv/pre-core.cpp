@@ -37,20 +37,12 @@ int Pre(std::string id, std::string input, std::string output, int levelStructur
     return -1;
   }
 
-  auto data = Level::Read(io.getLevelDatFilePath(inputPath));
-  if (!data) {
-    return -1;
-  }
-  Level level = Level::Import(*data);
+  JavaEditionMap jem(input, io);
 
-  bool ok = Datapacks::Import(inputPath, outputPath);
-
-  auto levelData = std::make_unique<LevelData>(inputPath, io);
-
-  size_t length = levelData->fJavaEditionMap.fScaleLookupTable.size() * 2;
+  size_t length = jem.fScaleLookupTable.size() * 2;
   int32_t *ptr = (int32_t *)malloc(4 * length);
   size_t i = 0;
-  for (auto k : levelData->fJavaEditionMap.fScaleLookupTable) {
+  for (auto k : jem.fScaleLookupTable) {
     ptr[i++] = k.first;
     ptr[i++] = k.second;
   }
