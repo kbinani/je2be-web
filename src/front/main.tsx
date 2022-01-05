@@ -104,7 +104,7 @@ export const MainComponent: FC = () => {
     return w;
   }, []);
   const post = useMemo(() => {
-    const w = new Worker("./script/post.js", { name: "pre" });
+    const w = new Worker("./script/post.js", { name: "post" });
     w.onmessage = (ev: MessageEvent) => {
       if (isPocPostDoneMessage(ev.data)) {
         if (session.current.id === ev.data.id) {
