@@ -20,7 +20,7 @@ export const Progress: FC<{
       />
       <div className="progressLabel">
         {unit
-          ? `${label}: ${progress} ${unit}, ${p}% done`
+          ? `${label}: ${Math.max(0, progress)} ${unit}, ${p}% done`
           : `${label}: ${p}% done`}
       </div>
     </div>

@@ -227,17 +227,18 @@ function updateProgress(
   const p = m.progress / m.total;
   switch (m.stage) {
     case "unzip":
-      return { ...state, unzip: p };
+      return { ...state, unzip: p, convert: p >= 1 ? -1 : state.convert };
     case "convert":
       return {
         ...state,
         convert: m.progress,
         convertTotal: m.total,
+        compaction: m.progress === m.total ? -1 : state.compaction,
       };
     case "compaction":
-      return { ...state, compaction: p };
+      return { ...state, compaction: p, zip: p >= 1 ? -1 : state.zip };
     case "zip":
-      return { ...state, zip: p };
+      return { ...state, zip: p, copy: p >= 1 ? -1 : state.copy };
     case "copy":
       return { ...state, copy: p };
   }
