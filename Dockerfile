@@ -14,3 +14,5 @@ RUN apt update \
     && sha256sum -c --ignore-missing cmake-${CMAKE_VERSION}-SHA-256.txt \
     && sh ./cmake-${CMAKE_VERSION}-linux-x86_64.sh --skip-license --prefix=/usr/local --exclude-subdir \
     && rm -f /src/cmake-${CMAKE_VERSION}-linux-x86_64.sh
+RUN cd /emsdk/upstream/emscripten \
+    && ./embuilder.py build --lto libembind-rtti libGL libal libhtml5 libstubs libc libcompiler_rt libc++ libc++abi libdlmalloc libc_rt libsockets
