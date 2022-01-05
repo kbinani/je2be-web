@@ -7,7 +7,7 @@ import {
   ProgressMessage,
   WorkerError,
 } from "../share/messages";
-import { dirname, mkdirp, syncfs } from "./fs-ext";
+import { dirname, mkdirp } from "./fs-ext";
 import JSZip from "jszip";
 import { FileStorage } from "../share/file-storage";
 import { Point } from "../share/cg";
@@ -44,7 +44,6 @@ async function start(m: PocStartPreMessage): Promise<void> {
     numTotalChunks,
   };
   self.postMessage(exportDone);
-  await syncfs(false);
   console.log(`[pre] (${id}) extract done`);
 
   console.log(`[pre] (${id}) pre...`);
@@ -57,7 +56,6 @@ async function start(m: PocStartPreMessage): Promise<void> {
     levelStructure,
     storage
   );
-  await syncfs(false);
   console.log(`[pre] (${id}) pre done`);
 
   console.log(`[pre] (${id}) queue...`);
@@ -154,6 +152,7 @@ async function extract(file: File, id: string): Promise<Region[]> {
   await Promise.all(unzip);
 
   const fs = new FileStorage();
+  fs.files.clear();
   const copy = regions.map(async (path) => {
     const rel = path.substring(prefix.length);
     const target = `/je2be/${id}/in/${rel}`;

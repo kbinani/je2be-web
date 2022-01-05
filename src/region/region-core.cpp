@@ -31,7 +31,7 @@ static void Report(std::string id, int delta) {
 }
 
 //id, rx, rz, dim, storage, javaEditionMap.length
-int ConvertRegion(string id, int rx, int rz, int dim, intptr_t javaEditionMap, int javaEditionMapSize) {
+bool ConvertRegion(string id, int rx, int rz, int dim, intptr_t javaEditionMap, int javaEditionMapSize, intptr_t numLdbFiles) {
   std::unordered_map<int32_t, int8_t> entries;
   int32_t *ptr = (int32_t *)javaEditionMap;
   for (int i = 0; i + 1 < javaEditionMapSize; i += 2) {
@@ -51,28 +51,37 @@ int ConvertRegion(string id, int rx, int rz, int dim, intptr_t javaEditionMap, i
   mcfile::je::World w(worldDir);
   auto region = w.region(rx, rz);
   if (!region) {
-    return 0;
+    Report(id, 32 * 32);
+    return true;
   }
-  auto last = chrono::high_resolution_clock::now();
+  auto wd = make_shared<WorldData>(d);
   for (int cx = region->minChunkX(); cx <= region->maxChunkX(); cx++) {
     for (int cz = region->minChunkZ(); cz <= region->maxChunkZ(); cz++) {
       auto result = Chunk::Convert(d, db, *region, cx, cz, jem);
-      auto now = chrono::high_resolution_clock::now();
       Report(id, 1);
       if (!result.fData) {
         continue;
       }
-      //TODO: result.fData->drain(ld);
+      result.fData->drain(*wd);
       if (!result.fOk) {
-        return -1;
+        return false;
       }
     }
   }
   if (!db.flush()) {
-    return -1;
+    return false;
   }
-  //TODO:
-  return db.fNumFiles;
+
+  auto nbt = wd->toNbt();
+  auto file = fs::path("/je2be") / id / "wd" / to_string(dim) / (basename + ".nbt");
+  auto stream = make_shared<mcfile::stream::FileOutputStream>(file);
+  mcfile::stream::OutputStreamWriter writer(stream);
+  if (!nbt->write(writer)) {
+    return false;
+  }
+
+  (*(int32_t *)numLdbFiles) = db.fNumFiles;
+  return true;
 }
 
 #if defined(EMSCRIPTEN)

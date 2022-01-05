@@ -7,12 +7,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_subdirectory(deps/je2be EXCLUDE_FROM_ALL)
 
-add_executable(core src/core/core.cpp deps/zlib/contrib/minizip/zip.c deps/zlib/contrib/minizip/ioapi.c)
-target_link_libraries(core je2be)
-target_link_options(core PRIVATE --bind -s SINGLE_FILE=1 -g2 -fexceptions)
-target_include_directories(core PRIVATE deps/zlib/contrib/minizip)
-target_compile_definitions(core PRIVATE NOCRYPT)
-target_compile_options(core PRIVATE -Wno-unused-value -Wno-unknown-attributes -g2 -fexceptions)
+# add_executable(core src/core/core.cpp deps/zlib/contrib/minizip/zip.c deps/zlib/contrib/minizip/ioapi.c)
+# target_link_libraries(core je2be)
+# target_link_options(core PRIVATE --bind -s SINGLE_FILE=1 -g2 -fexceptions)
+# target_include_directories(core PRIVATE deps/zlib/contrib/minizip)
+# target_compile_definitions(core PRIVATE NOCRYPT)
+# target_compile_options(core PRIVATE -Wno-unused-value -Wno-unknown-attributes -g2 -fexceptions)
 
 add_executable(region-core src/region/region-core.cpp ./include/db.hpp)
 target_link_libraries(region-core je2be)

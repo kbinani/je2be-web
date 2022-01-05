@@ -37,7 +37,7 @@ public:
     namespace fs = std::filesystem;
     auto env = Env::Default();
     WritableFile *ptr = nullptr;
-    auto path = fDir / (fBasename + ".ldb." + to_string(fNumFiles));
+    auto path = fDir / (fBasename + "." + to_string(fNumFiles) + ".ldb");
     vector<pair<string, string>> buffer;
     buffer.swap(fBuffer);
     auto st = env->NewWritableFile(path, &ptr);

@@ -4,7 +4,7 @@ import {
   PocConvertRegionMessage,
 } from "../share/messages";
 import { FileStorage } from "../share/file-storage";
-import { WriteI32 } from "../share/heap";
+import { ReadI32, WriteI32 } from "../share/heap";
 import { dirname, mkdirp } from "./fs-ext";
 
 self.importScripts("./region-core.js");
@@ -48,31 +48,40 @@ async function convertRegion(m: PocConvertRegionMessage): Promise<void> {
   for (let i = 0; i < javaEditionMap.length; i++) {
     WriteI32(storage + i, javaEditionMap[i]);
   }
-  const outDir = `/je2be/${id}/ldb/${dim}`;
-  mkdirp(outDir);
-  const numFiles = Module.ConvertRegion(
+  const ldbDir = `/je2be/${id}/ldb/${dim}`;
+  mkdirp(ldbDir);
+  const wdDir = `/je2be/${id}/wd/${dim}`;
+  mkdirp(wdDir);
+  const numLdbFilesPtr = Module._malloc(4);
+  WriteI32(numLdbFilesPtr, 0);
+  const ok = Module.ConvertRegion(
     id,
     rx,
     rz,
     dim,
     storage,
-    javaEditionMap.length
+    javaEditionMap.length,
+    numLdbFilesPtr
   );
   FS.unlink(path);
-  if (numFiles < 0) {
-    // error
+  const numLdbFiles = ReadI32(numLdbFilesPtr);
+  if (!ok) {
     return;
   }
-  if (numFiles === 0) {
-    // do nothing
-    return;
-  }
-  for (let i = 0; i < numFiles; i++) {
-    const ldb = `${outDir}/r.${rx}.${rz}.ldb.${i}`;
+  const copy: Promise<void>[] = [];
+  for (let i = 0; i < numLdbFiles; i++) {
+    const ldb = `${ldbDir}/r.${rx}.${rz}.${i}.ldb`;
     const buffer = FS.readFile(ldb);
-    await fs.files.put({ path: ldb, data: buffer });
-    FS.unlink(ldb);
+    copy.push(
+      fs.files.put({ path: ldb, data: buffer }).then(() => FS.unlink(ldb))
+    );
   }
+  const nbt = `${wdDir}/r.${rx}.${rz}.nbt`;
+  const buffer = FS.readFile(nbt);
+  copy.push(
+    fs.files.put({ path: nbt, data: buffer }).then(() => FS.unlink(nbt))
+  );
+  await Promise.all(copy);
   const done: PocConvertRegionDoneMessage = {
     type: "region_done",
     id,
