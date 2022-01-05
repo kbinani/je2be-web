@@ -129,8 +129,21 @@ async function extract(file: File, id: string): Promise<Region[]> {
       files.push(path);
     }
   });
+
+  const total = files.length + regions.length;
+  const m: ProgressMessage = {
+    type: "progress",
+    id,
+    stage: "unzip",
+    progress: -1,
+    total,
+  };
+  self.postMessage(m);
+
+  const fs = new FileStorage();
+  await fs.files.clear();
+
   let progress = 0;
-  const total = files.length;
   const unzip = files.map(async (path) => {
     const rel = path.substring(prefix.length);
     const target = `/je2be/${id}/in/${rel}`;
@@ -151,13 +164,20 @@ async function extract(file: File, id: string): Promise<Region[]> {
   });
   await Promise.all(unzip);
 
-  const fs = new FileStorage();
-  fs.files.clear();
   const copy = regions.map(async (path) => {
     const rel = path.substring(prefix.length);
     const target = `/je2be/${id}/in/${rel}`;
     const buffer = await promiseUnzipFileInZip({ zip, path });
     await fs.files.put({ path: target, data: buffer });
+    progress++;
+    const m: ProgressMessage = {
+      type: "progress",
+      id,
+      stage: "unzip",
+      progress,
+      total,
+    };
+    self.postMessage(m);
   });
   await Promise.all(copy);
 
