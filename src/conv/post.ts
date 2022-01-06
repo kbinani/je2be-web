@@ -48,7 +48,7 @@ async function post(m: PocStartPostMessage): Promise<void> {
   console.log(`[post] (${id}) loadWorldData...`);
   await loadWorldData(id, fs);
   console.log(`[post] (${id}) loadWorldData done`);
-  console.log(`[post] (${id}) wasm::post...`);
+  console.log(`[post] (${id}) wasm::Post...`);
   const numFiles = Module.Post(id);
   if (numFiles < 0) {
     console.log(`[post] (${id}) wasm::Post failed`);
