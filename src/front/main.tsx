@@ -114,7 +114,11 @@ export const MainComponent: FC = () => {
         if (dot > 0) {
           filename = session.current.file.name.substring(0, dot) + ".mcworld";
         }
-        state.current = { ...state.current, dl: { id, filename } };
+        state.current = {
+          ...state.current,
+          dl: { id, filename },
+          id: undefined,
+        };
         forceUpdate();
       }
     };
