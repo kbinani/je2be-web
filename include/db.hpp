@@ -12,7 +12,12 @@ public:
     if (!fValid) {
       return;
     }
-    std::string v = value.ToString();
+    std::vector<uint8_t> v;
+    std::copy_n(value.data(), value.size(), std::back_inserter(v));
+    if (!mcfile::Compression::compress(v)) {
+      fValid = false;
+      return;
+    }
     fBuffer.push_back(std::make_pair(key, v));
     if (fBuffer.size() >= 512) {
       fValid = flush();
@@ -34,35 +39,57 @@ public:
   bool flush() {
     using namespace std;
     using namespace leveldb;
+    using namespace mcfile;
     namespace fs = std::filesystem;
-    auto env = Env::Default();
-    WritableFile *ptr = nullptr;
-    auto path = fDir / (fBasename + "." + to_string(fNumFiles) + ".ldb");
-    vector<pair<string, string>> buffer;
-    buffer.swap(fBuffer);
-    auto st = env->NewWritableFile(path, &ptr);
-    if (!st.ok()) {
+
+    if (!fValid) {
       return false;
     }
-    unique_ptr<WritableFile> wf(ptr);
-    Options o;
-    o.compression = kZlibRawCompression;
-    TableBuilder tb(o, wf.get());
-    sort(buffer.begin(), buffer.end(), [](auto const &a, auto const &b) {
-      Comparator const *comp = BytewiseComparator();
-      return comp->Compare(a.first, b.first) < 0;
-    });
+
+    auto keys = fDir / (fBasename + "." + to_string(fNumFiles) + ".keys");
+    auto values = fDir / (fBasename + "." + to_string(fNumFiles) + ".values");
+
+    vector<pair<string, vector<uint8_t>>> buffer;
+    fBuffer.swap(buffer);
+
+    je2be::ScopedFile valuesF(File::Open(values, File::Mode::Write));
+    je2be::ScopedFile keysF(File::Open(keys, File::Mode::Write));
+    if (!valuesF) {
+      fValid = false;
+      return false;
+    }
+    if (!keysF) {
+      fValid = false;
+      return false;
+    }
+
+    uint32_t pos = 0;
     for (auto const &pair : buffer) {
-      tb.Add(pair.first, pair.second);
+      uint32_t valueSize = pair.second.size();
+      if (fwrite(&valueSize, sizeof(valueSize), 1, valuesF) != 1) {
+        fValid = false;
+        return false;
+      }
+      if (fwrite(pair.second.data(), valueSize, 1, valuesF) != 1) {
+        fValid = false;
+        return false;
+      }
+      pos += valueSize + sizeof(valueSize);
+      uint32_t keySize = pair.first.size();
+      if (fwrite(&pos, sizeof(pos), 1, keysF) != 1) {
+        fValid = false;
+        return false;
+      }
+      if (fwrite(&keySize, sizeof(keySize), 1, keysF) != 1) {
+        fValid = false;
+        return false;
+      }
+      if (fwrite(pair.first.c_str(), keySize, 1, keysF) != 1) {
+        fValid = false;
+        return false;
+      }
     }
-    st = tb.Finish();
-    if (!st.ok()) {
-      return false;
-    }
-    st = wf->Close();
-    if (!st.ok()) {
-      return false;
-    }
+
     fNumFiles++;
     return true;
   }
@@ -74,5 +101,5 @@ private:
   bool fValid = true;
   std::filesystem::path fDir;
   std::string fBasename;
-  std::vector<std::pair<std::string, std::string>> fBuffer;
+  std::vector<std::pair<std::string, std::vector<uint8_t>>> fBuffer;
 };

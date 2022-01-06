@@ -84,9 +84,13 @@ async function convertRegion(m: PocConvertRegionMessage): Promise<void> {
   }
   const copy: Promise<void>[] = [];
   for (let i = 0; i < numLdbFiles; i++) {
-    const path = `${ldbDir}/r.${rx}.${rz}.${i}.ldb`;
-    const data = FS.readFile(path);
-    copy.push(fs.files.put({ path, data }).then(FS.unlink(path)));
+    for (const path of [
+      `${ldbDir}/r.${rx}.${rz}.${i}.keys`,
+      `${ldbDir}/r.${rx}.${rz}.${i}.values`,
+    ]) {
+      const data = FS.readFile(path);
+      copy.push(fs.files.put({ path, data }).then(FS.unlink(path)));
+    }
   }
   {
     const path = `${wdDir}/r.${rx}.${rz}.nbt`;

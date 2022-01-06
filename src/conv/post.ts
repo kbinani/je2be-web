@@ -8,6 +8,7 @@ import { File, FileStorage } from "../share/file-storage";
 import { dirname, mkdirp } from "./fs-ext";
 import JSZip from "jszip";
 import { promiseUnzipFileInZip } from "../share/zip-ext";
+import { ReadI32 } from "../share/heap";
 
 self.onmessage = (ev: MessageEvent) => {
   if (isPocStartPostMessage(ev.data)) {
@@ -46,6 +47,33 @@ async function post(m: PocStartPostMessage): Promise<void> {
   const ok: boolean = Module.Post(id);
   if (!ok) {
     return;
+  }
+  const keys = await collectKeys(id, fs);
+  keys.sort((a: Key, b: Key) => {
+    return bytewiseComparator(a.key, b.key);
+  });
+  console.log(keys);
+}
+
+function memcmp(a: Uint8Array, b: Uint8Array, n: number): number {
+  for (let i = 0; i < n; i++) {
+    if (a[i] !== b[i]) {
+      return a[i] - b[i];
+    }
+  }
+  return 0;
+}
+
+function bytewiseComparator(a: Uint8Array, b: Uint8Array): number {
+  const n = Math.min(a.length, b.length);
+  const r = memcmp(a, b, n);
+  if (r !== 0) {
+    return r;
+  }
+  if (a.length < b.length) {
+    return -1;
+  } else if (a.length > b.length) {
+    return 1;
   }
 }
 
@@ -101,4 +129,36 @@ async function loadWorldData(id: string, fs: FileStorage): Promise<void> {
       const { path, data } = file;
       FS.writeFile(path, data);
     });
+}
+
+type Key = {
+  key: Uint8Array;
+  file: string;
+  pos: number;
+};
+
+async function collectKeys(id: string, fs: FileStorage): Promise<Key[]> {
+  const prefix = `/je2be/${id}/ldb/`;
+  const keys: Key[] = [];
+  await fs.files
+    .where("path")
+    .startsWith(prefix)
+    .and((file) => file.path.endsWith(".keys"))
+    .each((file: File) => {
+      const { path, data } = file;
+      let ptr = 0;
+      const valuesFile =
+        path.substring(0, path.length - ".keys".length) + ".values";
+      while (ptr < data.length) {
+        const pos = ReadI32(ptr, data);
+        ptr += 4;
+        const keySize = ReadI32(ptr, data);
+        ptr += 4;
+        const key = data.slice(ptr, ptr + keySize);
+        ptr += keySize;
+        const k: Key = { key, file: valuesFile, pos };
+        keys.push(k);
+      }
+    });
+  return keys;
 }
