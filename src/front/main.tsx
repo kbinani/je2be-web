@@ -106,10 +106,16 @@ export const MainComponent: FC = () => {
   const post = useMemo(() => {
     const w = new Worker("./script/post.js", { name: "post" });
     w.onmessage = (ev: MessageEvent) => {
-      if (isPocPostDoneMessage(ev.data)) {
-        if (session.current.id === ev.data.id) {
-          session.current.markPostDone();
+      const id = session.current?.id;
+      if (isPocPostDoneMessage(ev.data) && id == ev.data.id) {
+        session.current.markPostDone();
+        const dot = session.current.file.name.lastIndexOf(".");
+        let filename = "world.mcworld";
+        if (dot > 0) {
+          filename = session.current.file.name.substring(0, dot) + ".mcworld";
         }
+        state.current = { ...state.current, dl: { id, filename } };
+        forceUpdate();
       }
     };
     return w;
@@ -164,6 +170,8 @@ export const MainComponent: FC = () => {
     const s = new ConvertSession(id, pre, workers, post, file);
     session.current = s;
     s.start(file);
+    state.current = { ...kInitComponentState, id };
+    forceUpdate();
   };
   return (
     <div className="main">
