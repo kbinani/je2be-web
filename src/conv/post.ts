@@ -5,7 +5,7 @@ import {
   WorkerError,
 } from "../share/messages";
 import { File, FileStorage } from "../share/file-storage";
-import { dirname, mkdirp } from "./fs-ext";
+import { dirname, exists, mkdirp } from "./fs-ext";
 import JSZip from "jszip";
 import { promiseUnzipFileInZip } from "../share/zip-ext";
 import { ReadI32 } from "../share/heap";
@@ -31,11 +31,11 @@ function startPost(m: PocStartPostMessage) {
       self.postMessage(done);
     })
     .finally(() => {
-      const fs = new FileStorage();
-      fs.files
-        .clear()
-        .then(() => console.log(`[post] (${id}) file storage cleared`))
-        .catch(console.error);
+      // const fs = new FileStorage();
+      // fs.files
+      //   .clear()
+      //   .then(() => console.log(`[post] (${id}) file storage cleared`))
+      //   .catch(console.error);
     });
 }
 
@@ -54,7 +54,8 @@ async function post(m: PocStartPostMessage): Promise<void> {
   keys.sort((a: Key, b: Key) => {
     return bytewiseComparator(a.key, b.key);
   });
-  console.log(keys);
+  const ok = await constructDb(id, fs, keys);
+  console.log(`ok=${ok}`);
 }
 
 function memcmp(a: Uint8Array, b: Uint8Array, n: number): number {
@@ -186,4 +187,44 @@ async function collectKeys(id: string, fs: FileStorage): Promise<Key[]> {
       }
     });
   return keys;
+}
+
+async function constructDb(
+  id: string,
+  fs: FileStorage,
+  keys: Key[]
+): Promise<boolean> {
+  const file = `/je2be/${id}/tmp.bin`;
+  const db = Module.NewAppendDb(id);
+  let path: string = "";
+  let data: Uint8Array;
+  let keyBuffer = Module._malloc(16);
+  let keyBufferSize = 16;
+  for (const key of keys) {
+    if (path !== key.file) {
+      const f = await fs.files.get(key.file);
+      data = f.data;
+      path = key.file;
+    }
+    const size = ReadI32(key.pos, data);
+    FS.writeFile(file, data.slice(key.pos + 4, key.pos + 4 + size));
+    if (keyBufferSize < key.key.byteLength) {
+      Module._free(keyBuffer);
+      keyBufferSize = key.key.byteLength;
+      keyBuffer = Module._malloc(keyBufferSize);
+    }
+    for (let i = 0; i < key.key.length; i++) {
+      Module.HEAPU8[keyBuffer + i] = key.key[i];
+    }
+    //bool Append(intptr_t dbPtr, string file, intptr_t key, int keySize)
+    if (!Module.Append(db, file, keyBuffer, key.key.length)) {
+      break;
+    }
+  }
+  if (exists(file)) {
+    FS.unlink(file);
+  }
+  await fs.files.where("path").startsWith(`/je2be/${id}/ldb`).delete();
+  Module._free(keyBuffer);
+  return Module.DeleteAppendDb(db);
 }

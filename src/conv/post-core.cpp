@@ -94,9 +94,11 @@ intptr_t NewAppendDb(string id) {
   return (intptr_t) new AppendDb(id);
 }
 
-void DeleteAppendDb(intptr_t dbPtr) {
+bool DeleteAppendDb(intptr_t dbPtr) {
   AppendDb *db = (AppendDb *)dbPtr;
+  bool ok = db->close();
   delete db;
+  return ok;
 }
 
 bool Append(intptr_t dbPtr, string file, intptr_t key, int keySize) {
