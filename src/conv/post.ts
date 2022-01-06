@@ -44,10 +44,12 @@ async function post(m: PocStartPostMessage): Promise<void> {
   const fs = new FileStorage();
   await extract(id, file, levelDirectory);
   await loadWorldData(id, fs);
-  const ok: boolean = Module.Post(id);
-  if (!ok) {
+  const numFiles = Module.Post(id);
+  if (numFiles < 0) {
     return;
   }
+  await retrieveLdbFiles(id, fs, numFiles);
+  await unloadWorldData(id, fs);
   const keys = await collectKeys(id, fs);
   keys.sort((a: Key, b: Key) => {
     return bytewiseComparator(a.key, b.key);
@@ -129,6 +131,29 @@ async function loadWorldData(id: string, fs: FileStorage): Promise<void> {
       const { path, data } = file;
       FS.writeFile(path, data);
     });
+}
+
+async function unloadWorldData(id: string, fs: FileStorage): Promise<void> {
+  const prefix = `/je2be/${id}/wd`;
+  Module.RemoveAll(prefix);
+  await fs.files.where("path").startsWith(prefix).delete();
+}
+
+async function retrieveLdbFiles(
+  id: string,
+  fs: FileStorage,
+  numFiles: number
+): Promise<void> {
+  const prefix = `/je2be/${id}/ldb/`;
+  for (let i = 0; i < numFiles; i++) {
+    const keys = `${prefix}/level.${i}.keys`;
+    const values = `${prefix}/level.${i}.values`;
+    for (const path of [keys, values]) {
+      const data = FS.readFile(path);
+      await fs.files.put({ path, data });
+      FS.unlink(path);
+    }
+  }
 }
 
 type Key = {

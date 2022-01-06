@@ -15,7 +15,7 @@ using namespace je2be;
 using namespace je2be::tobe;
 namespace fs = std::filesystem;
 
-bool Post(string id) {
+int Post(string id) {
   fs::path inputDir = fs::path("/je2be") / id / "in";
   fs::path outputDir = fs::path("/je2be") / id / "out";
   auto dbPath = outputDir / "db";
@@ -23,14 +23,14 @@ bool Post(string id) {
   error_code ec;
   fs::create_directories(dbPath, ec);
   if (ec) {
-    return false;
+    return -1;
   }
 
   InputOption io;
   io.fLevelDirectoryStructure = LevelDirectoryStructure::Vanilla;
   auto data = Level::Read(io.getLevelDatFilePath(inputDir));
   if (!data) {
-    return false;
+    return -1;
   }
   Level level = Level::Import(*data);
 
@@ -47,11 +47,11 @@ bool Post(string id) {
       stream::InputStreamReader reader(s);
       auto tag = make_shared<nbt::CompoundTag>();
       if (!tag->read(reader)) {
-        return false;
+        return -1;
       }
       auto wd = WorldData::FromNbt(*tag);
       if (!wd) {
-        return false;
+        return -1;
       }
       wd->drain(*levelData);
     }
@@ -80,17 +80,23 @@ bool Post(string id) {
   fs::remove_all(inputDir, ec);
 
   if (!db.valid()) {
-    return false;
+    return -1;
   }
   if (!db.flush()) {
-    return false;
+    return -1;
   }
 
-  return true;
+  return db.fNumFiles;
+}
+
+void RemoveAll(string dir) {
+  error_code ec;
+  fs::remove_all(fs::path(dir), ec);
 }
 
 #if defined(EMSCRIPTEN)
 EMSCRIPTEN_BINDINGS() {
   emscripten::function("Post", &Post);
+  emscripten::function("RemoveAll", &RemoveAll);
 }
 #endif
