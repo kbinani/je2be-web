@@ -57,7 +57,10 @@ bool Post(string id) {
     }
   }
 
-  ::Db db(fs::path("/je2be") / id / "ldb", "level");
+  auto ldbDir = fs::path("/je2be") / id / "ldb";
+  ec.clear();
+  fs::create_directories(ldbDir, ec);
+  ::Db db(ldbDir, "level");
 
   auto localPlayerData = Converter::LocalPlayerData(*data, *levelData);
   if (localPlayerData) {
@@ -75,6 +78,13 @@ bool Post(string id) {
 
   ec.clear();
   fs::remove_all(inputDir, ec);
+
+  if (!db.valid()) {
+    return false;
+  }
+  if (!db.flush()) {
+    return false;
+  }
 
   return true;
 }
