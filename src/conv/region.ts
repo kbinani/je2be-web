@@ -98,6 +98,10 @@ async function convertRegion(m: PocConvertRegionMessage): Promise<void> {
     copy.push(fs.files.put({ path, data }).then(FS.unlink(path)));
   }
   await Promise.all(copy);
+  await fs.files.delete(region);
+  if (entitiesFileExists) {
+    await fs.files.delete(entities);
+  }
   const done: PocConvertRegionDoneMessage = {
     type: "region_done",
     id,
