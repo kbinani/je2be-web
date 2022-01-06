@@ -57,6 +57,8 @@ bool ConvertRegion(string id, int rx, int rz, int dim, intptr_t javaEditionMap, 
   auto wd = make_shared<WorldData>(d);
   for (int cx = region->minChunkX(); cx <= region->maxChunkX(); cx++) {
     for (int cz = region->minChunkZ(); cz <= region->maxChunkZ(); cz++) {
+      if (cx != 0) continue;
+      if (cz != 0) continue;
       auto result = Chunk::Convert(d, db, *region, cx, cz, jem);
       Report(id, 1);
       if (!result.fData) {
