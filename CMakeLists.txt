@@ -34,7 +34,7 @@ add_executable(region-core
   src/region/region-core.cpp
   include/db.hpp)
 target_link_libraries(region-core je2be)
-target_include_directories(region-core PRIVATE ./include)
+target_include_directories(region-core PRIVATE include)
 target_compile_options(region-core PRIVATE ${je2be_common_em_compile_options})
 target_link_options(region-core PRIVATE ${je2be_common_em_link_options})
 
@@ -46,8 +46,11 @@ target_link_options(pre-core PRIVATE ${je2be_common_em_link_options})
 add_executable(post-core
   src/conv/post-core.cpp
   include/db.hpp
-  include/append-db.hpp)
-target_include_directories(post-core PRIVATE ./include)
+  include/append-db.hpp
+  deps/zlib/contrib/minizip/zip.c
+  deps/zlib/contrib/minizip/ioapi.c)
+target_include_directories(post-core PRIVATE include deps/zlib/contrib/minizip)
 target_link_libraries(post-core je2be)
-target_compile_options(post-core PRIVATE ${je2be_common_em_compile_options})
+target_compile_definitions(post-core PRIVATE NOCRYPT)
+target_compile_options(post-core PRIVATE -Wno-unused-value ${je2be_common_em_compile_options})
 target_link_options(post-core PRIVATE ${je2be_common_em_link_options})

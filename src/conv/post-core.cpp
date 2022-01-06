@@ -6,6 +6,7 @@
 #include <iostream>
 
 #include <je2be.hpp>
+#include <zip.h>
 
 #include "append-db.hpp"
 #include "db.hpp"
@@ -106,6 +107,99 @@ bool Append(intptr_t dbPtr, string file, intptr_t key, int keySize) {
   return db->append(file, key, keySize);
 }
 
+int Zip(string id) {
+  auto zipDir = fs::path("/je2be") / "dl" / id;
+  auto zipFilePath = zipDir / "out.zip";
+  auto out = fs::path("/je2be") / id / "out";
+  vector<uint8_t> buffer(1048576);
+  zipFile file = zipOpen(zipFilePath.c_str(), 0);
+  if (!file) {
+    return -2;
+  }
+  int count = 0;
+  for (auto it : fs::recursive_directory_iterator(out)) {
+    if (!it.is_regular_file()) {
+      continue;
+    }
+    count++;
+  }
+  int progress = 0;
+  for (auto it : fs::recursive_directory_iterator(out)) {
+    if (!it.is_regular_file()) {
+      continue;
+    }
+    auto rel = fs::relative(it.path(), out);
+    int ret = zipOpenNewFileInZip(file,                 // file
+                                  rel.string().c_str(), // filename
+                                  nullptr,              // zipfi
+                                  nullptr, 0,           // extrafield_local, size_extrafield_local
+                                  nullptr, 0,           // extrafield_global, size_extrafield_global
+                                  nullptr,              // comment
+                                  Z_DEFLATED,           // method
+                                  Z_BEST_COMPRESSION);  // level
+    if (ret != 0) {
+      zipClose(file, nullptr);
+      return -3;
+    }
+    FILE *f = File::Open(it.path(), File::Mode::Read);
+    if (!f) {
+      zipClose(file, nullptr);
+      return -4;
+    }
+    while (!feof(f)) {
+      int read = fread(buffer.data(), 1, buffer.size(), f);
+      if (0 != zipWriteInFileInZip(file, buffer.data(), read)) {
+        zipClose(file, nullptr);
+        fclose(f);
+        return -5;
+      }
+    }
+    fclose(f);
+    if (0 != zipCloseFileInZip(file)) {
+      zipClose(file, nullptr);
+      return -6;
+    }
+    progress++;
+    //    Report(id, "zip", progress, count);
+  }
+  if (0 != zipClose(file, nullptr)) {
+    return -7;
+  }
+
+  FILE *fp = File::Open(zipFilePath, File::Mode::Read);
+  if (!fp) {
+    return -8;
+  }
+  int fileIndex = 0;
+  int64_t offset = 0;
+  while (!feof(fp)) {
+    fill(buffer.begin(), buffer.end(), 0);
+    int read = fread(buffer.data(), 1, buffer.size(), fp);
+    if (read < 1) {
+      fclose(fp);
+      return -9;
+    }
+    auto name = fs::path(zipDir) / (to_string(fileIndex) + ".bin");
+    FILE *t = File::Open(name, File::Mode::Write);
+    if (!t) {
+      fclose(fp);
+      return -10;
+    }
+    if (fwrite(buffer.data(), 1, read, t) != read) {
+      fclose(fp);
+      fclose(t);
+      return -11;
+    }
+    fclose(t);
+    offset += read;
+    fileIndex++;
+  }
+  fclose(fp);
+  fs::remove(zipFilePath);
+
+  return fileIndex;
+}
+
 void RemoveAll(string dir) {
   error_code ec;
   fs::remove_all(fs::path(dir), ec);
@@ -118,5 +212,6 @@ EMSCRIPTEN_BINDINGS() {
   emscripten::function("NewAppendDb", &NewAppendDb);
   emscripten::function("DeleteAppendDb", &DeleteAppendDb);
   emscripten::function("Append", &Append);
+  emscripten::function("Zip", &Zip);
 }
 #endif

@@ -2,6 +2,7 @@ import {
   isPocStartPostMessage,
   PocPostDoneMessage,
   PocStartPostMessage,
+  ProgressMessage,
   WorkerError,
 } from "../share/messages";
 import { File, FileStorage } from "../share/file-storage";
@@ -9,6 +10,7 @@ import { dirname, exists, iterate, mkdirp } from "./fs-ext";
 import JSZip from "jszip";
 import { promiseUnzipFileInZip } from "../share/zip-ext";
 import { ReadI32 } from "../share/heap";
+import { ChunksStore } from "../share/chunk-store";
 
 self.onmessage = (ev: MessageEvent) => {
   if (isPocStartPostMessage(ev.data)) {
@@ -73,9 +75,12 @@ async function post(m: PocStartPostMessage): Promise<void> {
     return;
   }
   console.log(`[post] (${id}) constructDb done`);
-  console.log(`[post] (${id}) copyLdbFiles...`);
-  await copyLdbFiles(id, fs);
-  console.log(`[post] (${id}) copyLdbFiles done`);
+  // console.log(`[post] (${id}) copyLdbFiles...`);
+  // await copyLdbFiles(id, fs);
+  // console.log(`[post] (${id}) copyLdbFiles done`);
+  console.log(`[post] (${id}) zip...`);
+  await zip(id);
+  console.log(`[post] (${id}) zip done`);
 }
 
 function memcmp(a: Uint8Array, b: Uint8Array, n: number): number {
@@ -294,4 +299,37 @@ async function copyLdbFiles(id: string, fs: FileStorage): Promise<void> {
     await fs.files.put({ path, data });
     FS.unlink(path);
   }
+}
+
+async function zip(id: string): Promise<void> {
+  const cs = new ChunksStore();
+  mkdirp(`/je2be/dl/${id}`);
+  const count = Module.Zip(id);
+  for (let i = 0; i < count; i++) {
+    const name = `/je2be/dl/${id}/${i}.bin`;
+    const data: Uint8Array = FS.readFile(name);
+    FS.unlink(name);
+    try {
+      await cs.chunks.add({
+        name,
+        data,
+      });
+      const m: ProgressMessage = {
+        type: "progress",
+        stage: "copy",
+        id,
+        progress: i + 1,
+        total: count,
+      };
+      self.postMessage(m);
+    } catch (e) {
+      console.error(e);
+      cs.close();
+      const m: WorkerError = { type: "CopyToIdb" };
+      throw m;
+    }
+  }
+  cs.close();
+  Module.RemoveAll(`/je2be/${id}`);
+  Module.RemoveAll(`/je2be/dl/${id}`);
 }
