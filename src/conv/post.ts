@@ -42,20 +42,37 @@ function startPost(m: PocStartPostMessage) {
 async function post(m: PocStartPostMessage): Promise<void> {
   const { id, file, levelDirectory } = m;
   const fs = new FileStorage();
+  console.log(`[post] (${id}) extract...`);
   await extract(id, file, levelDirectory);
+  console.log(`[post] (${id}) extract done`);
+  console.log(`[post] (${id}) loadWorldData...`);
   await loadWorldData(id, fs);
+  console.log(`[post] (${id}) loadWorldData done`);
+  console.log(`[post] (${id}) wasm::post...`);
   const numFiles = Module.Post(id);
   if (numFiles < 0) {
+    console.log(`[post] (${id}) wasm::post failed`);
     return;
   }
+  console.log(`[post] (${id}) wasm::post done`);
+  console.log(`[post] (${id}) retrieveLdbFiles...`);
   await retrieveLdbFiles(id, fs, numFiles);
+  console.log(`[post] (${id}) retrieveLdbFiles done`);
+  console.log(`[post] (${id}) unloadWorldData...`);
   await unloadWorldData(id, fs);
+  console.log(`[post] (${id}) unloadWorldData done`);
+  console.log(`[post] (${id}) collectKeys...`);
   const keys = await collectKeys(id, fs);
-  keys.sort((a: Key, b: Key) => {
-    return bytewiseComparator(a.key, b.key);
-  });
-  const ok = await constructDb(id, fs, keys);
-  console.log(`ok=${ok}`);
+  console.log(`[post] (${id}) collectKeys done`);
+  console.log(`[post] (${id}) constructDb...`);
+  if (!(await constructDb(id, fs, keys))) {
+    console.log(`[post] (${id}) constructDb failed`);
+    return;
+  }
+  console.log(`[post] (${id}) constructDb done`);
+  console.log(`[post] (${id}) copyLdbFiles...`);
+  await copyLdbFiles(id, fs);
+  console.log(`[post] (${id}) copyLdbFiles done`);
 }
 
 function memcmp(a: Uint8Array, b: Uint8Array, n: number): number {
@@ -186,6 +203,9 @@ async function collectKeys(id: string, fs: FileStorage): Promise<Key[]> {
         keys.push(k);
       }
     });
+  keys.sort((a: Key, b: Key) => {
+    return bytewiseComparator(a.key, b.key);
+  });
   return keys;
 }
 
@@ -227,4 +247,33 @@ async function constructDb(
   await fs.files.where("path").startsWith(`/je2be/${id}/ldb`).delete();
   Module._free(keyBuffer);
   return Module.DeleteAppendDb(db);
+}
+
+function tableName(n: number): string {
+  let s = `${n}`;
+  while (s.length < 6) {
+    s = "0" + s;
+  }
+  return `${s}.ldb`;
+}
+
+async function copyLdbFiles(id: string, fs: FileStorage): Promise<void> {
+  let tableNumber = 0;
+  const prefix = `/je2be/${id}/out/db`;
+  while (true) {
+    const path = `${prefix}/${tableName(tableNumber)}`;
+    tableNumber++;
+    if (!exists(path)) {
+      break;
+    }
+    const data = FS.readFile(path);
+    await fs.files.put({ path, data });
+    FS.unlink(path);
+  }
+  for (const name of ["MANIFEST-000001", "CURRENT"]) {
+    const path = `/je2be/${id}/out/db/${name}`;
+    const data = FS.readFile(path);
+    await fs.files.put({ path, data });
+    FS.unlink(path);
+  }
 }
