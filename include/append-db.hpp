@@ -93,13 +93,15 @@ private:
       return false;
     }
     vector<uint8_t> valueBuffer(compressedValueSize);
-    if (fread(valueBuffer.data(), compressedValueSize, 1, fp) != 1) {
-      return false;
+    if (compressedValueSize > 0) {
+      if (fread(valueBuffer.data(), compressedValueSize, 1, fp) != 1) {
+        return false;
+      }
+      if (!Compression::decompress(valueBuffer)) {
+        return false;
+      }
     }
     fp.close();
-    if (!Compression::decompress(valueBuffer)) {
-      return false;
-    }
 
     size_t approxSize = fApproxSize + keySize + compressedValueSize;
     if (approxSize > fOptions.max_file_size && fSmallest) {
@@ -130,11 +132,11 @@ private:
     Slice userKey(keyPtr, keySize);
     InternalKey ik(userKey, fSequence, kTypeValue);
     fBuilder->Add(ik.Encode(), value);
+
     if (!fSmallest) {
       fSmallest = ik;
     }
     fLargest = ik;
-
     fSequence++;
     fApproxSize += keySize + compressedValueSize;
 
