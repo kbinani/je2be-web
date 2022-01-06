@@ -9,11 +9,12 @@ public:
   }
 
   void put(std::string const &key, leveldb::Slice const &value) override {
+    using namespace std;
     if (!fValid) {
       return;
     }
-    std::vector<uint8_t> v;
-    std::copy_n(value.data(), value.size(), std::back_inserter(v));
+    vector<uint8_t> v;
+    copy_n(value.data(), value.size(), back_inserter(v));
     if (!mcfile::Compression::compress(v)) {
       fValid = false;
       return;
@@ -74,7 +75,6 @@ public:
         fValid = false;
         return false;
       }
-      pos += valueSize + sizeof(valueSize);
       uint32_t keySize = pair.first.size();
       if (fwrite(&pos, sizeof(pos), 1, keysF) != 1) {
         fValid = false;
@@ -88,6 +88,7 @@ public:
         fValid = false;
         return false;
       }
+      pos += sizeof(valueSize) + valueSize;
     }
 
     fNumFiles++;
