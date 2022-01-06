@@ -5,7 +5,7 @@ import {
   WorkerError,
 } from "../share/messages";
 import { File, FileStorage } from "../share/file-storage";
-import { dirname, exists, mkdirp } from "./fs-ext";
+import { dirname, exists, iterate, mkdirp } from "./fs-ext";
 import JSZip from "jszip";
 import { promiseUnzipFileInZip } from "../share/zip-ext";
 import { ReadI32 } from "../share/heap";
@@ -178,23 +178,15 @@ async function retrieveLdbFiles(
 }
 
 async function retrieveMemFsFiles(id: string, fs: FileStorage): Promise<void> {
-  const copy = async (item: any) => {
-    const { path, node } = item;
-    if (node.isFolder) {
+  await iterate(`/je2be/${id}/out`, async ({ path, dir }) => {
+    if (dir) {
       mkdirp(path);
-      for (const name of Object.keys(node.contents)) {
-        const child = node.contents[name];
-        const childPath = `${path}/${name}`;
-        await copy({ path: childPath, node: child });
-      }
-    } else if (node.isDevice) {
-      return;
     } else {
       const data = FS.readFile(path);
       await fs.files.put({ path, data });
+      FS.unlink(path);
     }
-  };
-  await copy(FS.lookupPath(`/je2be/${id}/out`));
+  });
 }
 
 type Key = {

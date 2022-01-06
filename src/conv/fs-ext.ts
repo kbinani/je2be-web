@@ -69,3 +69,25 @@ export function fread({
   }
   return 0;
 }
+
+export async function iterate(
+  directory: string,
+  callback: ({ path: string, dir: boolean }) => Promise<void>
+): Promise<void> {
+  const visit = async (item: any) => {
+    const { path, node } = item;
+    if (node.isFolder) {
+      await callback({ path, dir: true });
+      for (const name of Object.keys(node.contents)) {
+        const child = node.contents[name];
+        const childPath = `${path}/${name}`;
+        await visit({ path: childPath, node: child });
+      }
+    } else if (node.isDevice) {
+      return;
+    } else {
+      await callback({ path, dir: false });
+    }
+  };
+  await visit(FS.lookupPath(directory));
+}
