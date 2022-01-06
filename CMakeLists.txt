@@ -17,8 +17,11 @@ add_subdirectory(deps/je2be EXCLUDE_FROM_ALL)
 set(je2be_common_em_compile_and_link_options
   -fexceptions
   -flto)
-set(je2be_common_em_compile_options)
+set(je2be_common_em_compile_options
+  ${je2be_common_em_compile_and_link_options})
 set(je2be_common_em_link_options
+  ${je2be_common_em_compile_and_link_options}
+  -g2
   --bind
   -sSINGLE_FILE=1
   -sALLOW_MEMORY_GROWTH=1
@@ -32,28 +35,16 @@ add_executable(region-core
   include/db.hpp)
 target_link_libraries(region-core je2be)
 target_include_directories(region-core PRIVATE ./include)
-target_compile_options(region-core PRIVATE
-  ${je2be_common_em_compile_and_link_options}
-  ${je2be_common_em_compile_options})
-target_link_options(region-core PRIVATE
-  ${je2be_common_em_compile_and_link_options}
-  ${je2be_common_em_link_options})
+target_compile_options(region-core PRIVATE ${je2be_common_em_compile_options})
+target_link_options(region-core PRIVATE ${je2be_common_em_link_options})
 
 add_executable(pre-core src/conv/pre-core.cpp)
 target_link_libraries(pre-core je2be)
-target_compile_options(pre-core PRIVATE
-  ${je2be_common_em_compile_and_link_options}
-  ${je2be_common_em_compile_options})
-target_link_options(pre-core PRIVATE
-  ${je2be_common_em_compile_and_link_options}
-  ${je2be_common_em_link_options})
+target_compile_options(pre-core PRIVATE ${je2be_common_em_compile_options})
+target_link_options(pre-core PRIVATE ${je2be_common_em_link_options})
 
 add_executable(post-core src/conv/post-core.cpp)
 target_include_directories(post-core PRIVATE ./include)
 target_link_libraries(post-core je2be)
-target_compile_options(post-core PRIVATE
-  ${je2be_common_em_compile_and_link_options}
-  ${je2be_common_em_compile_options})
-target_link_options(post-core PRIVATE
-  ${je2be_common_em_compile_and_link_options}
-  ${je2be_common_em_link_options})
+target_compile_options(post-core PRIVATE ${je2be_common_em_compile_options})
+target_link_options(post-core PRIVATE ${je2be_common_em_link_options})
