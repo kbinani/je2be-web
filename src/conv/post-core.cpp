@@ -7,6 +7,7 @@
 
 #include <je2be.hpp>
 
+#include "append-db.hpp"
 #include "db.hpp"
 
 using namespace std;
@@ -89,6 +90,20 @@ int Post(string id) {
   return db.fNumFiles;
 }
 
+intptr_t NewAppendDb(string id) {
+  return (intptr_t) new AppendDb(id);
+}
+
+void DeleteAppendDb(intptr_t dbPtr) {
+  AppendDb *db = (AppendDb *)dbPtr;
+  delete db;
+}
+
+bool Append(intptr_t dbPtr, string file, intptr_t key, int keySize) {
+  AppendDb *db = (AppendDb *)dbPtr;
+  return db->append(file, key, keySize);
+}
+
 void RemoveAll(string dir) {
   error_code ec;
   fs::remove_all(fs::path(dir), ec);
@@ -98,5 +113,8 @@ void RemoveAll(string dir) {
 EMSCRIPTEN_BINDINGS() {
   emscripten::function("Post", &Post);
   emscripten::function("RemoveAll", &RemoveAll);
+  emscripten::function("NewAppendDb", &NewAppendDb);
+  emscripten::function("DeleteAppendDb", &DeleteAppendDb);
+  emscripten::function("Append", &Append);
 }
 #endif

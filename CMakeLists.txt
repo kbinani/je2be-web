@@ -43,7 +43,9 @@ target_link_libraries(pre-core je2be)
 target_compile_options(pre-core PRIVATE ${je2be_common_em_compile_options})
 target_link_options(pre-core PRIVATE ${je2be_common_em_link_options})
 
-add_executable(post-core src/conv/post-core.cpp)
+add_executable(post-core
+  src/conv/post-core.cpp
+  include/append-db.hpp)
 target_include_directories(post-core PRIVATE ./include)
 target_link_libraries(post-core je2be)
 target_compile_options(post-core PRIVATE ${je2be_common_em_compile_options})
