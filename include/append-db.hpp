@@ -38,7 +38,7 @@ public:
       fVersionEdit.AddFile(1, fTableNumber, fBuilder->FileSize(), *fSmallest, largest);
     }
 
-    fVersionEdit.SetLastSequence(fSequence + 1);
+    fVersionEdit.SetLastSequence(fSequence);
     fVersionEdit.SetNextFile(fTableNumber + 1);
     fVersionEdit.SetLogNumber(0);
     string manifestRecord;
@@ -127,8 +127,8 @@ private:
       fBuilder.reset(new TableBuilder(fOptions, fFile.get()));
     }
 
+    fSequence++;
     Slice value((char const *)valueBuffer.data(), valueBuffer.size());
-
     Slice userKey(keyPtr, keySize);
     InternalKey ik(userKey, fSequence, kTypeValue);
     fBuilder->Add(ik.Encode(), value);
@@ -137,7 +137,6 @@ private:
       fSmallest = ik;
     }
     fLargest = ik;
-    fSequence++;
     fApproxSize += keySize + compressedValueSize;
 
     return true;
