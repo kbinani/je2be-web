@@ -189,7 +189,7 @@ async function retrieveMemFsFiles(id: string, fs: FileStorage): Promise<void> {
     } else {
       const data = FS.readFile(path);
       await fs.files.put({ path, data });
-      FS.unlink(path);
+      //TODO: debug FS.unlink(path);
     }
   });
 }
@@ -291,13 +291,13 @@ async function copyLdbFiles(id: string, fs: FileStorage): Promise<void> {
     }
     const data = FS.readFile(path);
     await fs.files.put({ path, data });
-    FS.unlink(path);
+    //TODO:debug FS.unlink(path);
   }
   for (const name of ["MANIFEST-000001", "CURRENT"]) {
     const path = `/je2be/${id}/out/db/${name}`;
     const data = FS.readFile(path);
     await fs.files.put({ path, data });
-    FS.unlink(path);
+    //TODO:debug FS.unlink(path);
   }
 }
 
@@ -330,6 +330,6 @@ async function zip(id: string): Promise<void> {
     }
   }
   cs.close();
-  Module.RemoveAll(`/je2be/${id}`);
+  //TODO:debug Module.RemoveAll(`/je2be/${id}`);
   Module.RemoveAll(`/je2be/dl/${id}`);
 }
