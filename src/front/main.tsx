@@ -36,6 +36,7 @@ const kInitComponentState: MainComponentState = {
   compaction: 0,
   zip: 0,
   copy: 0,
+  dl: { id: "4c88d4e7-2495-4153-830a-bfca0b043885", filename: "a.mcworld" },
 };
 
 export const useForceUpdate = () => {
