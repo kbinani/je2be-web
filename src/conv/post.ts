@@ -51,10 +51,13 @@ async function post(m: PocStartPostMessage): Promise<void> {
   console.log(`[post] (${id}) wasm::post...`);
   const numFiles = Module.Post(id);
   if (numFiles < 0) {
-    console.log(`[post] (${id}) wasm::post failed`);
+    console.log(`[post] (${id}) wasm::Post failed`);
     return;
   }
-  console.log(`[post] (${id}) wasm::post done`);
+  console.log(`[post] (${id}) wasm::Post done`);
+  console.log(`[post] (${id}) retrieveMemFsFiles...`);
+  await retrieveMemFsFiles(id, fs);
+  console.log(`[post] (${id}) retrieveMemFsFiles done`);
   console.log(`[post] (${id}) retrieveLdbFiles...`);
   await retrieveLdbFiles(id, fs, numFiles);
   console.log(`[post] (${id}) retrieveLdbFiles done`);
@@ -174,6 +177,26 @@ async function retrieveLdbFiles(
   }
 }
 
+async function retrieveMemFsFiles(id: string, fs: FileStorage): Promise<void> {
+  const copy = async (item: any) => {
+    const { path, node } = item;
+    if (node.isFolder) {
+      mkdirp(path);
+      for (const name of Object.keys(node.contents)) {
+        const child = node.contents[name];
+        const childPath = `${path}/${name}`;
+        await copy({ path: childPath, node: child });
+      }
+    } else if (node.isDevice) {
+      return;
+    } else {
+      const data = FS.readFile(path);
+      await fs.files.put({ path, data });
+    }
+  };
+  await copy(FS.lookupPath(`/je2be/${id}/out`));
+}
+
 type Key = {
   key: Uint8Array;
   file: string;
@@ -220,6 +243,7 @@ async function constructDb(
   let data: Uint8Array;
   let keyBuffer = Module._malloc(16);
   let keyBufferSize = 16;
+  let ok = true;
   for (const key of keys) {
     if (path !== key.file) {
       const f = await fs.files.get(key.file);
@@ -238,6 +262,8 @@ async function constructDb(
     }
     //bool Append(intptr_t dbPtr, string file, intptr_t key, int keySize)
     if (!Module.Append(db, file, keyBuffer, key.key.length)) {
+      console.log(`[post] wasm::Append failed`);
+      ok = false;
       break;
     }
   }
@@ -246,7 +272,7 @@ async function constructDb(
   }
   await fs.files.where("path").startsWith(`/je2be/${id}/ldb`).delete();
   Module._free(keyBuffer);
-  return Module.DeleteAppendDb(db);
+  return ok && Module.DeleteAppendDb(db);
 }
 
 function tableName(n: number): string {
