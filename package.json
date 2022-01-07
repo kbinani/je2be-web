@@ -25,9 +25,9 @@
   "scripts": {
     "front": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/front/index.tsx --bundle --outfile=public/script/front.js",
     "sworker": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/sworker/sworker.ts --bundle --outfile=public/sworker.js",
-    "pre": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/conv/pre.ts --bundle --outfile=public/script/pre.js",
-    "post": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/conv/post.ts --bundle --outfile=public/script/post.js",
-    "region": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/conv/region.ts --bundle --outfile=public/script/region.js",
+    "pre": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/dworker/pre.ts --bundle --outfile=public/script/pre.js",
+    "post": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/dworker/post.ts --bundle --outfile=public/script/post.js",
+    "region": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/dworker/region.ts --bundle --outfile=public/script/region.js",
     "fmt": "prettier --write 'src/**/*.ts' 'src/**/*.tsx' 'public/style/*.css'",
     "dev": "yarn front --servedir=public --serve=3000"
   }
