@@ -3,51 +3,7 @@
 class AppendDb {
 public:
   explicit AppendDb(std::string id)
-  : fDb(new je2be::tobe::RawDb(std::filesystem::path("/je2be") / id / "out" / "db", 0)) {}
-
-  bool append(std::string file, intptr_t keyBufferPtr, int keySize) {
-    using namespace std;
-    using namespace mcfile;
-    using namespace leveldb;
-    namespace fs = std::filesystem;
-    char const *keyPtr = (char const *)keyBufferPtr;
-    error_code ec;
-    size_t compressedValueSize = fs::file_size(fs::path(file), ec);
-    if (ec) {
-      return false;
-    }
-    je2be::ScopedFile fp(File::Open(fs::path(file), File::Mode::Read));
-    if (!fp) {
-      return false;
-    }
-    vector<uint8_t> valueBuffer(compressedValueSize);
-    if (compressedValueSize > 0) {
-      if (fread(valueBuffer.data(), compressedValueSize, 1, fp) != 1) {
-        return false;
-      }
-      if (!Compression::decompress(valueBuffer)) {
-        return false;
-      }
-    }
-    fp.close();
-    string key;
-    key.assign(keyPtr, keySize);
-    Slice value((char const*)valueBuffer.data(), valueBuffer.size());
-    fDb->put(key, value);
-    return true;
-  }
-  
-  bool close() {
-    return fDb->close();
-  }
-  
-  std::unique_ptr<je2be::tobe::RawDb> fDb;
-};
-
-class _AppendDb {
-public:
-  explicit _AppendDb(std::string id)
-      : fValid(true), fDir(std::filesystem::path("/je2be") / id / "out" / "db"), fTableNumber(0), fOptions(Options()) {
+      : fValid(true), fDir(std::filesystem::path("/je2be") / id / "out" / "db"), fTableNumber(1), fOptions(Options()) {
     namespace fs = std::filesystem;
     std::error_code ec;
     fs::create_directories(fDir, ec);
@@ -141,15 +97,6 @@ private:
       if (fread(valueBuffer.data(), compressedValueSize, 1, fp) != 1) {
         return false;
       }
-      cout << "append-db:key=";
-      for (int i = 0; i < keySize; i++) {
-        cout << "0x" << hex << (int)(uint8_t)keyPtr[i] << dec << " ";
-      }
-      cout << "value=";
-      for (int i = 0; i < valueBuffer.size(); i++) {
-        cout << "0x" << hex << (int)valueBuffer[i] << dec << " ";
-      }
-      cout << endl;
       if (!Compression::decompress(valueBuffer)) {
         return false;
       }
@@ -218,8 +165,11 @@ private:
   }
 
   static leveldb::Options Options() {
+    using namespace leveldb;
+    static InternalKeyComparator sCmp(BytewiseComparator());
     leveldb::Options o;
-    o.compression = leveldb::kZlibRawCompression;
+    o.compression = kZlibRawCompression;
+    o.comparator = &sCmp;
     return o;
   }
 
