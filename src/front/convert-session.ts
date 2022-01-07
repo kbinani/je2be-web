@@ -1,17 +1,17 @@
 import {
   isConvertProgressDeltaMessage,
   isExportDoneMessage,
-  isPocConvertQueueingFinishedMessage,
-  isPocConvertRegionDoneMessage,
-  isPocConvertRegionMessage,
-  isPocPostDoneMessage,
+  isConvertQueueingFinishedMessage,
+  isConvertRegionDoneMessage,
+  isConvertRegionMessage,
+  isPostDoneMessage,
   isProgressMessage,
-  PocConvertRegionMessage,
-  PocStartPostMessage,
-  PocStartPreMessage,
+  ConvertRegionMessage,
+  StartPostMessage,
+  StartPreMessage,
   ProgressMessage,
 } from "../share/messages";
-import { MainComponentState, MainComponentStateReducer } from "../front/main";
+import { MainComponentState, MainComponentStateReducer } from "./main";
 
 export class ConvertSession {
   private readonly pre: Worker;
@@ -22,7 +22,7 @@ export class ConvertSession {
   private done_ = 0;
   private queued = 0;
   private readonly active: boolean[] = [];
-  private buffer: PocConvertRegionMessage[] = [];
+  private buffer: ConvertRegionMessage[] = [];
   private _numTotalChunks = -1;
   numDoneChunks = 0;
   lastProgressUpdate: number = 0;
@@ -39,10 +39,10 @@ export class ConvertSession {
     const pre = new Worker("./script/pre.js", { name: "pre" });
     pre.onmessage = (ev: MessageEvent) => {
       const id = this.id;
-      if (isPocConvertRegionMessage(ev.data) && ev.data.id === id) {
+      if (isConvertRegionMessage(ev.data) && ev.data.id === id) {
         this.queue(ev.data);
       } else if (
-        isPocConvertQueueingFinishedMessage(ev.data) &&
+        isConvertQueueingFinishedMessage(ev.data) &&
         ev.data.id === id
       ) {
         this.markQueueingFinished();
@@ -74,7 +74,7 @@ export class ConvertSession {
           return;
         }
         const id = this.id;
-        if (isPocConvertRegionDoneMessage(ev.data) && ev.data.id === id) {
+        if (isConvertRegionDoneMessage(ev.data) && ev.data.id === id) {
           this.done(target);
         } else if (
           isConvertProgressDeltaMessage(ev.data) &&
@@ -113,7 +113,7 @@ export class ConvertSession {
         this.reduce((state) => {
           return updateProgress(state, ev.data);
         }, true);
-      } else if (isPocPostDoneMessage(ev.data) && id == ev.data.id) {
+      } else if (isPostDoneMessage(ev.data) && id == ev.data.id) {
         this.markPostDone();
         const dot = this.file.name.lastIndexOf(".");
         let filename = "world.mcworld";
@@ -142,11 +142,11 @@ export class ConvertSession {
 
   start(file: File) {
     console.log(`[front] (${this.id}) start`);
-    const start: PocStartPreMessage = { type: "pre", id: this.id, file };
+    const start: StartPreMessage = { type: "pre", id: this.id, file };
     this.pre.postMessage(start);
   }
 
-  queue(m: PocConvertRegionMessage) {
+  queue(m: ConvertRegionMessage) {
     this.buffer.push(m);
     this.enqueue();
     this.count++;
@@ -192,7 +192,7 @@ export class ConvertSession {
     this.enqueue();
     if (this.finalCount === this.done_) {
       console.log(`[front] (${this.id}) all chunk conversion finished`);
-      const m: PocStartPostMessage = {
+      const m: StartPostMessage = {
         type: "post",
         id: this.id,
         file: this.file,

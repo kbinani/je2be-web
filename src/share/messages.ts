@@ -82,13 +82,13 @@ export type WorkerError = {
   native?: Error;
 };
 
-export type PocStartPreMessage = {
+export type StartPreMessage = {
   type: "pre";
   id: string;
   file: File;
 };
 
-export function isPocStartPreMessage(x: any): x is PocStartPreMessage {
+export function isStartPreMessage(x: any): x is StartPreMessage {
   if (!x) {
     return false;
   }
@@ -99,7 +99,7 @@ export function isPocStartPreMessage(x: any): x is PocStartPreMessage {
   );
 }
 
-export type PocConvertRegionMessage = {
+export type ConvertRegionMessage = {
   type: "region";
   id: string;
   rx: number;
@@ -108,9 +108,7 @@ export type PocConvertRegionMessage = {
   javaEditionMap: number[];
 };
 
-export function isPocConvertRegionMessage(
-  x: any
-): x is PocConvertRegionMessage {
+export function isConvertRegionMessage(x: any): x is ConvertRegionMessage {
   if (!x) {
     return false;
   }
@@ -124,28 +122,28 @@ export function isPocConvertRegionMessage(
   );
 }
 
-export type PocConvertQueueingFinishedMessage = {
+export type ConvertQueueingFinishedMessage = {
   id: string;
   type: "queueing_finished";
 };
 
-export function isPocConvertQueueingFinishedMessage(
+export function isConvertQueueingFinishedMessage(
   x: any
-): x is PocConvertQueueingFinishedMessage {
+): x is ConvertQueueingFinishedMessage {
   if (!x) {
     return false;
   }
   return x["type"] === "queueing_finished" && typeof x["id"] === "string";
 }
 
-export type PocStartPostMessage = {
+export type StartPostMessage = {
   type: "post";
   id: string;
   file: File;
   levelDirectory: string;
 };
 
-export function isPocStartPostMessage(x: any): x is PocStartPostMessage {
+export function isStartPostMessage(x: any): x is StartPostMessage {
   if (!x) {
     return false;
   }
@@ -157,27 +155,27 @@ export function isPocStartPostMessage(x: any): x is PocStartPostMessage {
   );
 }
 
-export type PocPostDoneMessage = {
+export type PostDoneMessage = {
   type: "post_done";
   id: string;
 };
 
-export function isPocPostDoneMessage(x: any): x is PocPostDoneMessage {
+export function isPostDoneMessage(x: any): x is PostDoneMessage {
   if (!x) {
     return false;
   }
   return x["type"] === "post_done" && typeof x["id"] === "string";
 }
 
-export type PocConvertRegionDoneMessage = {
+export type ConvertRegionDoneMessage = {
   type: "region_done";
   id: string;
   data: string;
 };
 
-export function isPocConvertRegionDoneMessage(
+export function isConvertRegionDoneMessage(
   x: any
-): x is PocConvertRegionDoneMessage {
+): x is ConvertRegionDoneMessage {
   if (!x) {
     return false;
   }

@@ -1,7 +1,7 @@
 import {
-  isPocConvertRegionMessage,
-  PocConvertRegionDoneMessage,
-  PocConvertRegionMessage,
+  isConvertRegionMessage,
+  ConvertRegionDoneMessage,
+  ConvertRegionMessage,
 } from "../../share/messages";
 import { File, FileStorage } from "../../share/file-storage";
 import { ReadI32, WriteI32 } from "../../share/heap";
@@ -10,16 +10,16 @@ import { dirname, mkdirp } from "../../share/fs-ext";
 self.importScripts("./region-wasm.js");
 
 self.onmessage = (ev: MessageEvent) => {
-  if (isPocConvertRegionMessage(ev.data)) {
+  if (isConvertRegionMessage(ev.data)) {
     startConvertRegion(ev.data);
   }
 };
 
-function startConvertRegion(m: PocConvertRegionMessage) {
+function startConvertRegion(m: ConvertRegionMessage) {
   convertRegion(m);
 }
 
-async function convertRegion(m: PocConvertRegionMessage): Promise<void> {
+async function convertRegion(m: ConvertRegionMessage): Promise<void> {
   const { id, rx, rz, dim, javaEditionMap } = m;
   const fs = new FileStorage();
   const root = `/je2be/${id}/in`;
@@ -102,7 +102,7 @@ async function convertRegion(m: PocConvertRegionMessage): Promise<void> {
   if (entitiesFileExists) {
     await fs.files.delete(entities);
   }
-  const done: PocConvertRegionDoneMessage = {
+  const done: ConvertRegionDoneMessage = {
     type: "region_done",
     id,
     data: "foo!",

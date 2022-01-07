@@ -1,7 +1,7 @@
 import {
-  isPocStartPostMessage,
-  PocPostDoneMessage,
-  PocStartPostMessage,
+  isStartPostMessage,
+  PostDoneMessage,
+  StartPostMessage,
   ProgressMessage,
   WorkerError,
 } from "../../share/messages";
@@ -13,19 +13,19 @@ import { ReadI32 } from "../../share/heap";
 import { ChunksStore } from "../../share/chunk-store";
 
 self.onmessage = (ev: MessageEvent) => {
-  if (isPocStartPostMessage(ev.data)) {
+  if (isStartPostMessage(ev.data)) {
     startPost(ev.data);
   }
 };
 
 self.importScripts("./post-wasm.js");
 
-function startPost(m: PocStartPostMessage) {
+function startPost(m: StartPostMessage) {
   const { id } = m;
   console.log(`[post] (${id}) start`);
   post(m)
     .then(() => {
-      const done: PocPostDoneMessage = {
+      const done: PostDoneMessage = {
         type: "post_done",
         id,
       };
@@ -41,7 +41,7 @@ function startPost(m: PocStartPostMessage) {
     });
 }
 
-async function post(m: PocStartPostMessage): Promise<void> {
+async function post(m: StartPostMessage): Promise<void> {
   const { id, file, levelDirectory } = m;
   const fs = new FileStorage();
   console.log(`[post] (${id}) extract...`);

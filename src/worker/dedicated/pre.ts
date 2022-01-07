@@ -1,9 +1,9 @@
 import {
   ExportDoneMessage,
-  isPocStartPreMessage,
-  PocConvertQueueingFinishedMessage,
-  PocConvertRegionMessage,
-  PocStartPreMessage,
+  isStartPreMessage,
+  ConvertQueueingFinishedMessage,
+  ConvertRegionMessage,
+  StartPreMessage,
   ProgressMessage,
   WorkerError,
 } from "../../share/messages";
@@ -15,7 +15,7 @@ import { ReadI32 } from "../../share/heap";
 import { promiseUnzipFileInZip } from "../../share/zip-ext";
 
 self.onmessage = (ev: MessageEvent) => {
-  if (isPocStartPreMessage(ev.data)) {
+  if (isStartPreMessage(ev.data)) {
     const { id } = ev.data;
     start(ev.data).finally(() => {
       Module.RemoveAll(`/je2be/${id}`);
@@ -30,7 +30,7 @@ type Region = {
   region: Point;
 };
 
-async function start(m: PocStartPreMessage): Promise<void> {
+async function start(m: StartPreMessage): Promise<void> {
   console.log(`[pre] (${m.id}) start`);
   const { id, file } = m;
 
@@ -75,7 +75,7 @@ async function start(m: PocStartPreMessage): Promise<void> {
   Module._free(storage);
   queue(id, regions, javaEditionMap);
   console.log(`[pre] (${id}) queue done: queue length=${numTotalChunks}`);
-  const last: PocConvertQueueingFinishedMessage = {
+  const last: ConvertQueueingFinishedMessage = {
     id,
     type: "queueing_finished",
   };
@@ -210,7 +210,7 @@ async function extract(
 function queue(id: string, regions: Region[], javaEditionMap: number[]) {
   for (const r of regions) {
     const { region, dim } = r;
-    const m: PocConvertRegionMessage = {
+    const m: ConvertRegionMessage = {
       type: "region",
       id,
       rx: region.x,
