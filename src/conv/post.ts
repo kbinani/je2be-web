@@ -217,7 +217,10 @@ async function collectKeys(id: string, fs: FileStorage): Promise<Key[]> {
         ptr += 4;
         const keySize = ReadI32(ptr, data);
         ptr += 4;
-        const key = data.slice(ptr, ptr + keySize);
+        const key = new Uint8Array(keySize);
+        for (let i = 0; i < keySize; i++) {
+          key[i] = data[ptr + i];
+        }
         ptr += keySize;
         const k: Key = { key, file: valuesFile, pos };
         keys.push(k);
