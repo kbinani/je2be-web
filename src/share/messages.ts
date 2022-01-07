@@ -139,6 +139,7 @@ export type StartPostMessage = {
   id: string;
   file: File;
   levelDirectory: string;
+  numWorkers: number;
 };
 
 export function isStartPostMessage(x: any): x is StartPostMessage {
@@ -149,7 +150,8 @@ export function isStartPostMessage(x: any): x is StartPostMessage {
     x["type"] === "post" &&
     typeof x["id"] === "string" &&
     x["file"] instanceof File &&
-    typeof x["levelDirectory"] === "string"
+    typeof x["levelDirectory"] === "string" &&
+    typeof x["numWorkers"] === "number"
   );
 }
 
@@ -219,5 +221,49 @@ export function isConvertProgressDeltaMessage(
     x["type"] === "convert_progress_delta" &&
     typeof x["id"] === "string" &&
     typeof x["delta"] === "number"
+  );
+}
+
+export type DbKey = {
+  key: Uint8Array;
+  file: string;
+  pos: number;
+};
+
+export type CompactionQueueMessage = {
+  type: "compaction_queue";
+  index: number;
+  id: string;
+  keys: DbKey[];
+};
+
+export function isCompactionQueueMessage(x: any): x is CompactionQueueMessage {
+  if (!x) {
+    return false;
+  }
+  return (
+    x["type"] === "compaction_queue" &&
+    typeof x["index"] === "number" &&
+    typeof x["id"] === "string" &&
+    !!x["keys"]
+  );
+}
+
+export type CompactionThreadFinishedMessage = {
+  type: "compaction_thread_finished";
+  index: number;
+  id: string;
+};
+
+export function isCompactionThreadFinishedMessage(
+  x: any
+): x is CompactionThreadFinishedMessage {
+  if (!x) {
+    return false;
+  }
+  return (
+    x["type"] === "compaction_thread_finished" &&
+    typeof x["index"] === "number" &&
+    typeof x["id"] === "string"
   );
 }

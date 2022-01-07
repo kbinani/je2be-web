@@ -8,6 +8,7 @@
 #include <je2be.hpp>
 
 #include "db.hpp"
+#include "append-db.hpp"
 
 using namespace std;
 using namespace mcfile;
@@ -84,8 +85,27 @@ bool ConvertRegion(string id, int rx, int rz, int dim, intptr_t javaEditionMap, 
   return true;
 }
 
+intptr_t NewAppendDb(string id) {
+  return (intptr_t) new AppendDb(id);
+}
+
+bool DeleteAppendDb(intptr_t dbPtr) {
+  AppendDb *db = (AppendDb *)dbPtr;
+  bool ok = db->close();
+  delete db;
+  return ok;
+}
+
+int AppendDbAppend(intptr_t dbPtr, string file, intptr_t key, int keySize) {
+  AppendDb *db = (AppendDb *)dbPtr;
+  return db->append(file, key, keySize);
+}
+
 #if defined(EMSCRIPTEN)
 EMSCRIPTEN_BINDINGS(core_module) {
   emscripten::function("ConvertRegion", &ConvertRegion);
+  emscripten::function("NewAppendDb", &NewAppendDb);
+  emscripten::function("DeleteAppendDb", &DeleteAppendDb);
+  emscripten::function("AppendDbAppend", &AppendDbAppend);
 }
 #endif

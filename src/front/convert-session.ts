@@ -1,5 +1,6 @@
 import {
   ConvertRegionMessage,
+  isCompactionQueueMessage,
   isConvertProgressDeltaMessage,
   isConvertQueueingFinishedMessage,
   isConvertRegionDoneMessage,
@@ -113,7 +114,7 @@ export class ConvertSession {
         this.reduce((state) => {
           return updateProgress(state, ev.data);
         }, true);
-      } else if (isPostDoneMessage(ev.data) && id == ev.data.id) {
+      } else if (isPostDoneMessage(ev.data) && id === ev.data.id) {
         this.markPostDone();
         const dot = this.file.name.lastIndexOf(".");
         let filename = "world.mcworld";
@@ -127,6 +128,12 @@ export class ConvertSession {
             id: undefined,
           };
         }, true);
+      } else if (isCompactionQueueMessage(ev.data) && id === ev.data.id) {
+        const index = ev.data.index;
+        if (0 <= index && index < this.workers.length) {
+          const worker = this.workers[index];
+          worker.postMessage(ev.data);
+        }
       }
     };
     this.post = post;
@@ -197,10 +204,8 @@ export class ConvertSession {
         id: this.id,
         file: this.file,
         levelDirectory: this.levelDirectory,
+        numWorkers: this.workers.length,
       };
-      for (const worker of this.workers) {
-        worker.terminate();
-      }
       this.post.postMessage(m);
     }
   }

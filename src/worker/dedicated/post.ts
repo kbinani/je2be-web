@@ -1,12 +1,13 @@
 import {
+  CompactionQueueMessage,
+  DbKey,
   isStartPostMessage,
   PostDoneMessage,
-  ProgressMessage,
   StartPostMessage,
   WorkerError,
 } from "../../share/messages";
 import { File, FileStorage } from "../../share/file-storage";
-import { dirname, exists, iterate, mkdirp } from "../../share/fs-ext";
+import { dirname, iterate, mkdirp } from "../../share/fs-ext";
 import JSZip from "jszip";
 import { promiseUnzipFileInZip } from "../../share/zip-ext";
 import { ReadI32 } from "../../share/heap";
@@ -41,7 +42,7 @@ function startPost(m: StartPostMessage) {
 }
 
 async function post(m: StartPostMessage): Promise<void> {
-  const { id, file, levelDirectory } = m;
+  const { id, file, levelDirectory, numWorkers } = m;
   const fs = new FileStorage();
   console.log(`[post] (${id}) extract...`);
   await extract(id, file, levelDirectory);
@@ -68,6 +69,9 @@ async function post(m: StartPostMessage): Promise<void> {
   console.log(`[post] (${id}) collectKeys...`);
   const keys = await collectKeys(id, fs);
   console.log(`[post] (${id}) collectKeys done`);
+  console.log(`[post] (${id}) queueCompaction...`);
+  queueCompaction(id, numWorkers, keys);
+  console.log(`[post] (${id}) queueCompaction done`);
   console.log(`[post] (${id}) constructDb...`);
   if (!(await constructDb(id, fs, keys))) {
     console.log(`[post] (${id}) constructDb failed`);
@@ -182,20 +186,14 @@ async function retrieveMemFsFiles(id: string, fs: FileStorage): Promise<void> {
     } else {
       const data = FS.readFile(path);
       await fs.files.put({ path, data });
-      //TODO: debug FS.unlink(path);
+      FS.unlink(path);
     }
   });
 }
 
-type Key = {
-  key: Uint8Array;
-  file: string;
-  pos: number;
-};
-
-async function collectKeys(id: string, fs: FileStorage): Promise<Key[]> {
+async function collectKeys(id: string, fs: FileStorage): Promise<DbKey[]> {
   const prefix = `/je2be/${id}/ldb/`;
-  const keys: Key[] = [];
+  const keys: DbKey[] = [];
   await fs.files
     .where("path")
     .startsWith(prefix)
@@ -215,111 +213,135 @@ async function collectKeys(id: string, fs: FileStorage): Promise<Key[]> {
           key[i] = data[ptr + i];
         }
         ptr += keySize;
-        const k: Key = { key, file: valuesFile, pos };
+        const k: DbKey = { key, file: valuesFile, pos };
         keys.push(k);
       }
     });
-  keys.sort((a: Key, b: Key) => {
+  keys.sort((a: DbKey, b: DbKey) => {
     return bytewiseComparator(a.key, b.key);
   });
   return keys;
 }
 
+function queueCompaction(id: string, numWorkers: number, keys: DbKey[]) {
+  const size = Math.floor(keys.length / numWorkers);
+  let pos = 0;
+  for (let i = 0; i < numWorkers - 1; i++) {
+    const queue = keys.slice(pos, pos + size);
+    const m: CompactionQueueMessage = {
+      type: "compaction_queue",
+      index: i,
+      keys: queue,
+      id,
+    };
+    self.postMessage(m);
+    pos += size;
+  }
+  const q: CompactionQueueMessage = {
+    type: "compaction_queue",
+    index: numWorkers - 1,
+    keys: keys.slice(pos),
+    id,
+  };
+  self.postMessage(q);
+}
+
 async function constructDb(
   id: string,
   fs: FileStorage,
-  keys: Key[]
+  keys: DbKey[]
 ): Promise<boolean> {
-  const file = `/je2be/${id}/tmp.bin`;
-  const db = Module.NewAppendDb(id);
-  let path: string = "";
-  let data: Uint8Array;
-  let keyBuffer = Module._malloc(16);
-  let keyBufferSize = 16;
-  let ok = true;
-  let tableNumber = 0;
-  for (let i = 0; i < keys.length; i++) {
-    const key = keys[i];
-    if (path !== key.file) {
-      const f = await fs.files.get(key.file);
-      data = f.data;
-      path = key.file;
-    }
-    const size = ReadI32(key.pos, data);
-    FS.writeFile(file, data.slice(key.pos + 4, key.pos + 4 + size));
-    if (keyBufferSize < key.key.byteLength) {
-      Module._free(keyBuffer);
-      keyBufferSize = key.key.byteLength;
-      keyBuffer = Module._malloc(keyBufferSize);
-    }
-    for (let i = 0; i < key.key.length; i++) {
-      Module.HEAPU8[keyBuffer + i] = key.key[i];
-    }
-    //int AppendDbAppend(intptr_t dbPtr, string file, intptr_t key, int keySize)
-    const maxTableNumber = Module.AppendDbAppend(
-      db,
-      file,
-      keyBuffer,
-      key.key.length
-    );
-    if (maxTableNumber < 0) {
-      console.log(`[post] wasm::Append failed`);
-      ok = false;
-      break;
-    }
-    for (let i = tableNumber + 1; i <= maxTableNumber; i++) {
-      const path = `/je2be/${id}/out/db/${tableName(i)}`;
-      const data = FS.readFile(path);
-      await fs.files.put({ path, data });
-      FS.unlink(path);
-    }
-    tableNumber = maxTableNumber;
-
-    const m: ProgressMessage = {
-      id,
-      type: "progress",
-      stage: "compaction",
-      progress: i,
-      total: keys.length,
-    };
-    self.postMessage(m);
-  }
-  if (exists(file)) {
-    FS.unlink(file);
-  }
-  Module._free(keyBuffer);
-
-  ok = Module.DeleteAppendDb(db) && ok;
-
-  for (let i = tableNumber + 1; ; i++) {
-    const path = `/je2be/${id}/out/db/${tableName(i)}`;
-    if (!exists(path)) {
-      break;
-    }
-    const data = FS.readFile(path);
-    await fs.files.put({ path, data });
-    FS.unlink(path);
-  }
-
-  for (const name of ["MANIFEST-000001", "CURRENT"]) {
-    const path = `/je2be/${id}/out/db/${name}`;
-    const data = FS.readFile(path);
-    await fs.files.put({ path, data });
-    FS.unlink(path);
-  }
-
-  await fs.files.where("path").startsWith(`/je2be/${id}/ldb`).delete();
-
-  const m: ProgressMessage = {
-    id,
-    type: "progress",
-    stage: "compaction",
-    progress: keys.length,
-    total: keys.length,
-  };
-  self.postMessage(m);
-
-  return ok;
+  return false; //TODO:
+  // const file = `/je2be/${id}/tmp.bin`;
+  // const db = Module.NewAppendDb(id);
+  // let path: string = "";
+  // let data: Uint8Array;
+  // let keyBuffer = Module._malloc(16);
+  // let keyBufferSize = 16;
+  // let ok = true;
+  // let tableNumber = 0;
+  // for (let i = 0; i < keys.length; i++) {
+  //   const key = keys[i];
+  //   if (path !== key.file) {
+  //     const f = await fs.files.get(key.file);
+  //     data = f.data;
+  //     path = key.file;
+  //   }
+  //   const size = ReadI32(key.pos, data);
+  //   FS.writeFile(file, data.slice(key.pos + 4, key.pos + 4 + size));
+  //   if (keyBufferSize < key.key.byteLength) {
+  //     Module._free(keyBuffer);
+  //     keyBufferSize = key.key.byteLength;
+  //     keyBuffer = Module._malloc(keyBufferSize);
+  //   }
+  //   for (let i = 0; i < key.key.length; i++) {
+  //     Module.HEAPU8[keyBuffer + i] = key.key[i];
+  //   }
+  //   //int AppendDbAppend(intptr_t dbPtr, string file, intptr_t key, int keySize)
+  //   const maxTableNumber = Module.AppendDbAppend(
+  //     db,
+  //     file,
+  //     keyBuffer,
+  //     key.key.length
+  //   );
+  //   if (maxTableNumber < 0) {
+  //     console.log(`[post] wasm::Append failed`);
+  //     ok = false;
+  //     break;
+  //   }
+  //   for (let i = tableNumber + 1; i <= maxTableNumber; i++) {
+  //     const path = `/je2be/${id}/out/db/${tableName(i)}`;
+  //     const data = FS.readFile(path);
+  //     await fs.files.put({ path, data });
+  //     FS.unlink(path);
+  //   }
+  //   tableNumber = maxTableNumber;
+  //
+  //   const m: ProgressMessage = {
+  //     id,
+  //     type: "progress",
+  //     stage: "compaction",
+  //     progress: i,
+  //     total: keys.length,
+  //   };
+  //   self.postMessage(m);
+  // }
+  // if (exists(file)) {
+  //   FS.unlink(file);
+  // }
+  // Module._free(keyBuffer);
+  //
+  // ok = Module.DeleteAppendDb(db) && ok;
+  //
+  // for (let i = tableNumber + 1; ; i++) {
+  //   const path = `/je2be/${id}/out/db/${tableName(i)}`;
+  //   if (!exists(path)) {
+  //     break;
+  //   }
+  //   const data = FS.readFile(path);
+  //   await fs.files.put({ path, data });
+  //   FS.unlink(path);
+  // }
+  //
+  // for (const name of ["MANIFEST-000001", "CURRENT"]) {
+  //   const path = `/je2be/${id}/out/db/${name}`;
+  //   const data = FS.readFile(path);
+  //   await fs.files.put({ path, data });
+  //   FS.unlink(path);
+  // }
+  //
+  // await fs.files.where("path").startsWith(`/je2be/${id}/ldb`).delete();
+  //
+  // const m: ProgressMessage = {
+  //   id,
+  //   type: "progress",
+  //   stage: "compaction",
+  //   progress: keys.length,
+  //   total: keys.length,
+  // };
+  // self.postMessage(m);
+  //
+  // return ok;
 }
 
 function tableName(n: number): string {
