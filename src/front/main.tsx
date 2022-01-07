@@ -13,7 +13,6 @@ export type MainComponentState = {
   convertTotal: number;
   compaction: number;
   zip: number;
-  copy: number;
   dl?: { id: string; filename: string };
   error?: WorkerError;
   id?: string;
@@ -29,7 +28,6 @@ const kInitComponentState: MainComponentState = {
   convertTotal: 1,
   compaction: 0,
   zip: 0,
-  copy: 0,
 };
 
 export const useForceUpdate = () => {
@@ -73,7 +71,7 @@ export const MainComponent: FC = () => {
       window.removeEventListener("beforeunload", onBeforeUnload);
     };
   }, []);
-  const { unzip, compaction, zip, copy, convert, convertTotal } = state.current;
+  const { unzip, compaction, zip, convert, convertTotal } = state.current;
   const disableLink =
     state.current.id !== undefined || state.current.dl !== undefined;
   const onStartPoc = (ev: ChangeEvent<HTMLInputElement>) => {
@@ -126,7 +124,6 @@ export const MainComponent: FC = () => {
             label={"LevelDB Compaction"}
           />
           <Progress progress={zip} total={1} label={"Zip"} />
-          <Progress progress={copy} total={1} label={"Copy"} />
           <div className="message">
             {state.current.dl && (
               <div className="downloadMessage">

@@ -109,7 +109,11 @@ export class ConvertSession {
     const post = new Worker("./script/post.js", { name: "post" });
     post.onmessage = (ev: MessageEvent) => {
       const id = this.id;
-      if (isPocPostDoneMessage(ev.data) && id == ev.data.id) {
+      if (isProgressMessage(ev.data) && id === ev.data.id) {
+        this.reduce((state) => {
+          return updateProgress(state, ev.data);
+        }, true);
+      } else if (isPocPostDoneMessage(ev.data) && id == ev.data.id) {
         this.markPostDone();
         const dot = this.file.name.lastIndexOf(".");
         let filename = "world.mcworld";
@@ -224,9 +228,7 @@ function updateProgress(
     case "compaction":
       return { ...state, compaction: p, zip: p >= 1 ? -1 : state.zip };
     case "zip":
-      return { ...state, zip: p, copy: p >= 1 ? -1 : state.copy };
-    case "copy":
-      return { ...state, copy: p };
+      return { ...state, zip: p };
   }
   return { ...state };
 }

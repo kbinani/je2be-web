@@ -242,7 +242,8 @@ async function constructDb(
   let keyBufferSize = 16;
   let ok = true;
   let tableNumber = 0;
-  for (const key of keys) {
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i];
     if (path !== key.file) {
       const f = await fs.files.get(key.file);
       data = f.data;
@@ -277,6 +278,15 @@ async function constructDb(
       //TODO:debug FS.unlink(path);
     }
     tableNumber = maxTableNumber;
+
+    const m: ProgressMessage = {
+      id,
+      type: "progress",
+      stage: "compaction",
+      progress: i,
+      total: keys.length,
+    };
+    self.postMessage(m);
   }
   if (exists(file)) {
     FS.unlink(file);
@@ -303,6 +313,16 @@ async function constructDb(
   }
 
   await fs.files.where("path").startsWith(`/je2be/${id}/ldb`).delete();
+
+  const m: ProgressMessage = {
+    id,
+    type: "progress",
+    stage: "compaction",
+    progress: keys.length,
+    total: keys.length,
+  };
+  self.postMessage(m);
+
   return ok;
 }
 
@@ -341,8 +361,25 @@ async function zip(id: string): Promise<void> {
       const m: WorkerError = { type: "CopyToIdb" };
       throw m;
     }
+    const m: ProgressMessage = {
+      id,
+      type: "progress",
+      stage: "zip",
+      progress: i,
+      total: count,
+    };
+    self.postMessage(m);
   }
   cs.close();
   //TODO:debug Module.RemoveAll(`/je2be/${id}`);
   Module.RemoveAll(`/je2be/dl/${id}`);
+
+  const m: ProgressMessage = {
+    id,
+    type: "progress",
+    stage: "zip",
+    progress: count,
+    total: count,
+  };
+  self.postMessage(m);
 }
