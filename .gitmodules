@@ -4,3 +4,6 @@
 [submodule "deps/zlib"]
 	path = deps/zlib
 	url = https://github.com/madler/zlib.git
+[submodule "deps/client-zip"]
+	path = deps/client-zip
+	url = https://github.com/kbinani/client-zip.git
