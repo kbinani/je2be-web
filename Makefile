@@ -3,7 +3,7 @@ all: public/script/front.js public/sworker.js public/script/region.js public/scr
 
 .PHONY: clean
 clean:
-	rm -rf .wasm-build build/pre-wasm.js build/region-wasm.js build/post-wasm.js public/script
+	rm -rf .wasm-built build/pre-wasm.js build/region-wasm.js build/post-wasm.js public/script
 
 .PHONY: build_docker_image
 build_docker_image:
