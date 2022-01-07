@@ -75,9 +75,6 @@ async function post(m: PocStartPostMessage): Promise<void> {
     return;
   }
   console.log(`[post] (${id}) constructDb done`);
-  // console.log(`[post] (${id}) copyLdbFiles...`);
-  // await copyLdbFiles(id, fs);
-  // console.log(`[post] (${id}) copyLdbFiles done`);
   console.log(`[post] (${id}) zip...`);
   await zip(id);
   console.log(`[post] (${id}) zip done`);
@@ -277,16 +274,36 @@ async function constructDb(
       const path = `/je2be/${id}/out/db/${tableName(i)}`;
       const data = FS.readFile(path);
       await fs.files.put({ path, data });
-      FS.unlink(path);
+      //TODO:debug FS.unlink(path);
     }
     tableNumber = maxTableNumber;
   }
   if (exists(file)) {
     FS.unlink(file);
   }
-  await fs.files.where("path").startsWith(`/je2be/${id}/ldb`).delete();
   Module._free(keyBuffer);
-  return ok && Module.DeleteAppendDb(db);
+
+  ok = Module.DeleteAppendDb(db) && ok;
+
+  for (let i = tableNumber + 1; ; i++) {
+    const path = `/je2be/${id}/out/db/${tableName(i)}`;
+    if (!exists(path)) {
+      break;
+    }
+    const data = FS.readFile(path);
+    await fs.files.put({ path, data });
+    //TODO:debug FS.unlink(path);
+  }
+
+  for (const name of ["MANIFEST-000001", "CURRENT"]) {
+    const path = `/je2be/${id}/out/db/${name}`;
+    const data = FS.readFile(path);
+    await fs.files.put({ path, data });
+    //TODO:debug FS.unlink(path);
+  }
+
+  await fs.files.where("path").startsWith(`/je2be/${id}/ldb`).delete();
+  return ok;
 }
 
 function tableName(n: number): string {
@@ -295,27 +312,6 @@ function tableName(n: number): string {
     s = "0" + s;
   }
   return `${s}.ldb`;
-}
-
-async function copyLdbFiles(id: string, fs: FileStorage): Promise<void> {
-  let tableNumber = 0;
-  const prefix = `/je2be/${id}/out/db`;
-  while (true) {
-    const path = `${prefix}/${tableName(tableNumber)}`;
-    tableNumber++;
-    if (!exists(path)) {
-      break;
-    }
-    const data = FS.readFile(path);
-    await fs.files.put({ path, data });
-    //TODO:debug FS.unlink(path);
-  }
-  for (const name of ["MANIFEST-000001", "CURRENT"]) {
-    const path = `/je2be/${id}/out/db/${name}`;
-    const data = FS.readFile(path);
-    await fs.files.put({ path, data });
-    //TODO:debug FS.unlink(path);
-  }
 }
 
 async function zip(id: string): Promise<void> {
