@@ -1,7 +1,7 @@
 import {
-  isConvertRegionMessage,
   ConvertRegionDoneMessage,
   ConvertRegionMessage,
+  isConvertRegionMessage,
 } from "../../share/messages";
 import { File, FileStorage } from "../../share/file-storage";
 import { ReadI32, WriteI32 } from "../../share/heap";

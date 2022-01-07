@@ -1,8 +1,8 @@
 import {
   isStartPostMessage,
   PostDoneMessage,
-  StartPostMessage,
   ProgressMessage,
+  StartPostMessage,
   WorkerError,
 } from "../../share/messages";
 import { File, FileStorage } from "../../share/file-storage";
@@ -10,7 +10,6 @@ import { dirname, exists, iterate, mkdirp } from "../../share/fs-ext";
 import JSZip from "jszip";
 import { promiseUnzipFileInZip } from "../../share/zip-ext";
 import { ReadI32 } from "../../share/heap";
-import { ChunksStore } from "../../share/chunk-store";
 
 self.onmessage = (ev: MessageEvent) => {
   if (isStartPostMessage(ev.data)) {
@@ -75,9 +74,6 @@ async function post(m: StartPostMessage): Promise<void> {
     return;
   }
   console.log(`[post] (${id}) constructDb done`);
-  console.log(`[post] (${id}) zip...`);
-  await zip(id);
-  console.log(`[post] (${id}) zip done`);
 }
 
 function memcmp(a: Uint8Array, b: Uint8Array, n: number): number {
@@ -275,7 +271,7 @@ async function constructDb(
       const path = `/je2be/${id}/out/db/${tableName(i)}`;
       const data = FS.readFile(path);
       await fs.files.put({ path, data });
-      //TODO:debug FS.unlink(path);
+      FS.unlink(path);
     }
     tableNumber = maxTableNumber;
 
@@ -302,14 +298,14 @@ async function constructDb(
     }
     const data = FS.readFile(path);
     await fs.files.put({ path, data });
-    //TODO:debug FS.unlink(path);
+    FS.unlink(path);
   }
 
   for (const name of ["MANIFEST-000001", "CURRENT"]) {
     const path = `/je2be/${id}/out/db/${name}`;
     const data = FS.readFile(path);
     await fs.files.put({ path, data });
-    //TODO:debug FS.unlink(path);
+    FS.unlink(path);
   }
 
   await fs.files.where("path").startsWith(`/je2be/${id}/ldb`).delete();
@@ -332,46 +328,4 @@ function tableName(n: number): string {
     s = "0" + s;
   }
   return `${s}.ldb`;
-}
-
-async function zip(id: string): Promise<void> {
-  const cs = new ChunksStore();
-  mkdirp(`/je2be/dl/${id}`);
-  const count = Module.Zip(id);
-  for (let i = 0; i < count; i++) {
-    const name = `/je2be/dl/${id}/${i}.bin`;
-    const data: Uint8Array = FS.readFile(name);
-    FS.unlink(name);
-    try {
-      await cs.chunks.add({
-        name,
-        data,
-      });
-    } catch (e) {
-      console.error(e);
-      cs.close();
-      const m: WorkerError = { type: "CopyToIdb" };
-      throw m;
-    }
-    const m: ProgressMessage = {
-      id,
-      type: "progress",
-      stage: "zip",
-      progress: i,
-      total: count,
-    };
-    self.postMessage(m);
-  }
-  cs.close();
-  //TODO:debug Module.RemoveAll(`/je2be/${id}`);
-  Module.RemoveAll(`/je2be/dl/${id}`);
-
-  const m: ProgressMessage = {
-    id,
-    type: "progress",
-    stage: "zip",
-    progress: count,
-    total: count,
-  };
-  self.postMessage(m);
 }

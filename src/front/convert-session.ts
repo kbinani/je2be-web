@@ -1,15 +1,15 @@
 import {
+  ConvertRegionMessage,
   isConvertProgressDeltaMessage,
-  isExportDoneMessage,
   isConvertQueueingFinishedMessage,
   isConvertRegionDoneMessage,
   isConvertRegionMessage,
+  isExportDoneMessage,
   isPostDoneMessage,
   isProgressMessage,
-  ConvertRegionMessage,
+  ProgressMessage,
   StartPostMessage,
   StartPreMessage,
-  ProgressMessage,
 } from "../share/messages";
 import { MainComponentState, MainComponentStateReducer } from "./main";
 
@@ -226,9 +226,7 @@ function updateProgress(
         compaction: m.progress === m.total ? -1 : state.compaction,
       };
     case "compaction":
-      return { ...state, compaction: p, zip: p >= 1 ? -1 : state.zip };
-    case "zip":
-      return { ...state, zip: p };
+      return { ...state, compaction: p };
   }
   return { ...state };
 }
