@@ -18,7 +18,7 @@ self.onmessage = (ev: MessageEvent) => {
   }
 };
 
-self.importScripts("./post-core.js");
+self.importScripts("./post-wasm.js");
 
 function startPost(m: PocStartPostMessage) {
   const { id } = m;

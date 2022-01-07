@@ -7,7 +7,7 @@ import { File, FileStorage } from "../../share/file-storage";
 import { ReadI32, WriteI32 } from "../../share/heap";
 import { dirname, mkdirp } from "../../share/fs-ext";
 
-self.importScripts("./region-core.js");
+self.importScripts("./region-wasm.js");
 
 self.onmessage = (ev: MessageEvent) => {
   if (isPocConvertRegionMessage(ev.data)) {

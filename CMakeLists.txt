@@ -23,27 +23,27 @@ set(je2be_common_em_link_options
   -sINVOKE_RUN=0
   -O3)
 
-add_executable(region-core
-  src/worker/dedicated/region-core.cpp
+add_executable(region-wasm
+  src/worker/dedicated/region-wasm.cpp
   include/db.hpp)
-target_link_libraries(region-core je2be)
-target_include_directories(region-core PRIVATE include)
-target_compile_options(region-core PRIVATE ${je2be_common_em_compile_options})
-target_link_options(region-core PRIVATE ${je2be_common_em_link_options})
+target_link_libraries(region-wasm je2be)
+target_include_directories(region-wasm PRIVATE include)
+target_compile_options(region-wasm PRIVATE ${je2be_common_em_compile_options})
+target_link_options(region-wasm PRIVATE ${je2be_common_em_link_options})
 
-add_executable(pre-core src/worker/dedicated/pre-core.cpp)
-target_link_libraries(pre-core je2be)
-target_compile_options(pre-core PRIVATE ${je2be_common_em_compile_options})
-target_link_options(pre-core PRIVATE ${je2be_common_em_link_options})
+add_executable(pre-wasm src/worker/dedicated/pre-wasm.cpp)
+target_link_libraries(pre-wasm je2be)
+target_compile_options(pre-wasm PRIVATE ${je2be_common_em_compile_options})
+target_link_options(pre-wasm PRIVATE ${je2be_common_em_link_options})
 
-add_executable(post-core
-  src/worker/dedicated/post-core.cpp
+add_executable(post-wasm
+  src/worker/dedicated/post-wasm.cpp
   include/db.hpp
   include/append-db.hpp
   deps/zlib/contrib/minizip/zip.c
   deps/zlib/contrib/minizip/ioapi.c)
-target_include_directories(post-core PRIVATE include deps/zlib/contrib/minizip)
-target_link_libraries(post-core je2be)
-target_compile_definitions(post-core PRIVATE NOCRYPT)
-target_compile_options(post-core PRIVATE -Wno-unused-value ${je2be_common_em_compile_options})
-target_link_options(post-core PRIVATE ${je2be_common_em_link_options})
+target_include_directories(post-wasm PRIVATE include deps/zlib/contrib/minizip)
+target_link_libraries(post-wasm je2be)
+target_compile_definitions(post-wasm PRIVATE NOCRYPT)
+target_compile_options(post-wasm PRIVATE -Wno-unused-value ${je2be_common_em_compile_options})
+target_link_options(post-wasm PRIVATE ${je2be_common_em_link_options})

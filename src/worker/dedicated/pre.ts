@@ -23,7 +23,7 @@ self.onmessage = (ev: MessageEvent) => {
   }
 };
 
-self.importScripts("./pre-core.js");
+self.importScripts("./pre-wasm.js");
 
 type Region = {
   dim: number;
