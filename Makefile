@@ -3,49 +3,34 @@ all: public/script/front.js public/sworker.js public/script/region.js public/scr
 
 .PHONY: clean
 clean:
-	rm -rf build/pre-core.js build/region-core.js build/post-core.js public/script
+	rm -rf .wasm-build build/pre-core.js build/region-core.js build/post-core.js public/script
 
 .PHONY: build_docker_image
 build_docker_image:
 	docker build -t je2be_build_wasm .
 
 
-.PHONY: build_region_core_wasm
-build_region_core_wasm:
-	cd build && emcmake cmake .. && make -j $$(nproc) region-core
-
-build/region-core.js: src/region/region-core.cpp include/db.hpp CMakeLists.txt
+.wasm-build: src/conv/pre-core.cpp src/region/region-core.cpp src/conv/post-core.cpp include/db.hpp include/append-db.hpp CMakeLists.txt
 	mkdir -p build
-	docker run --rm -v $$(pwd):/src/je2be-web -u $$(id -u):$$(id -g) -w /src/je2be-web je2be_build_wasm make build_region_core_wasm
-	touch build/region-core.js
+	docker run --rm -v $$(pwd):/src/je2be-web -u $$(id -u):$$(id -g) -w /src/je2be-web je2be_build_wasm make wasm_target
+	touch .wasm-build
+
+.PHONY: wasm_target
+wasm_target:
+	cd build && emcmake cmake .. && make -j $$(nproc) pre-core region-core post-core
+
+
+build/region-core.js: .wasm-build
+build/pre-core.js: .wasm-build
+build/post-core.js: .wasm-build
 
 public/script/region-core.js: build/region-core.js
 	mkdir -p public/script
 	cp build/region-core.js public/script/region-core.js
 
-
-.PHONY: build_pre_core_wasm
-build_pre_core_wasm:
-	cd build && emcmake cmake .. && make -j $$(nproc) pre-core
-
-build/pre-core.js: src/conv/pre-core.cpp CMakeLists.txt
-	mkdir -p build
-	docker run --rm -v $$(pwd):/src/je2be-web -u $$(id -u):$$(id -g) -w /src/je2be-web je2be_build_wasm make build_pre_core_wasm
-	touch build/pre-core.js
-
 public/script/pre-core.js: build/pre-core.js
 	mkdir -p public/script
 	cp build/pre-core.js public/script/pre-core.js
-
-
-.PHONY: build_post_core_wasm
-build_post_core_wasm:
-	cd build && emcmake cmake .. && make -j $$(nproc) post-core
-
-build/post-core.js: src/conv/post-core.cpp include/db.hpp include/append-db.hpp CMakeLists.txt
-	mkdir -p build
-	docker run --rm -v $$(pwd):/src/je2be-web -u $$(id -u):$$(id -g) -w /src/je2be-web je2be_build_wasm make build_post_core_wasm
-	touch build/post-core.js
 
 public/script/post-core.js: build/post-core.js
 	mkdir -p public/script

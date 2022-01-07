@@ -5,3 +5,4 @@
 /xcode
 *.mcworld
 *.zip
+/.wasm-build
