@@ -210,15 +210,6 @@ async function extract(
 function queue(id: string, regions: Region[], javaEditionMap: number[]) {
   for (const r of regions) {
     const { region, dim } = r;
-    if (dim !== 0) {
-      continue;//TODO: debug
-    }
-    if (region.x !== 0) {
-      continue;//TODO: debug
-    }
-    if (region.z !== 0) {
-      continue;//TODO: debug
-    }
     const m: PocConvertRegionMessage = {
       type: "region",
       id,

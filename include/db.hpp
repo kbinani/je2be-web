@@ -19,15 +19,6 @@ public:
       fValid = false;
       return;
     }
-    cout << "key=";
-    for (int i = 0; i < key.size(); i++) {
-      cout << "0x" << hex << (int)(uint8_t)key[i] << dec << " ";
-    }
-    cout << "value=";
-    for (int i = 0; i < v.size(); i++) {
-      cout << "0x" << hex << (int)v[i] << dec << " ";
-    }
-    cout << endl;
     fBuffer.push_back(std::make_pair(key, v));
     if (fBuffer.size() >= 512) {
       fValid = flush();

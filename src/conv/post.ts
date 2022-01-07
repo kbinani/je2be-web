@@ -257,15 +257,6 @@ async function constructDb(
     for (let i = 0; i < key.key.length; i++) {
       Module.HEAPU8[keyBuffer + i] = key.key[i];
     }
-    let line = `key=`;
-    for (let i = 0; i < key.key.length; i++) {
-      line += `0x${key.key[i].toString(16)} `;
-    }
-    line += `value=`;
-    for (let i = 0; i < size; i++) {
-      line += `0x${data[key.pos + 4 + i].toString(16)} `;
-    }
-    console.log(line);
     //bool Append(intptr_t dbPtr, string file, intptr_t key, int keySize)
     if (!Module.Append(db, file, keyBuffer, key.key.length)) {
       console.log(`[post] wasm::Append failed`);
