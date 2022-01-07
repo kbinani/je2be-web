@@ -4,13 +4,13 @@ import {
   PocStartPostMessage,
   ProgressMessage,
   WorkerError,
-} from "../share/messages";
-import { File, FileStorage } from "../share/file-storage";
-import { dirname, exists, iterate, mkdirp } from "./fs-ext";
+} from "../../share/messages";
+import { File, FileStorage } from "../../share/file-storage";
+import { dirname, exists, iterate, mkdirp } from "../../share/fs-ext";
 import JSZip from "jszip";
-import { promiseUnzipFileInZip } from "../share/zip-ext";
-import { ReadI32 } from "../share/heap";
-import { ChunksStore } from "../share/chunk-store";
+import { promiseUnzipFileInZip } from "../../share/zip-ext";
+import { ReadI32 } from "../../share/heap";
+import { ChunksStore } from "../../share/chunk-store";
 
 self.onmessage = (ev: MessageEvent) => {
   if (isPocStartPostMessage(ev.data)) {
@@ -347,14 +347,6 @@ async function zip(id: string): Promise<void> {
         name,
         data,
       });
-      const m: ProgressMessage = {
-        type: "progress",
-        stage: "copy",
-        id,
-        progress: i + 1,
-        total: count,
-      };
-      self.postMessage(m);
     } catch (e) {
       console.error(e);
       cs.close();

@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import { Header } from "./header";
 import { Footer } from "./footer";
 import { Progress } from "./progress";
-import { ConvertSession } from "../dworker/convert-session";
+import { ConvertSession } from "./convert-session";
 
 export type MainComponentState = {
   unzip: number;

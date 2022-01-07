@@ -24,20 +24,20 @@ set(je2be_common_em_link_options
   -O3)
 
 add_executable(region-core
-  src/dworker/region-core.cpp
+  src/worker/dedicated/region-core.cpp
   include/db.hpp)
 target_link_libraries(region-core je2be)
 target_include_directories(region-core PRIVATE include)
 target_compile_options(region-core PRIVATE ${je2be_common_em_compile_options})
 target_link_options(region-core PRIVATE ${je2be_common_em_link_options})
 
-add_executable(pre-core src/dworker/pre-core.cpp)
+add_executable(pre-core src/worker/dedicated/pre-core.cpp)
 target_link_libraries(pre-core je2be)
 target_compile_options(pre-core PRIVATE ${je2be_common_em_compile_options})
 target_link_options(pre-core PRIVATE ${je2be_common_em_link_options})
 
 add_executable(post-core
-  src/dworker/post-core.cpp
+  src/worker/dedicated/post-core.cpp
   include/db.hpp
   include/append-db.hpp
   deps/zlib/contrib/minizip/zip.c

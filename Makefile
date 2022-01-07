@@ -10,7 +10,7 @@ build_docker_image:
 	docker build -t je2be_build_wasm .
 
 
-.wasm-build: src/dworker/pre-core.cpp src/dworker/region-core.cpp src/dworker/post-core.cpp include/db.hpp include/append-db.hpp CMakeLists.txt
+.wasm-build: src/worker/dedicated/pre-core.cpp src/worker/dedicated/region-core.cpp src/worker/dedicated/post-core.cpp include/db.hpp include/append-db.hpp CMakeLists.txt
 	mkdir -p build
 	docker run --rm -v $$(pwd):/src/je2be-web -u $$(id -u):$$(id -g) -w /src/je2be-web je2be_build_wasm make wasm_target
 	touch .wasm-build
@@ -37,17 +37,17 @@ public/script/post-core.js: build/post-core.js
 	cp build/post-core.js public/script/post-core.js
 
 
-public/script/pre.js: src/dworker/pre.ts src/dworker/fs-ext.ts src/dworker/index.d.ts src/share/messages.ts src/share/version.ts
+public/script/pre.js: src/worker/dedicated/pre.ts src/worker/dedicated/fs-ext.ts src/worker/dedicated/index.d.ts src/share/messages.ts src/share/version.ts
 	yarn pre --minify
 
-public/script/region.js: src/dworker/region.ts src/dworker/fs-ext.ts src/dworker/index.d.ts src/share/messages.ts src/share/version.ts
+public/script/region.js: src/worker/dedicated/region.ts src/worker/dedicated/fs-ext.ts src/worker/dedicated/index.d.ts src/share/messages.ts src/share/version.ts
 	yarn region --minify
 
-public/script/post.js: src/dworker/post.ts src/dworker/fs-ext.ts src/dworker/index.d.ts src/share/messages.ts src/share/version.ts
+public/script/post.js: src/worker/dedicated/post.ts src/worker/dedicated/fs-ext.ts src/worker/dedicated/index.d.ts src/share/messages.ts src/share/version.ts
 	yarn post --minify
 
 public/script/front.js: src/front/index.tsx src/front/main.tsx src/front/footer.tsx src/front/header.tsx src/front/progress.tsx src/share/messages.ts src/share/version.ts
 	yarn front --minify
 
-public/sworker.js: src/sworker/sworker.ts src/share/messages.ts src/share/version.ts
+public/sworker.js: src/worker/service/sworker.ts src/share/messages.ts src/share/version.ts
 	yarn sworker --minify

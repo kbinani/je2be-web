@@ -6,13 +6,13 @@ import {
   PocStartPreMessage,
   ProgressMessage,
   WorkerError,
-} from "../share/messages";
-import { dirname, mkdirp } from "./fs-ext";
+} from "../../share/messages";
+import { dirname, mkdirp } from "../../share/fs-ext";
 import JSZip from "jszip";
-import { FileStorage } from "../share/file-storage";
-import { Point } from "../share/cg";
-import { ReadI32 } from "../share/heap";
-import { promiseUnzipFileInZip } from "../share/zip-ext";
+import { FileStorage } from "../../share/file-storage";
+import { Point } from "../../share/cg";
+import { ReadI32 } from "../../share/heap";
+import { promiseUnzipFileInZip } from "../../share/zip-ext";
 
 self.onmessage = (ev: MessageEvent) => {
   if (isPocStartPreMessage(ev.data)) {

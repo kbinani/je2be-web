@@ -1,4 +1,4 @@
-import { ChunksStore } from "../share/chunk-store";
+import { ChunksStore } from "../../share/chunk-store";
 
 self.addEventListener("install", onInstall);
 self.addEventListener("activate", onActivate);

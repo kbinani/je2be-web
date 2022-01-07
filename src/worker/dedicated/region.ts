@@ -2,10 +2,10 @@ import {
   isPocConvertRegionMessage,
   PocConvertRegionDoneMessage,
   PocConvertRegionMessage,
-} from "../share/messages";
-import { File, FileStorage } from "../share/file-storage";
-import { ReadI32, WriteI32 } from "../share/heap";
-import { dirname, mkdirp } from "./fs-ext";
+} from "../../share/messages";
+import { File, FileStorage } from "../../share/file-storage";
+import { ReadI32, WriteI32 } from "../../share/heap";
+import { dirname, mkdirp } from "../../share/fs-ext";
 
 self.importScripts("./region-core.js");
 
