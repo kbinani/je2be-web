@@ -244,6 +244,7 @@ async function constructDb(
   let keyBuffer = Module._malloc(16);
   let keyBufferSize = 16;
   let ok = true;
+  let tableNumber = 0;
   for (const key of keys) {
     if (path !== key.file) {
       const f = await fs.files.get(key.file);
@@ -260,12 +261,25 @@ async function constructDb(
     for (let i = 0; i < key.key.length; i++) {
       Module.HEAPU8[keyBuffer + i] = key.key[i];
     }
-    //bool Append(intptr_t dbPtr, string file, intptr_t key, int keySize)
-    if (!Module.Append(db, file, keyBuffer, key.key.length)) {
+    //int AppendDbAppend(intptr_t dbPtr, string file, intptr_t key, int keySize)
+    const maxTableNumber = Module.AppendDbAppend(
+      db,
+      file,
+      keyBuffer,
+      key.key.length
+    );
+    if (maxTableNumber < 0) {
       console.log(`[post] wasm::Append failed`);
       ok = false;
       break;
     }
+    for (let i = tableNumber + 1; i <= maxTableNumber; i++) {
+      const path = `/je2be/${id}/out/db/${tableName(i)}`;
+      const data = FS.readFile(path);
+      await fs.files.put({ path, data });
+      FS.unlink(path);
+    }
+    tableNumber = maxTableNumber;
   }
   if (exists(file)) {
     FS.unlink(file);

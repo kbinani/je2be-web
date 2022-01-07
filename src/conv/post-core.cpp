@@ -102,7 +102,7 @@ bool DeleteAppendDb(intptr_t dbPtr) {
   return ok;
 }
 
-bool Append(intptr_t dbPtr, string file, intptr_t key, int keySize) {
+int AppendDbAppend(intptr_t dbPtr, string file, intptr_t key, int keySize) {
   AppendDb *db = (AppendDb *)dbPtr;
   return db->append(file, key, keySize);
 }
@@ -211,7 +211,7 @@ EMSCRIPTEN_BINDINGS() {
   emscripten::function("RemoveAll", &RemoveAll);
   emscripten::function("NewAppendDb", &NewAppendDb);
   emscripten::function("DeleteAppendDb", &DeleteAppendDb);
-  emscripten::function("Append", &Append);
+  emscripten::function("AppendDbAppend", &AppendDbAppend);
   emscripten::function("Zip", &Zip);
 }
 #endif

@@ -66,12 +66,19 @@ public:
     return true;
   }
 
-  bool append(std::string file, intptr_t keyBufferPtr, int keySize) {
+  int append(std::string file, intptr_t keyBufferPtr, int keySize) {
     if (!fValid) {
-      return false;
+      return -1;
     }
-    fValid = doAppend(file, keyBufferPtr, keySize);
-    return fValid;
+    if (doAppend(file, keyBufferPtr, keySize)) {
+      if (fTableNumber > 0) {
+        return fTableNumber - 1;
+      } else {
+        return 0;
+      }
+    } else {
+      return -1;
+    }
   }
 
 private:
