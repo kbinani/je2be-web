@@ -1,23 +1,13 @@
 import * as React from "react";
-import { ChangeEvent, FC, useEffect, useMemo, useReducer, useRef } from "react";
-import {
-  isConvertProgressDeltaMessage,
-  isExportDoneMessage,
-  isPocConvertQueueingFinishedMessage,
-  isPocConvertRegionDoneMessage,
-  isPocConvertRegionMessage,
-  isPocPostDoneMessage,
-  isProgressMessage,
-  ProgressMessage,
-  WorkerError,
-} from "../share/messages";
+import { ChangeEvent, FC, useEffect, useReducer, useRef } from "react";
+import { WorkerError } from "../share/messages";
 import { v4 as uuidv4 } from "uuid";
 import { Header } from "./header";
 import { Footer } from "./footer";
 import { Progress } from "./progress";
 import { ConvertSession } from "../conv/convert-session";
 
-type MainComponentState = {
+export type MainComponentState = {
   unzip: number;
   convert: number;
   convertTotal: number;
@@ -29,6 +19,10 @@ type MainComponentState = {
   id?: string;
 };
 
+export type MainComponentStateReducer = (
+  state: MainComponentState
+) => MainComponentState;
+
 const kInitComponentState: MainComponentState = {
   unzip: 0,
   convert: 0,
@@ -36,7 +30,6 @@ const kInitComponentState: MainComponentState = {
   compaction: 0,
   zip: 0,
   copy: 0,
-  dl: { id: "4c88d4e7-2495-4153-830a-bfca0b043885", filename: "a.mcworld" },
 };
 
 export const useForceUpdate = () => {
@@ -83,87 +76,6 @@ export const MainComponent: FC = () => {
   const { unzip, compaction, zip, copy, convert, convertTotal } = state.current;
   const disableLink =
     state.current.id !== undefined || state.current.dl !== undefined;
-  const pre = useMemo(() => {
-    const w = new Worker("./script/pre.js", { name: "pre" });
-    w.onmessage = (ev: MessageEvent) => {
-      const id = session.current?.id;
-      if (isPocConvertRegionMessage(ev.data) && ev.data.id === id) {
-        session.current.queue(ev.data);
-      } else if (
-        isPocConvertQueueingFinishedMessage(ev.data) &&
-        ev.data.id === id
-      ) {
-        session.current.markQueueingFinished();
-      } else if (isProgressMessage(ev.data) && ev.data.id === id) {
-        state.current = updateProgress(state.current, ev.data);
-        forceUpdate();
-      } else if (isExportDoneMessage(ev.data) && ev.data.id === id) {
-        session.current.setNumTotalChunks(ev.data.numTotalChunks);
-        session.current.levelDirectory = ev.data.levelDirectory;
-      }
-    };
-    return w;
-  }, []);
-  const post = useMemo(() => {
-    const w = new Worker("./script/post.js", { name: "post" });
-    w.onmessage = (ev: MessageEvent) => {
-      const id = session.current?.id;
-      if (isPocPostDoneMessage(ev.data) && id == ev.data.id) {
-        session.current.markPostDone();
-        const dot = session.current.file.name.lastIndexOf(".");
-        let filename = "world.mcworld";
-        if (dot > 0) {
-          filename = session.current.file.name.substring(0, dot) + ".mcworld";
-        }
-        state.current = {
-          ...state.current,
-          dl: { id, filename },
-          id: undefined,
-        };
-        forceUpdate();
-      }
-    };
-    return w;
-  }, []);
-  const workers = useMemo(() => {
-    const num = navigator.hardwareConcurrency;
-    const a: Worker[] = [];
-    for (let i = 0; i < num; i++) {
-      const w = new Worker("./script/region.js", { name: `region#${i}` });
-      w.onmessage = (ev: MessageEvent) => {
-        const target = ev.target;
-        if (!(target instanceof Worker)) {
-          return;
-        }
-        const id = session.current?.id;
-        if (isPocConvertRegionDoneMessage(ev.data) && ev.data.id === id) {
-          session.current.done(target);
-        } else if (
-          isConvertProgressDeltaMessage(ev.data) &&
-          ev.data.id === id
-        ) {
-          session.current.numDoneChunks += ev.data.delta;
-          const progress = session.current.numDoneChunks;
-          const total = session.current.numTotalChunks;
-          const m: ProgressMessage = {
-            id,
-            type: "progress",
-            stage: "convert",
-            progress,
-            total,
-          };
-          state.current = updateProgress(state.current, m);
-          const now = Date.now();
-          if (session.current.lastProgressUpdate + 1000.0 / 60.0 <= now) {
-            session.current.lastProgressUpdate = now;
-            forceUpdate();
-          }
-        }
-      };
-      a.push(w);
-    }
-    return a;
-  }, []);
   const onStartPoc = (ev: ChangeEvent<HTMLInputElement>) => {
     const files = ev.target.files;
     if (!files || files.length !== 1) {
@@ -172,7 +84,12 @@ export const MainComponent: FC = () => {
     }
     const id = uuidv4();
     const file = files.item(0);
-    const s = new ConvertSession(id, pre, workers, post, file);
+    const s = new ConvertSession(id, file, (reducer, update) => {
+      state.current = reducer(state.current);
+      if (update) {
+        forceUpdate();
+      }
+    });
     session.current = s;
     s.start(file);
     state.current = { ...kInitComponentState, id };
@@ -233,28 +150,3 @@ export const MainComponent: FC = () => {
     </div>
   );
 };
-
-function updateProgress(
-  state: MainComponentState,
-  m: ProgressMessage
-): MainComponentState {
-  const p = m.progress / m.total;
-  switch (m.stage) {
-    case "unzip":
-      return { ...state, unzip: p, convert: p >= 1 ? -1 : state.convert };
-    case "convert":
-      return {
-        ...state,
-        convert: m.progress,
-        convertTotal: m.total,
-        compaction: m.progress === m.total ? -1 : state.compaction,
-      };
-    case "compaction":
-      return { ...state, compaction: p, zip: p >= 1 ? -1 : state.zip };
-    case "zip":
-      return { ...state, zip: p, copy: p >= 1 ? -1 : state.copy };
-    case "copy":
-      return { ...state, copy: p };
-  }
-  return { ...state };
-}

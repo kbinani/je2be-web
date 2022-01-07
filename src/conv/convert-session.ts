@@ -1,15 +1,27 @@
 import {
+  isConvertProgressDeltaMessage,
+  isExportDoneMessage,
+  isPocConvertQueueingFinishedMessage,
+  isPocConvertRegionDoneMessage,
+  isPocConvertRegionMessage,
+  isPocPostDoneMessage,
+  isProgressMessage,
   PocConvertRegionMessage,
   PocStartPostMessage,
   PocStartPreMessage,
+  ProgressMessage,
 } from "../share/messages";
+import { MainComponentState, MainComponentStateReducer } from "../front/main";
 
 export class ConvertSession {
+  private readonly pre: Worker;
+  private readonly workers: Worker[];
+  private readonly post: Worker;
   private count = 0;
   private finalCount = 0;
   private done_ = 0;
   private queued = 0;
-  private readonly active: boolean[];
+  private readonly active: boolean[] = [];
   private buffer: PocConvertRegionMessage[] = [];
   private _numTotalChunks = -1;
   numDoneChunks = 0;
@@ -18,15 +30,95 @@ export class ConvertSession {
 
   constructor(
     readonly id: string,
-    readonly pre: Worker,
-    readonly workers: Worker[],
-    readonly post: Worker,
-    readonly file: File
+    readonly file: File,
+    readonly reduce: (
+      reducer: MainComponentStateReducer,
+      forceUpdate: boolean
+    ) => void
   ) {
-    this.active = [];
-    for (let i = 0; i < workers.length; i++) {
+    const pre = new Worker("./script/pre.js", { name: "pre" });
+    pre.onmessage = (ev: MessageEvent) => {
+      const id = this.id;
+      if (isPocConvertRegionMessage(ev.data) && ev.data.id === id) {
+        this.queue(ev.data);
+      } else if (
+        isPocConvertQueueingFinishedMessage(ev.data) &&
+        ev.data.id === id
+      ) {
+        this.markQueueingFinished();
+      } else if (isProgressMessage(ev.data) && ev.data.id === id) {
+        this.reduce((state: MainComponentState) => {
+          return updateProgress(state, ev.data);
+        }, true);
+      } else if (isExportDoneMessage(ev.data) && ev.data.id === id) {
+        this.setNumTotalChunks(ev.data.numTotalChunks);
+        this.levelDirectory = ev.data.levelDirectory;
+      }
+    };
+    this.pre = pre;
+
+    const num = navigator.hardwareConcurrency;
+    const workers: Worker[] = [];
+    for (let i = 0; i < num; i++) {
+      const w = new Worker("./script/region.js", { name: `region#${i}` });
+      w.onmessage = (ev: MessageEvent) => {
+        const target = ev.target;
+        if (!(target instanceof Worker)) {
+          return;
+        }
+        const id = this.id;
+        if (isPocConvertRegionDoneMessage(ev.data) && ev.data.id === id) {
+          this.done(target);
+        } else if (
+          isConvertProgressDeltaMessage(ev.data) &&
+          ev.data.id === id
+        ) {
+          this.numDoneChunks += ev.data.delta;
+          const progress = this.numDoneChunks;
+          const total = this.numTotalChunks;
+          const m: ProgressMessage = {
+            id,
+            type: "progress",
+            stage: "convert",
+            progress,
+            total,
+          };
+          const now = Date.now();
+          let forceUpdate = false;
+          if (this.lastProgressUpdate + 1000.0 / 60.0 <= now) {
+            this.lastProgressUpdate = now;
+            forceUpdate = true;
+          }
+          this.reduce((state) => {
+            return updateProgress(state, m);
+          }, forceUpdate);
+        }
+      };
+      workers.push(w);
       this.active.push(false);
     }
+    this.workers = workers;
+
+    const post = new Worker("./script/post.js", { name: "post" });
+    post.onmessage = (ev: MessageEvent) => {
+      const id = this.id;
+      if (isPocPostDoneMessage(ev.data) && id == ev.data.id) {
+        this.markPostDone();
+        const dot = this.file.name.lastIndexOf(".");
+        let filename = "world.mcworld";
+        if (dot > 0) {
+          filename = this.file.name.substring(0, dot) + ".mcworld";
+        }
+        this.reduce((state) => {
+          return {
+            ...state,
+            dl: { id, filename },
+            id: undefined,
+          };
+        }, true);
+      }
+    };
+    this.post = post;
   }
 
   get numTotalChunks(): number {
@@ -74,6 +166,7 @@ export class ConvertSession {
 
   markQueueingFinished() {
     console.log(`[front] (${this.id}) all queueing finished`);
+    this.pre.terminate();
     this.finalCount = this.count;
   }
 
@@ -94,11 +187,40 @@ export class ConvertSession {
         file: this.file,
         levelDirectory: this.levelDirectory,
       };
+      for (const worker of this.workers) {
+        worker.terminate();
+      }
       this.post.postMessage(m);
     }
   }
 
   markPostDone() {
     console.log(`[front] (${this.id}) post done`);
+    this.post.terminate();
   }
+}
+
+function updateProgress(
+  state: MainComponentState,
+  m: ProgressMessage
+): MainComponentState {
+  const p = m.progress / m.total;
+  switch (m.stage) {
+    case "unzip":
+      return { ...state, unzip: p, convert: p >= 1 ? -1 : state.convert };
+    case "convert":
+      return {
+        ...state,
+        convert: m.progress,
+        convertTotal: m.total,
+        compaction: m.progress === m.total ? -1 : state.compaction,
+      };
+    case "compaction":
+      return { ...state, compaction: p, zip: p >= 1 ? -1 : state.zip };
+    case "zip":
+      return { ...state, zip: p, copy: p >= 1 ? -1 : state.copy };
+    case "copy":
+      return { ...state, copy: p };
+  }
+  return { ...state };
 }
