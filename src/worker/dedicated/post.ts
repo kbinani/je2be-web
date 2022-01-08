@@ -8,20 +8,27 @@ import {
   StartPostMessage,
   WorkerError,
 } from "../../share/messages";
-import { File, FileStorage } from "../../share/file-storage";
-import { dirname, iterate, mkdirp, writeFile } from "../../share/fs-ext";
+import {
+  dirname,
+  iterate,
+  mkdirp,
+  readFile,
+  unlink,
+  writeFile,
+} from "../../share/fs-ext";
 import JSZip from "jszip";
 import { promiseUnzipFileInZip } from "../../share/zip-ext";
 import { ReadI32 } from "../../share/heap";
 import { packU8, unpackToU8 } from "../../share/string";
+import { KvsClient } from "../../share/kvs";
 
-self.onmessage = (ev: MessageEvent) => {
+self.addEventListener("message", (ev: MessageEvent) => {
   if (isStartPostMessage(ev.data)) {
     startPost(ev.data);
   } else if (isMergeCompactionMessage(ev.data)) {
     startMerge(ev.data);
   }
-};
+});
 
 self.importScripts("./post-wasm.js");
 
@@ -51,7 +58,7 @@ function startMerge(m: MergeCompactionMessage) {
 
 async function post(m: StartPostMessage): Promise<void> {
   const { id, file, levelDirectory, numWorkers } = m;
-  const fs = new FileStorage();
+  const fs = new KvsClient();
   console.log(`[post] (${id}) extract...`);
   await extract(id, file, levelDirectory);
   console.log(`[post] (${id}) extract done`);
@@ -62,7 +69,6 @@ async function post(m: StartPostMessage): Promise<void> {
   const numFiles = Module.Post(id);
   if (numFiles < 0) {
     console.log(`[post] (${id}) wasm::Post failed: code=${numFiles}`);
-    fs.close();
     return;
   }
   console.log(`[post] (${id}) wasm::Post done`);
@@ -145,29 +151,34 @@ async function extract(
   await Promise.all(promises);
 }
 
-async function loadWorldData(id: string, fs: FileStorage): Promise<void> {
+async function loadWorldData(id: string, fs: KvsClient): Promise<void> {
   const prefix = `/je2be/${id}/wd`;
   mkdirp(`${prefix}/0`);
   mkdirp(`${prefix}/1`);
   mkdirp(`${prefix}/2`);
-  await fs.files
-    .where("path")
-    .startsWith(`${prefix}/`)
-    .each((file: File) => {
-      const { path, data } = file;
+  const files = await fs.keys({ withPrefix: `${prefix}/` });
+  await Promise.all(
+    files.map(async (path) => {
+      const data = await fs.get(path);
       writeFile(path, unpackToU8(data));
-    });
+    })
+  );
 }
 
-async function unloadWorldData(id: string, fs: FileStorage): Promise<void> {
+async function unloadWorldData(id: string, fs: KvsClient): Promise<void> {
   const prefix = `/je2be/${id}/wd`;
   Module.RemoveAll(prefix);
-  await fs.files.where("path").startsWith(prefix).delete();
+  const files = await fs.keys({ withPrefix: prefix });
+  await Promise.all(
+    files.map(async (path) => {
+      await fs.del(path);
+    })
+  );
 }
 
 async function retrieveLdbFiles(
   id: string,
-  fs: FileStorage,
+  fs: KvsClient,
   numFiles: number
 ): Promise<void> {
   const prefix = `/je2be/${id}/ldb/`;
@@ -175,21 +186,21 @@ async function retrieveLdbFiles(
     const keys = `${prefix}/level.${i}.keys`;
     const values = `${prefix}/level.${i}.values`;
     for (const path of [keys, values]) {
-      const data = packU8(FS.readFile(path));
-      await fs.files.put({ path, data });
-      FS.unlink(path);
+      const data = packU8(readFile(path));
+      await fs.put(path, data);
+      unlink(path);
     }
   }
 }
 
-async function retrieveMemFsFiles(id: string, fs: FileStorage): Promise<void> {
+async function retrieveMemFsFiles(id: string, fs: KvsClient): Promise<void> {
   await iterate(`/je2be/${id}/out`, async ({ path, dir }) => {
     if (dir) {
       mkdirp(path);
     } else {
-      const data = packU8(FS.readFile(path));
-      await fs.files.put({ path, data });
-      FS.unlink(path);
+      const data = packU8(readFile(path));
+      await fs.put(path, data);
+      unlink(path);
     }
   });
 }
@@ -205,15 +216,15 @@ function dbKeyFromKey(k: Key): DbKey {
   return { key: packU8(key), file, pos };
 }
 
-async function collectKeys(id: string, fs: FileStorage): Promise<DbKey[]> {
+async function collectKeys(id: string, fs: KvsClient): Promise<DbKey[]> {
   const prefix = `/je2be/${id}/ldb/`;
   const keys: Key[] = [];
-  await fs.files
-    .where("path")
-    .startsWith(prefix)
-    .and((file) => file.path.endsWith(".keys"))
-    .each((file: File) => {
-      const { path, data: rawData } = file;
+  const files = (await fs.keys({ withPrefix: prefix })).filter((path) =>
+    path.endsWith(".keys")
+  );
+  await Promise.all(
+    files.map(async (path) => {
+      const rawData = await fs.get(path);
       const data = unpackToU8(rawData);
       let ptr = 0;
       const valuesFile =
@@ -231,7 +242,8 @@ async function collectKeys(id: string, fs: FileStorage): Promise<DbKey[]> {
         const k: Key = { key, file: valuesFile, pos };
         keys.push(k);
       }
-    });
+    })
+  );
   keys.sort((a: Key, b: Key) => {
     return bytewiseComparator(a.key, b.key);
   });
@@ -273,41 +285,44 @@ function tableName(n: number): string {
 
 async function merge(m: MergeCompactionMessage): Promise<boolean> {
   const { id, numWorkers, lastSequence } = m;
-  const fs = new FileStorage();
-  await fs.files.where("path").startsWith(`/je2be/${id}/ldb`).delete();
+  const fs = new KvsClient();
+  const files = await fs.keys({ withPrefix: `/je2be/${id}/ldb` });
+  await Promise.all(
+    files.map(async (path) => {
+      await fs.del(path);
+    })
+  );
   const prefix = `/je2be/${id}/out/db`;
   let tableNumber = 0;
   for (let i = 0; i < numWorkers; i++) {
     for (let j = 1; ; j++) {
       const path = `${prefix}/${i}_${j}.ldb`;
-      const item = await fs.files.get(path);
+      const item = await fs.get(path);
       if (!item) {
         break;
       }
       tableNumber++;
       const newPath = `${prefix}/${tableName(tableNumber)}`;
-      await fs.files.delete(path);
-      await fs.files.put({ path: newPath, data: item.data });
+      await fs.del(path);
+      await fs.put(newPath, item);
     }
   }
   mkdirp(prefix);
   for (let i = 0; i < numWorkers; i++) {
     const path = `${prefix}/${i}.manifest`;
-    const item = await fs.files.get(path);
-    if (!item) {
-      fs.close();
+    const data = await fs.get(path);
+    if (!data) {
       return false;
     }
-    writeFile(path, unpackToU8(item.data));
-    await fs.files.delete(path);
+    writeFile(path, unpackToU8(data));
+    await fs.del(path);
   }
   const ok = Module.MergeManifests(id, numWorkers, lastSequence);
   for (const name of ["MANIFEST-000001", "CURRENT"]) {
     const path = `/je2be/${id}/out/db/${name}`;
-    const data = packU8(FS.readFile(path));
-    await fs.files.put({ path, data });
-    FS.unlink(path);
+    const data = packU8(readFile(path));
+    await fs.put(path, data);
+    unlink(path);
   }
-  fs.close();
   return ok;
 }

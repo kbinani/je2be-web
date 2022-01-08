@@ -1,5 +1,6 @@
-import { FileStorage } from "../../share/file-storage";
 import { downloadZip } from "../../../deps/client-zip/src";
+import { KvsClient } from "../../share/kvs";
+import { unpackToU8 } from "../../share/string";
 
 self.addEventListener("install", onInstall);
 self.addEventListener("activate", onActivate);
@@ -50,14 +51,11 @@ function onFetch(ev: FetchEvent) {
 }
 
 async function* eachFilesWithPrefix(prefix: string): AsyncIterable<File> {
-  const fs = new FileStorage();
-  const files = (await fs.files
-    .where("path")
-    .startsWith(prefix)
-    .keys()) as string[];
+  const fs = new KvsClient();
+  const files = await fs.keys({ withPrefix: prefix });
   for (const path of files) {
-    const item = await fs.files.get(path);
-    yield new File([new Blob([item.data])], path.substring(prefix.length));
+    const data = unpackToU8(await fs.get(path));
+    yield new File([new Blob([data])], path.substring(prefix.length));
   }
 }
 

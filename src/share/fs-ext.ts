@@ -93,5 +93,27 @@ export async function iterate(
 }
 
 export function writeFile(path: string, data: Uint8Array) {
-  FS.writeFile(path, data);
+  try {
+    return FS.writeFile(path, data);
+  } catch (e) {
+    console.trace(e);
+  }
+}
+
+export function readFile(path: string): Uint8Array {
+  try {
+    return FS.readFile(path);
+  } catch (e) {
+    console.trace(e);
+  }
+}
+
+export function unlink(path: string) {
+  try {
+    if (exists(path)) {
+      FS.unlink(path);
+    }
+  } catch (e) {
+    console.trace(e);
+  }
 }

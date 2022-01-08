@@ -9,20 +9,20 @@ import {
 } from "../../share/messages";
 import { dirname, mkdirp, writeFile } from "../../share/fs-ext";
 import JSZip from "jszip";
-import { FileStorage } from "../../share/file-storage";
 import { Point } from "../../share/cg";
 import { ReadI32 } from "../../share/heap";
 import { promiseUnzipFileInZip } from "../../share/zip-ext";
 import { packU8 } from "../../share/string";
+import { KvsClient } from "../../share/kvs";
 
-self.onmessage = (ev: MessageEvent) => {
+self.addEventListener("message", (ev: MessageEvent) => {
   if (isStartPreMessage(ev.data)) {
     const { id } = ev.data;
     start(ev.data).finally(() => {
       Module.RemoveAll(`/je2be/${id}`);
     });
   }
-};
+});
 
 self.importScripts("./pre-wasm.js");
 
@@ -150,8 +150,17 @@ async function extract(
   };
   self.postMessage(m);
 
-  const fs = new FileStorage();
-  await fs.files.clear();
+  await new Promise<void>((resolve, reject) => {
+    const req = indexedDB.deleteDatabase("je2be-fs");
+    req.onsuccess = () => {
+      resolve();
+    };
+    req.onerror = (e) => {
+      reject(e);
+    };
+  });
+
+  const fs = new KvsClient();
 
   let progress = 0;
   const unzipToMemory = other.map(async (path) => {
@@ -178,7 +187,7 @@ async function extract(
     const rel = path.substring(prefix.length);
     const target = `/je2be/${id}/in/${rel}`;
     const buffer = await promiseUnzipFileInZip({ zip, path });
-    await fs.files.put({ path: target, data: packU8(buffer) });
+    await fs.put(target, packU8(buffer));
     progress++;
     const m: ProgressMessage = {
       type: "progress",
@@ -205,7 +214,6 @@ async function extract(
     return { dim, region: new Point(rx, rz) };
   });
   const levelDirectory = dirname(levelDatPath);
-  fs.close();
   return { regions, levelDirectory };
 }
 

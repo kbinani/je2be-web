@@ -16,6 +16,7 @@ import {
   StartPreMessage,
 } from "../share/messages";
 import { MainComponentState, MainComponentStateReducer } from "./main";
+import { KvsServer } from "../share/kvs";
 
 export class ConvertSession {
   private readonly pre: Worker;
@@ -35,6 +36,7 @@ export class ConvertSession {
   private lastSequence = 0;
   private compactionProgress = 0;
   private startTime: number;
+  private readonly kvs = new KvsServer();
 
   constructor(
     readonly id: string,
@@ -61,6 +63,8 @@ export class ConvertSession {
       } else if (isExportDoneMessage(ev.data) && ev.data.id === id) {
         this.setNumTotalChunks(ev.data.numTotalChunks);
         this.levelDirectory = ev.data.levelDirectory;
+      } else {
+        this.kvs.handle(ev);
       }
     };
     this.pre = pre;
@@ -140,6 +144,8 @@ export class ConvertSession {
           this.reduce((state) => {
             return updateProgress(state, m);
           }, true);
+        } else {
+          this.kvs.handle(ev);
         }
       };
       workers.push(w);
@@ -178,6 +184,8 @@ export class ConvertSession {
           const worker = this.workers[index];
           worker.postMessage(ev.data);
         }
+      } else {
+        this.kvs.handle(ev);
       }
     };
     this.post = post;
