@@ -205,6 +205,7 @@ async function extract(
     return { dim, region: new Point(rx, rz) };
   });
   const levelDirectory = dirname(levelDatPath);
+  fs.close();
   return { regions, levelDirectory };
 }
 

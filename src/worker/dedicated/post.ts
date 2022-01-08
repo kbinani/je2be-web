@@ -62,6 +62,7 @@ async function post(m: StartPostMessage): Promise<void> {
   const numFiles = Module.Post(id);
   if (numFiles < 0) {
     console.log(`[post] (${id}) wasm::Post failed: code=${numFiles}`);
+    fs.close();
     return;
   }
   console.log(`[post] (${id}) wasm::Post done`);
@@ -294,6 +295,7 @@ async function merge(m: MergeCompactionMessage): Promise<boolean> {
     const path = `${prefix}/${i}.manifest`;
     const item = await fs.files.get(path);
     if (!item) {
+      fs.close();
       return false;
     }
     writeFile(path, unpackToU8(item.data));
@@ -306,5 +308,6 @@ async function merge(m: MergeCompactionMessage): Promise<boolean> {
     await fs.files.put({ path, data });
     FS.unlink(path);
   }
+  fs.close();
   return ok;
 }

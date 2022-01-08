@@ -49,6 +49,7 @@ async function convertRegion(m: ConvertRegionMessage): Promise<void> {
   const region = `${worldDir}/region/r.${rx}.${rz}.mca`;
   let regionFile: File | undefined = await fs.files.get({ path: region });
   if (!regionFile) {
+    fs.close();
     return;
   }
   mkdirp(dirname(region));
@@ -89,6 +90,7 @@ async function convertRegion(m: ConvertRegionMessage): Promise<void> {
   }
   const numLdbFiles = ReadI32(numLdbFilesPtr);
   if (!ok) {
+    fs.close();
     return;
   }
   const copy: Promise<void>[] = [];
@@ -111,6 +113,7 @@ async function convertRegion(m: ConvertRegionMessage): Promise<void> {
   if (entitiesFileExists) {
     await fs.files.delete(entities);
   }
+  fs.close();
   const done: ConvertRegionDoneMessage = {
     type: "region_done",
     id,
@@ -230,6 +233,7 @@ async function compaction(m: CompactionQueueMessage): Promise<boolean> {
     FS.unlink(file);
   }
   Module._free(keyBuffer);
+  fs.close();
 
   return ok;
 }
