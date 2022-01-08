@@ -141,6 +141,7 @@ private:
     Slice userKey(keyPtr, keySize);
     InternalKey ik(userKey, fSequence, kTypeValue);
     fBuilder->Add(ik.Encode(), value);
+    fBuilder->Flush();
 
     if (!fSmallest) {
       fSmallest = ik;
