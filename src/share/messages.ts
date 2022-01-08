@@ -171,7 +171,6 @@ export function isPostDoneMessage(x: any): x is PostDoneMessage {
 export type ConvertRegionDoneMessage = {
   type: "region_done";
   id: string;
-  data: string;
 };
 
 export function isConvertRegionDoneMessage(
@@ -180,11 +179,7 @@ export function isConvertRegionDoneMessage(
   if (!x) {
     return false;
   }
-  return (
-    x["type"] === "region_done" &&
-    typeof x["id"] === "string" &&
-    typeof x["data"] === "string"
-  );
+  return x["type"] === "region_done" && typeof x["id"] === "string";
 }
 
 export type ExportDoneMessage = {

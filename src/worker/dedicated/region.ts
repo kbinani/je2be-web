@@ -109,11 +109,7 @@ async function convertRegion(m: ConvertRegionMessage): Promise<void> {
     copy.push(kvs.put(path, data).then(() => unlink(path)));
   }
   await Promise.all(copy);
-  const done: ConvertRegionDoneMessage = {
-    type: "region_done",
-    id,
-    data: "foo!",
-  };
+  const done: ConvertRegionDoneMessage = { type: "region_done", id };
   self.postMessage(done);
 }
 
