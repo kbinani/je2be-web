@@ -71,13 +71,15 @@ export class ConvertSession {
     };
     this.pre = pre;
 
-    const heapLimit = performance["memory"]?.["jsHeapSizeLimit"];
     // "-2" stands for "pre" and "post" workers
     let num = Math.max(4, navigator.hardwareConcurrency - 2);
+
+    const heapLimit = performance["memory"]?.["jsHeapSizeLimit"];
     if (typeof heapLimit === "number") {
-      const approxWorkerRuntimeSize = 300 * 1024 * 1024;
-      num = Math.max(4, Math.floor(heapLimit / approxWorkerRuntimeSize)) - 2;
+      const magic = 600 * 1024 * 1024;
+      num = Math.max(4, Math.floor(heapLimit / magic)) - 2;
     }
+
     console.log(`[front] launch ${num} workers`);
     const workers: Worker[] = [];
     for (let i = 0; i < num; i++) {
