@@ -149,7 +149,6 @@ bool ExtractFileMetaData(fs::path file, vector<FileMetaData> &buffer) {
 
   VersionEdit v;
   v.DecodeFrom(record);
-  cout << "DebugString()=" << v.DebugString() << endl;
 
   Slice input = record;
   const char *msg = nullptr;
