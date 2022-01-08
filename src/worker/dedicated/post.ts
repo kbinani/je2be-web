@@ -5,6 +5,7 @@ import {
   isStartPostMessage,
   MergeCompactionMessage,
   PostDoneMessage,
+  ProgressMessage,
   StartPostMessage,
   WorkerError,
 } from "../../share/messages";
@@ -35,13 +36,7 @@ self.importScripts("./post-wasm.js");
 function startPost(m: StartPostMessage) {
   const { id } = m;
   console.log(`[post] (${id}) start`);
-  post(m).finally(() => {
-    // const fs = new FileStorage();
-    // fs.files
-    //   .clear()
-    //   .then(() => console.log(`[post] (${id}) file storage cleared`))
-    //   .catch(console.error);
-  });
+  post(m).then(() => console.log(`[post] (${id}) done`));
 }
 
 function startMerge(m: MergeCompactionMessage) {
@@ -274,6 +269,14 @@ function tableName(n: number): string {
 
 async function merge(m: MergeCompactionMessage): Promise<boolean> {
   const { id, numWorkers, lastSequence } = m;
+  const start: ProgressMessage = {
+    type: "progress",
+    id,
+    stage: "copy",
+    progress: -1,
+    total: 1,
+  };
+  self.postMessage(start);
   const kvs = new KvsClient();
   const fs = new FileStorage();
   const files = await kvs.keys({ withPrefix: `/je2be/${id}/ldb` });
@@ -283,7 +286,12 @@ async function merge(m: MergeCompactionMessage): Promise<boolean> {
     })
   );
   const prefix = `/je2be/${id}/out/db`;
+  const dbFiles = (await kvs.keys({ withPrefix: prefix })).filter((path) =>
+    path.endsWith(".ldb")
+  );
+  const total = dbFiles.length + numWorkers + 2;
   let tableNumber = 0;
+  let progress = 0;
   for (let i = 0; i < numWorkers; i++) {
     for (let j = 1; ; j++) {
       const path = `${prefix}/${i}_${j}.ldb`;
@@ -292,20 +300,37 @@ async function merge(m: MergeCompactionMessage): Promise<boolean> {
         break;
       }
       tableNumber++;
+      progress++;
       const newPath = `${prefix}/${tableName(tableNumber)}`;
       await kvs.del(path);
       await fs.files.put({ path: newPath, data: item });
+      const mid: ProgressMessage = {
+        type: "progress",
+        id,
+        stage: "copy",
+        progress,
+        total,
+      };
+      self.postMessage(mid);
     }
   }
   mkdirp(prefix);
   for (let i = 0; i < numWorkers; i++) {
     const path = `${prefix}/${i}.manifest`;
     const data = await kvs.get(path);
-    if (!data) {
-      return false;
+    if (data) {
+      writeFile(path, data);
+      await kvs.del(path);
     }
-    writeFile(path, data);
-    await kvs.del(path);
+    progress++;
+    const mid: ProgressMessage = {
+      type: "progress",
+      id,
+      stage: "copy",
+      progress,
+      total,
+    };
+    self.postMessage(mid);
   }
   const ok = Module.MergeManifests(id, numWorkers, lastSequence);
   for (const name of ["MANIFEST-000001", "CURRENT"]) {
@@ -313,6 +338,15 @@ async function merge(m: MergeCompactionMessage): Promise<boolean> {
     const data = readFile(path);
     await fs.files.put({ path, data });
     unlink(path);
+    progress++;
+    const mid: ProgressMessage = {
+      type: "progress",
+      id,
+      stage: "copy",
+      progress,
+      total,
+    };
+    self.postMessage(mid);
   }
   return ok;
 }

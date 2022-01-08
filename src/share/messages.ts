@@ -47,7 +47,7 @@ export function isFailedMessage(x: any): x is FailedMessage {
 export type ProgressMessage = {
   type: "progress";
   id: string;
-  stage: "unzip" | "convert" | "compaction";
+  stage: "unzip" | "convert" | "compaction" | "copy";
   progress: number;
   total: number;
 };
@@ -61,7 +61,8 @@ export function isProgressMessage(x: any): x is ProgressMessage {
     typeof x["id"] === "string" &&
     (x["stage"] === "unzip" ||
       x["stage"] === "convert" ||
-      x["stage"] === "compaction") &&
+      x["stage"] === "compaction" ||
+      x["stage"] === "copy") &&
     typeof x["progress"] === "number" &&
     typeof x["total"] === "number"
   );
