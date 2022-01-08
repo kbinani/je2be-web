@@ -12,6 +12,7 @@ import {
   isProgressMessage,
   MergeCompactionMessage,
   ProgressMessage,
+  ResultFilesMessage,
   StartPostMessage,
   StartPreMessage,
 } from "../share/messages";
@@ -41,6 +42,7 @@ export class ConvertSession {
   constructor(
     readonly id: string,
     readonly file: File,
+    readonly sw: ServiceWorker,
     readonly reduce: (
       reducer: MainComponentStateReducer,
       forceUpdate: boolean
@@ -170,6 +172,19 @@ export class ConvertSession {
         this.post.terminate();
         const elapsed = Date.now() - this.startTime;
         console.log(`[front] (${id}) finished in ${elapsed / 1000.0} sec`);
+
+        const prefix = `/je2be/${id}/out/`;
+        const fileNames = [...this.kvs.storage.keys()].filter((path) =>
+          path.startsWith(prefix)
+        );
+        const files: string[][] = [];
+        for (const filename of fileNames) {
+          const url = this.kvs.storage.get(filename);
+          files.push([filename, url]);
+        }
+        const m: ResultFilesMessage = { type: "result_message", id, files };
+        this.sw.postMessage(m);
+
         this.reduce((state) => {
           return {
             ...state,

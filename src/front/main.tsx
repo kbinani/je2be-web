@@ -42,6 +42,7 @@ export const MainComponent: FC = () => {
   const state = useRef<MainComponentState>({ ...kInitComponentState });
   const input = useRef<HTMLInputElement>(null);
   const session = useRef<ConvertSession>(null);
+  const sw = useRef<ServiceWorker>(null);
   const forceUpdate = useForceUpdate();
   const onBeforeUnload = (ev: BeforeUnloadEvent) => {
     if (state.current.id === undefined) {
@@ -60,9 +61,11 @@ export const MainComponent: FC = () => {
     const scope = `/${path}dl`;
     navigator.serviceWorker
       .register("./sworker.js", { scope })
-      .then((sw) => {
+      .then((swr) => {
         console.log(`[front] sworker registered`);
-        sw.update()
+        sw.current = swr.active;
+        swr
+          .update()
           .then(() => {
             console.log(`[front] sworker updated`);
           })
@@ -86,7 +89,7 @@ export const MainComponent: FC = () => {
     }
     const id = uuidv4();
     const file = files.item(0);
-    const s = new ConvertSession(id, file, (reducer, update) => {
+    const s = new ConvertSession(id, file, sw.current, (reducer, update) => {
       state.current = reducer(state.current);
       if (update) {
         forceUpdate();

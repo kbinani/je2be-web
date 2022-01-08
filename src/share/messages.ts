@@ -308,3 +308,20 @@ export function isMergeCompactionMessage(x: any): x is MergeCompactionMessage {
     typeof x["lastSequence"] === "number"
   );
 }
+
+export type ResultFilesMessage = {
+  type: "result_message";
+  id: string;
+  files: string[][];
+};
+
+export function isResultFilesMessage(x: any): x is ResultFilesMessage {
+  if (!x) {
+    return false;
+  }
+  return (
+    x["type"] === "result_message" &&
+    typeof x["id"] === "string" &&
+    !!x["files"]
+  );
+}

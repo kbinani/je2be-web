@@ -1,9 +1,12 @@
 import { downloadZip } from "../../../deps/client-zip/src";
-import { FileStorage } from "../../share/file-storage";
+import { isResultFilesMessage } from "../../share/messages";
 
 self.addEventListener("install", onInstall);
 self.addEventListener("activate", onActivate);
 self.addEventListener("fetch", onFetch);
+self.addEventListener("message", onMessage);
+
+const sResultFiles = new Map<string, string[][]>();
 
 function onInstall(ev) {
   console.log(`[sworker] install`);
@@ -49,11 +52,22 @@ function onFetch(ev: FetchEvent) {
   }
 }
 
-async function* eachFilesWithPrefix(prefix: string): AsyncIterable<File> {
-  const fs = new FileStorage();
-  const files = await fs.files.where("path").startsWith(prefix).toArray();
-  for (const item of files) {
-    yield new File([new Blob([item.data])], item.path.substring(prefix.length));
+function onMessage(ev: MessageEvent) {
+  if (isResultFilesMessage(ev.data)) {
+    const { id, files } = ev.data;
+    sResultFiles.set(id, files);
+  }
+}
+
+async function* objectUrlsAsFile(
+  files: string[][],
+  prefix: string
+): AsyncIterable<File> {
+  for (const file of files) {
+    const [name, url] = file;
+    const res = await fetch(url);
+    const blob = await res.blob();
+    yield new File([blob], name.substring(prefix.length));
   }
 }
 
@@ -61,8 +75,12 @@ async function respondDownload(
   id: string,
   filename: string
 ): Promise<Response> {
+  const urls = sResultFiles.get(id);
+  if ((urls?.length ?? 0) === 0) {
+    return new Response(null, { status: 404 });
+  }
   const prefix = `/je2be/${id}/out/`;
-  return downloadZip(eachFilesWithPrefix(prefix), {
+  return downloadZip(objectUrlsAsFile(urls, prefix), {
     headers: {
       "Content-Type": "application/octet-stream",
       "Cache-Control": "no-cache",

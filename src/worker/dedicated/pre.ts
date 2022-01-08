@@ -13,8 +13,6 @@ import { Point } from "../../share/cg";
 import { ReadI32 } from "../../share/heap";
 import { promiseUnzipFileInZip } from "../../share/zip-ext";
 import { KvsClient } from "../../share/kvs";
-import { FileStorage } from "../../share/file-storage";
-import Dexie from "dexie";
 
 self.addEventListener("message", (ev: MessageEvent) => {
   if (isStartPreMessage(ev.data)) {
@@ -40,9 +38,9 @@ async function start(m: StartPreMessage): Promise<void> {
   mkdirp(`/je2be/${id}/in`);
   mkdirp(`/je2be/${id}/out`);
 
-  await Dexie.delete("je2be-dl");
-  const fs = new FileStorage();
-  await fs.files.clear();
+  const req = indexedDB.deleteDatabase("je2be-dl");
+  req.onerror = (e) => console.error(e);
+  req.onsuccess = () => console.log(`[pre] deleted legacy "je2be-dl" table`);
 
   console.log(`[pre] (${id}) extract...`);
   const { regions, levelDirectory } = await extract(file, id);
