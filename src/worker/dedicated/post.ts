@@ -1,7 +1,9 @@
 import {
   CompactionQueueMessage,
   DbKey,
+  isMergeCompactionMessage,
   isStartPostMessage,
+  MergeCompactionMessage,
   PostDoneMessage,
   StartPostMessage,
   WorkerError,
@@ -15,6 +17,8 @@ import { ReadI32 } from "../../share/heap";
 self.onmessage = (ev: MessageEvent) => {
   if (isStartPostMessage(ev.data)) {
     startPost(ev.data);
+  } else if (isMergeCompactionMessage(ev.data)) {
+    startMerge(ev.data);
   }
 };
 
@@ -23,22 +27,25 @@ self.importScripts("./post-wasm.js");
 function startPost(m: StartPostMessage) {
   const { id } = m;
   console.log(`[post] (${id}) start`);
-  post(m)
-    .then(() => {
-      const done: PostDoneMessage = {
-        type: "post_done",
-        id,
-      };
-      console.log(`[post] (${id}) done`);
-      self.postMessage(done);
-    })
-    .finally(() => {
-      // const fs = new FileStorage();
-      // fs.files
-      //   .clear()
-      //   .then(() => console.log(`[post] (${id}) file storage cleared`))
-      //   .catch(console.error);
-    });
+  post(m).finally(() => {
+    // const fs = new FileStorage();
+    // fs.files
+    //   .clear()
+    //   .then(() => console.log(`[post] (${id}) file storage cleared`))
+    //   .catch(console.error);
+  });
+}
+
+function startMerge(m: MergeCompactionMessage) {
+  const { id } = m;
+  merge(m).then(() => {
+    const done: PostDoneMessage = {
+      type: "post_done",
+      id,
+    };
+    console.log(`[post] (${id}) done`);
+    self.postMessage(done);
+  });
 }
 
 async function post(m: StartPostMessage): Promise<void> {
@@ -72,12 +79,6 @@ async function post(m: StartPostMessage): Promise<void> {
   console.log(`[post] (${id}) queueCompaction...`);
   queueCompaction(id, numWorkers, keys);
   console.log(`[post] (${id}) queueCompaction done`);
-  console.log(`[post] (${id}) constructDb...`);
-  if (!(await constructDb(id, fs, keys))) {
-    console.log(`[post] (${id}) constructDb failed`);
-    return;
-  }
-  console.log(`[post] (${id}) constructDb done`);
 }
 
 function memcmp(a: Uint8Array, b: Uint8Array, n: number): number {
@@ -233,6 +234,7 @@ function queueCompaction(id: string, numWorkers: number, keys: DbKey[]) {
       index: i,
       keys: queue,
       id,
+      lastSequence: keys.length,
     };
     self.postMessage(m);
     pos += size;
@@ -242,106 +244,9 @@ function queueCompaction(id: string, numWorkers: number, keys: DbKey[]) {
     index: numWorkers - 1,
     keys: keys.slice(pos),
     id,
+    lastSequence: keys.length,
   };
   self.postMessage(q);
-}
-
-async function constructDb(
-  id: string,
-  fs: FileStorage,
-  keys: DbKey[]
-): Promise<boolean> {
-  return false; //TODO:
-  // const file = `/je2be/${id}/tmp.bin`;
-  // const db = Module.NewAppendDb(id);
-  // let path: string = "";
-  // let data: Uint8Array;
-  // let keyBuffer = Module._malloc(16);
-  // let keyBufferSize = 16;
-  // let ok = true;
-  // let tableNumber = 0;
-  // for (let i = 0; i < keys.length; i++) {
-  //   const key = keys[i];
-  //   if (path !== key.file) {
-  //     const f = await fs.files.get(key.file);
-  //     data = f.data;
-  //     path = key.file;
-  //   }
-  //   const size = ReadI32(key.pos, data);
-  //   FS.writeFile(file, data.slice(key.pos + 4, key.pos + 4 + size));
-  //   if (keyBufferSize < key.key.byteLength) {
-  //     Module._free(keyBuffer);
-  //     keyBufferSize = key.key.byteLength;
-  //     keyBuffer = Module._malloc(keyBufferSize);
-  //   }
-  //   for (let i = 0; i < key.key.length; i++) {
-  //     Module.HEAPU8[keyBuffer + i] = key.key[i];
-  //   }
-  //   //int AppendDbAppend(intptr_t dbPtr, string file, intptr_t key, int keySize)
-  //   const maxTableNumber = Module.AppendDbAppend(
-  //     db,
-  //     file,
-  //     keyBuffer,
-  //     key.key.length
-  //   );
-  //   if (maxTableNumber < 0) {
-  //     console.log(`[post] wasm::Append failed`);
-  //     ok = false;
-  //     break;
-  //   }
-  //   for (let i = tableNumber + 1; i <= maxTableNumber; i++) {
-  //     const path = `/je2be/${id}/out/db/${tableName(i)}`;
-  //     const data = FS.readFile(path);
-  //     await fs.files.put({ path, data });
-  //     FS.unlink(path);
-  //   }
-  //   tableNumber = maxTableNumber;
-  //
-  //   const m: ProgressMessage = {
-  //     id,
-  //     type: "progress",
-  //     stage: "compaction",
-  //     progress: i,
-  //     total: keys.length,
-  //   };
-  //   self.postMessage(m);
-  // }
-  // if (exists(file)) {
-  //   FS.unlink(file);
-  // }
-  // Module._free(keyBuffer);
-  //
-  // ok = Module.DeleteAppendDb(db) && ok;
-  //
-  // for (let i = tableNumber + 1; ; i++) {
-  //   const path = `/je2be/${id}/out/db/${tableName(i)}`;
-  //   if (!exists(path)) {
-  //     break;
-  //   }
-  //   const data = FS.readFile(path);
-  //   await fs.files.put({ path, data });
-  //   FS.unlink(path);
-  // }
-  //
-  // for (const name of ["MANIFEST-000001", "CURRENT"]) {
-  //   const path = `/je2be/${id}/out/db/${name}`;
-  //   const data = FS.readFile(path);
-  //   await fs.files.put({ path, data });
-  //   FS.unlink(path);
-  // }
-  //
-  // await fs.files.where("path").startsWith(`/je2be/${id}/ldb`).delete();
-  //
-  // const m: ProgressMessage = {
-  //   id,
-  //   type: "progress",
-  //   stage: "compaction",
-  //   progress: keys.length,
-  //   total: keys.length,
-  // };
-  // self.postMessage(m);
-  //
-  // return ok;
 }
 
 function tableName(n: number): string {
@@ -350,4 +255,43 @@ function tableName(n: number): string {
     s = "0" + s;
   }
   return `${s}.ldb`;
+}
+
+async function merge(m: MergeCompactionMessage): Promise<boolean> {
+  const { id, numWorkers, lastSequence } = m;
+  const fs = new FileStorage();
+  await fs.files.where("path").startsWith(`/je2be/${id}/ldb`).delete();
+  const prefix = `/je2be/${id}/out/db`;
+  let tableNumber = 0;
+  for (let i = 0; i < numWorkers; i++) {
+    for (let j = 1; ; j++) {
+      const path = `${prefix}/${i}_${j}.ldb`;
+      const item = await fs.files.get(path);
+      if (!item) {
+        break;
+      }
+      tableNumber++;
+      const newPath = `${prefix}/${tableName(tableNumber)}`;
+      await fs.files.delete(path);
+      await fs.files.put({ path: newPath, data: item.data });
+    }
+  }
+  mkdirp(prefix);
+  for (let i = 0; i < numWorkers; i++) {
+    const path = `${prefix}/${i}.manifest`;
+    const item = await fs.files.get(path);
+    if (!item) {
+      return false;
+    }
+    FS.writeFile(path, item.data);
+    await fs.files.delete(path);
+  }
+  const ok = Module.MergeManifests(id, numWorkers, lastSequence);
+  for (const name of ["MANIFEST-000001", "CURRENT"]) {
+    const path = `/je2be/${id}/out/db/${name}`;
+    const data = FS.readFile(path);
+    await fs.files.put({ path, data });
+    FS.unlink(path);
+  }
+  return ok;
 }

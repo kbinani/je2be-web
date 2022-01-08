@@ -7,8 +7,8 @@
 
 #include <je2be.hpp>
 
-#include "db.hpp"
 #include "append-db.hpp"
+#include "db.hpp"
 
 using namespace std;
 using namespace mcfile;

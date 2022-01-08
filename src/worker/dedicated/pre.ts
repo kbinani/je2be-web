@@ -210,11 +210,12 @@ async function extract(
 function queue(id: string, regions: Region[], javaEditionMap: number[]) {
   for (const r of regions) {
     const { region, dim } = r;
+    const { x: rx, z: rz } = region;
     const m: ConvertRegionMessage = {
       type: "region",
       id,
-      rx: region.x,
-      rz: region.z,
+      rx,
+      rz,
       dim,
       javaEditionMap,
     };

@@ -235,6 +235,7 @@ export type CompactionQueueMessage = {
   index: number;
   id: string;
   keys: DbKey[];
+  lastSequence: number;
 };
 
 export function isCompactionQueueMessage(x: any): x is CompactionQueueMessage {
@@ -245,7 +246,8 @@ export function isCompactionQueueMessage(x: any): x is CompactionQueueMessage {
     x["type"] === "compaction_queue" &&
     typeof x["index"] === "number" &&
     typeof x["id"] === "string" &&
-    !!x["keys"]
+    !!x["keys"] &&
+    typeof x["lastSequence"] === "number"
   );
 }
 
@@ -265,5 +267,24 @@ export function isCompactionThreadFinishedMessage(
     x["type"] === "compaction_thread_finished" &&
     typeof x["index"] === "number" &&
     typeof x["id"] === "string"
+  );
+}
+
+export type MergeCompactionMessage = {
+  type: "merge_compaction";
+  id: string;
+  numWorkers: number;
+  lastSequence: number;
+};
+
+export function isMergeCompactionMessage(x: any): x is MergeCompactionMessage {
+  if (!x) {
+    return false;
+  }
+  return (
+    x["type"] === "merge_compaction" &&
+    typeof x["id"] === "string" &&
+    typeof x["numWorkers"] === "number" &&
+    typeof x["lastSequence"] === "number"
   );
 }

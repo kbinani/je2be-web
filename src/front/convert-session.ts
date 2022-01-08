@@ -1,6 +1,7 @@
 import {
   ConvertRegionMessage,
   isCompactionQueueMessage,
+  isCompactionThreadFinishedMessage,
   isConvertProgressDeltaMessage,
   isConvertQueueingFinishedMessage,
   isConvertRegionDoneMessage,
@@ -8,6 +9,7 @@ import {
   isExportDoneMessage,
   isPostDoneMessage,
   isProgressMessage,
+  MergeCompactionMessage,
   ProgressMessage,
   StartPostMessage,
   StartPreMessage,
@@ -28,6 +30,8 @@ export class ConvertSession {
   numDoneChunks = 0;
   lastProgressUpdate: number = 0;
   levelDirectory: string = "";
+  private compactionDone = 0;
+  private lastSequence = 0;
 
   constructor(
     readonly id: string,
@@ -100,6 +104,20 @@ export class ConvertSession {
           this.reduce((state) => {
             return updateProgress(state, m);
           }, forceUpdate);
+        } else if (
+          isCompactionThreadFinishedMessage(ev.data) &&
+          ev.data.id === id
+        ) {
+          this.compactionDone++;
+          if (this.compactionDone === this.workers.length) {
+            const m: MergeCompactionMessage = {
+              type: "merge_compaction",
+              id,
+              numWorkers: this.workers.length,
+              lastSequence: this.lastSequence,
+            };
+            this.post.postMessage(m);
+          }
         }
       };
       workers.push(w);
@@ -129,8 +147,9 @@ export class ConvertSession {
           };
         }, true);
       } else if (isCompactionQueueMessage(ev.data) && id === ev.data.id) {
-        const index = ev.data.index;
+        const { index, lastSequence } = ev.data;
         if (0 <= index && index < this.workers.length) {
+          this.lastSequence = lastSequence;
           const worker = this.workers[index];
           worker.postMessage(ev.data);
         }
