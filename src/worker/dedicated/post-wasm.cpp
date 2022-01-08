@@ -33,7 +33,7 @@ int Post(string id) {
   io.fLevelDirectoryStructure = LevelDirectoryStructure::Vanilla;
   auto data = Level::Read(io.getLevelDatFilePath(inputDir));
   if (!data) {
-    return -1;
+    return -2;
   }
   Level level = Level::Import(*data);
 
@@ -50,11 +50,11 @@ int Post(string id) {
       stream::InputStreamReader reader(s);
       auto tag = make_shared<nbt::CompoundTag>();
       if (!tag->read(reader)) {
-        return -1;
+        return -3;
       }
       auto wd = WorldData::FromNbt(*tag);
       if (!wd) {
-        return -1;
+        return -4;
       }
       wd->drain(*levelData);
     }
@@ -83,10 +83,10 @@ int Post(string id) {
   fs::remove_all(inputDir, ec);
 
   if (!db.valid()) {
-    return -1;
+    return -5;
   }
   if (!db.flush()) {
-    return -1;
+    return -6;
   }
 
   return db.fNumFiles;

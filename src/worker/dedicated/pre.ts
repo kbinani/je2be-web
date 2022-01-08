@@ -7,12 +7,13 @@ import {
   StartPreMessage,
   WorkerError,
 } from "../../share/messages";
-import { dirname, mkdirp } from "../../share/fs-ext";
+import { dirname, mkdirp, writeFile } from "../../share/fs-ext";
 import JSZip from "jszip";
 import { FileStorage } from "../../share/file-storage";
 import { Point } from "../../share/cg";
 import { ReadI32 } from "../../share/heap";
 import { promiseUnzipFileInZip } from "../../share/zip-ext";
+import { packU8 } from "../../share/string";
 
 self.onmessage = (ev: MessageEvent) => {
   if (isStartPreMessage(ev.data)) {
@@ -159,7 +160,7 @@ async function extract(
     const directory = dirname(target);
     mkdirp(directory);
     const buffer = await promiseUnzipFileInZip({ zip, path });
-    FS.writeFile(target, buffer);
+    writeFile(target, buffer);
 
     progress++;
     const m: ProgressMessage = {
@@ -177,7 +178,7 @@ async function extract(
     const rel = path.substring(prefix.length);
     const target = `/je2be/${id}/in/${rel}`;
     const buffer = await promiseUnzipFileInZip({ zip, path });
-    await fs.files.put({ path: target, data: buffer });
+    await fs.files.put({ path: target, data: packU8(buffer) });
     progress++;
     const m: ProgressMessage = {
       type: "progress",

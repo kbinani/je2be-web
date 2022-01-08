@@ -9,10 +9,11 @@ import {
   WorkerError,
 } from "../../share/messages";
 import { File, FileStorage } from "../../share/file-storage";
-import { dirname, iterate, mkdirp } from "../../share/fs-ext";
+import { dirname, iterate, mkdirp, writeFile } from "../../share/fs-ext";
 import JSZip from "jszip";
 import { promiseUnzipFileInZip } from "../../share/zip-ext";
 import { ReadI32 } from "../../share/heap";
+import { packU8, unpackToU8 } from "../../share/string";
 
 self.onmessage = (ev: MessageEvent) => {
   if (isStartPostMessage(ev.data)) {
@@ -60,7 +61,7 @@ async function post(m: StartPostMessage): Promise<void> {
   console.log(`[post] (${id}) wasm::Post...`);
   const numFiles = Module.Post(id);
   if (numFiles < 0) {
-    console.log(`[post] (${id}) wasm::Post failed`);
+    console.log(`[post] (${id}) wasm::Post failed: code=${numFiles}`);
     return;
   }
   console.log(`[post] (${id}) wasm::Post done`);
@@ -138,7 +139,7 @@ async function extract(
     const rel = path.substring(prefix.length);
     const target = `/je2be/${id}/in/${rel}`;
     mkdirp(dirname(target));
-    FS.writeFile(target, buffer);
+    writeFile(target, buffer);
   });
   await Promise.all(promises);
 }
@@ -153,7 +154,7 @@ async function loadWorldData(id: string, fs: FileStorage): Promise<void> {
     .startsWith(`${prefix}/`)
     .each((file: File) => {
       const { path, data } = file;
-      FS.writeFile(path, data);
+      writeFile(path, unpackToU8(data));
     });
 }
 
@@ -173,7 +174,7 @@ async function retrieveLdbFiles(
     const keys = `${prefix}/level.${i}.keys`;
     const values = `${prefix}/level.${i}.values`;
     for (const path of [keys, values]) {
-      const data = FS.readFile(path);
+      const data = packU8(FS.readFile(path));
       await fs.files.put({ path, data });
       FS.unlink(path);
     }
@@ -185,22 +186,34 @@ async function retrieveMemFsFiles(id: string, fs: FileStorage): Promise<void> {
     if (dir) {
       mkdirp(path);
     } else {
-      const data = FS.readFile(path);
+      const data = packU8(FS.readFile(path));
       await fs.files.put({ path, data });
       FS.unlink(path);
     }
   });
 }
 
+export type Key = {
+  key: Uint8Array;
+  file: string;
+  pos: number;
+};
+
+function dbKeyFromKey(k: Key): DbKey {
+  const { key, file, pos } = k;
+  return { key: packU8(key), file, pos };
+}
+
 async function collectKeys(id: string, fs: FileStorage): Promise<DbKey[]> {
   const prefix = `/je2be/${id}/ldb/`;
-  const keys: DbKey[] = [];
+  const keys: Key[] = [];
   await fs.files
     .where("path")
     .startsWith(prefix)
     .and((file) => file.path.endsWith(".keys"))
     .each((file: File) => {
-      const { path, data } = file;
+      const { path, data: rawData } = file;
+      const data = unpackToU8(rawData);
       let ptr = 0;
       const valuesFile =
         path.substring(0, path.length - ".keys".length) + ".values";
@@ -214,14 +227,14 @@ async function collectKeys(id: string, fs: FileStorage): Promise<DbKey[]> {
           key[i] = data[ptr + i];
         }
         ptr += keySize;
-        const k: DbKey = { key, file: valuesFile, pos };
+        const k: Key = { key, file: valuesFile, pos };
         keys.push(k);
       }
     });
-  keys.sort((a: DbKey, b: DbKey) => {
+  keys.sort((a: Key, b: Key) => {
     return bytewiseComparator(a.key, b.key);
   });
-  return keys;
+  return keys.map(dbKeyFromKey);
 }
 
 function queueCompaction(id: string, numWorkers: number, keys: DbKey[]) {
@@ -283,13 +296,13 @@ async function merge(m: MergeCompactionMessage): Promise<boolean> {
     if (!item) {
       return false;
     }
-    FS.writeFile(path, item.data);
+    writeFile(path, unpackToU8(item.data));
     await fs.files.delete(path);
   }
   const ok = Module.MergeManifests(id, numWorkers, lastSequence);
   for (const name of ["MANIFEST-000001", "CURRENT"]) {
     const path = `/je2be/${id}/out/db/${name}`;
-    const data = FS.readFile(path);
+    const data = packU8(FS.readFile(path));
     await fs.files.put({ path, data });
     FS.unlink(path);
   }

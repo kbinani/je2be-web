@@ -2,7 +2,7 @@ import Dexie, { Table } from "dexie";
 
 export interface File {
   path: string;
-  data: Uint8Array;
+  data: string;
 }
 
 export class FileStorage extends Dexie {

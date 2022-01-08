@@ -4,12 +4,15 @@ import {
   CompactionThreadFinishedMessage,
   ConvertRegionDoneMessage,
   ConvertRegionMessage,
+  DbKey,
   isCompactionQueueMessage,
   isConvertRegionMessage,
 } from "../../share/messages";
 import { File, FileStorage } from "../../share/file-storage";
 import { ReadI32, WriteI32 } from "../../share/heap";
-import { dirname, exists, mkdirp } from "../../share/fs-ext";
+import { dirname, exists, mkdirp, writeFile } from "../../share/fs-ext";
+import { packU8, unpackToU8 } from "../../share/string";
+import { Key } from "./post";
 
 self.importScripts("./region-wasm.js");
 
@@ -49,7 +52,7 @@ async function convertRegion(m: ConvertRegionMessage): Promise<void> {
     return;
   }
   mkdirp(dirname(region));
-  FS.writeFile(region, regionFile.data);
+  writeFile(region, unpackToU8(regionFile.data));
   regionFile = undefined;
 
   const entities = `${worldDir}/entities/r.${rx}.${rz}.mca`;
@@ -57,7 +60,7 @@ async function convertRegion(m: ConvertRegionMessage): Promise<void> {
   const entitiesFileExists = entitiesFile !== undefined;
   if (entitiesFile) {
     mkdirp(dirname(entities));
-    FS.writeFile(entities, entitiesFile.data);
+    writeFile(entities, unpackToU8(entitiesFile.data));
   }
   entitiesFile = undefined;
 
@@ -94,13 +97,13 @@ async function convertRegion(m: ConvertRegionMessage): Promise<void> {
       `${ldbDir}/r.${rx}.${rz}.${i}.keys`,
       `${ldbDir}/r.${rx}.${rz}.${i}.values`,
     ]) {
-      const data = FS.readFile(path);
+      const data = packU8(FS.readFile(path));
       copy.push(fs.files.put({ path, data }).then(FS.unlink(path)));
     }
   }
   {
     const path = `${wdDir}/r.${rx}.${rz}.nbt`;
-    const data = FS.readFile(path);
+    const data = packU8(FS.readFile(path));
     copy.push(fs.files.put({ path, data }).then(FS.unlink(path)));
   }
   await Promise.all(copy);
@@ -128,8 +131,14 @@ function startCompaction(m: CompactionQueueMessage) {
   });
 }
 
+function keyFromDbKey(dbKey: DbKey): Key {
+  const { key, file, pos } = dbKey;
+  return { key: unpackToU8(key), file, pos };
+}
+
 async function compaction(m: CompactionQueueMessage): Promise<boolean> {
-  const { id, keys, index } = m;
+  const { id, keys: rawKeys, index } = m;
+  const keys = rawKeys.map(keyFromDbKey);
   const db = Module.NewAppendDb(id);
   const fs = new FileStorage();
   const file = `/je2be/${id}/tmp.bin`;
@@ -152,7 +161,7 @@ async function compaction(m: CompactionQueueMessage): Promise<boolean> {
       }
     }
     const { data } = await fs.files.get(k.file);
-    FS.writeFile(file, data);
+    writeFile(file, unpackToU8(data));
     let maxTableNumber = tableNumber;
     for (let j = from; j <= to; j++) {
       const key = keys[j];
@@ -187,7 +196,7 @@ async function compaction(m: CompactionQueueMessage): Promise<boolean> {
     }
     for (let i = tableNumber + 1; i <= maxTableNumber; i++) {
       const path = `/je2be/${id}/out/db/${tableName(i)}`;
-      const data = FS.readFile(path);
+      const data = packU8(FS.readFile(path));
       const p = `/je2be/${id}/out/db/${index}_${i}.ldb`;
       await fs.files.put({ path: p, data });
       FS.unlink(path);
@@ -203,7 +212,7 @@ async function compaction(m: CompactionQueueMessage): Promise<boolean> {
     if (!exists(path)) {
       break;
     }
-    const data = FS.readFile(path);
+    const data = packU8(FS.readFile(path));
     const p = `/je2be/${id}/out/db/${index}_${i}.ldb`;
     await fs.files.put({ path: p, data });
     FS.unlink(path);
@@ -212,7 +221,7 @@ async function compaction(m: CompactionQueueMessage): Promise<boolean> {
   {
     const path = `/je2be/${id}/out/db/MANIFEST-000001`;
     const p = `/je2be/${id}/out/db/${index}.manifest`;
-    const data = FS.readFile(path);
+    const data = packU8(FS.readFile(path));
     await fs.files.put({ path: p, data });
     FS.unlink(path);
   }

@@ -91,3 +91,7 @@ export async function iterate(
   };
   await visit(FS.lookupPath(directory));
 }
+
+export function writeFile(path: string, data: Uint8Array) {
+  FS.writeFile(path, data);
+}
