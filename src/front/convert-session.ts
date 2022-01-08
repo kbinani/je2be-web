@@ -110,6 +110,10 @@ export class ConvertSession {
           isCompactionThreadFinishedMessage(ev.data) &&
           ev.data.id === id
         ) {
+          const index = ev.data.index;
+          if (0 <= index && index < this.workers.length) {
+            this.workers[index].terminate();
+          }
           this.compactionDone++;
           if (this.compactionDone === this.workers.length) {
             const m: MergeCompactionMessage = {
@@ -156,6 +160,7 @@ export class ConvertSession {
         if (dot > 0) {
           filename = this.file.name.substring(0, dot) + ".mcworld";
         }
+        this.post.terminate();
         this.reduce((state) => {
           return {
             ...state,
