@@ -64,7 +64,7 @@ export class ConvertSession {
         this.setNumTotalChunks(ev.data.numTotalChunks);
         this.levelDirectory = ev.data.levelDirectory;
       } else {
-        this.kvs.handle(ev);
+        this.kvs.onMessage(ev);
       }
     };
     this.pre = pre;
@@ -145,7 +145,7 @@ export class ConvertSession {
             return updateProgress(state, m);
           }, true);
         } else {
-          this.kvs.handle(ev);
+          this.kvs.onMessage(ev);
         }
       };
       workers.push(w);
@@ -185,7 +185,7 @@ export class ConvertSession {
           worker.postMessage(ev.data);
         }
       } else {
-        this.kvs.handle(ev);
+        this.kvs.onMessage(ev);
       }
     };
     this.post = post;

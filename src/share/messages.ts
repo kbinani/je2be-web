@@ -225,7 +225,7 @@ export function isConvertProgressDeltaMessage(
 }
 
 export type DbKey = {
-  key: string;
+  key: Uint8Array;
   file: string;
   pos: number;
 };

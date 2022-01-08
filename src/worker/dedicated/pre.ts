@@ -12,8 +12,9 @@ import JSZip from "jszip";
 import { Point } from "../../share/cg";
 import { ReadI32 } from "../../share/heap";
 import { promiseUnzipFileInZip } from "../../share/zip-ext";
-import { packU8 } from "../../share/string";
 import { KvsClient } from "../../share/kvs";
+import { FileStorage } from "../../share/file-storage";
+import Dexie from "dexie";
 
 self.addEventListener("message", (ev: MessageEvent) => {
   if (isStartPreMessage(ev.data)) {
@@ -38,6 +39,10 @@ async function start(m: StartPreMessage): Promise<void> {
   mkdirp(`/je2be`);
   mkdirp(`/je2be/${id}/in`);
   mkdirp(`/je2be/${id}/out`);
+
+  await Dexie.delete("je2be-dl");
+  const fs = new FileStorage();
+  await fs.files.clear();
 
   console.log(`[pre] (${id}) extract...`);
   const { regions, levelDirectory } = await extract(file, id);
@@ -160,7 +165,7 @@ async function extract(
     };
   });
 
-  const fs = new KvsClient();
+  const kvs = new KvsClient();
 
   let progress = 0;
   const unzipToMemory = other.map(async (path) => {
@@ -187,7 +192,7 @@ async function extract(
     const rel = path.substring(prefix.length);
     const target = `/je2be/${id}/in/${rel}`;
     const buffer = await promiseUnzipFileInZip({ zip, path });
-    await fs.put(target, packU8(buffer));
+    await kvs.put(target, buffer);
     progress++;
     const m: ProgressMessage = {
       type: "progress",

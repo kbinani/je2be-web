@@ -18,8 +18,7 @@ export function defer<T = void>(): Deferred<T> {
 export class KvsServer {
   readonly storage = new Map<string, string>();
 
-  handle(ev: MessageEvent) {
-    console.log(`[server] handle`, ev.data);
+  onMessage(ev: MessageEvent) {
     const { target, data } = ev;
     if (!(target instanceof Worker)) {
       return;
@@ -34,8 +33,10 @@ export class KvsServer {
       };
       target.postMessage(m);
     } else if (isPutQuery(data)) {
-      const { id, key, value } = data;
-      this.storage.set(key, value);
+      const { id, key, buffer } = data;
+      const blob = new Blob([buffer]);
+      const url = URL.createObjectURL(blob);
+      this.storage.set(key, url);
       const m: VoidResponse = {
         type: "void_response",
         id,
@@ -43,6 +44,8 @@ export class KvsServer {
       target.postMessage(m);
     } else if (isDelQuery(data)) {
       const { id, key } = data;
+      const url = this.storage.get(key);
+      URL.revokeObjectURL(url);
       this.storage.delete(key);
       const m: VoidResponse = {
         type: "void_response",
@@ -68,37 +71,44 @@ export class KvsServer {
 }
 
 export class KvsClient {
-  private readonly string_ = new Map<string, Deferred<string | undefined>>();
-  private readonly void_ = new Map<string, Deferred<void>>();
-  private readonly strings_ = new Map<string, Deferred<string[]>>();
+  private readonly _string = new Map<string, Deferred<string | undefined>>();
+  private readonly _void = new Map<string, Deferred<void>>();
+  private readonly _strings = new Map<string, Deferred<string[]>>();
 
   constructor() {
     self.addEventListener("message", this.onMessage);
   }
 
-  async get(key: string): Promise<string | undefined> {
+  async get(key: string): Promise<Uint8Array | undefined> {
     const id = uuidv4();
-    const d = defer<string>();
+    const d = defer<string | undefined>();
     const m: GetQuery = {
       type: "get",
       id,
       key,
     };
-    this.string_.set(id, d);
+    this._string.set(id, d);
     self.postMessage(m);
-    return d;
+    return d.then(async (url) => {
+      if (url === undefined) {
+        return undefined;
+      }
+      const res = await fetch(url);
+      const buffer = await res.arrayBuffer();
+      return new Uint8Array(buffer);
+    });
   }
 
-  async put(key: string, value: string): Promise<void> {
+  async put(key: string, value: Uint8Array): Promise<void> {
     const id = uuidv4();
     const d = defer<void>();
     const m: PutQuery = {
       type: "put",
       id,
       key,
-      value,
+      buffer: value,
     };
-    this.void_.set(id, d);
+    this._void.set(id, d);
     self.postMessage(m);
     return d;
   }
@@ -111,7 +121,7 @@ export class KvsClient {
       id,
       key,
     };
-    this.void_.set(id, d);
+    this._void.set(id, d);
     self.postMessage(m);
     return d;
   }
@@ -124,25 +134,24 @@ export class KvsClient {
       id,
       prefix: withPrefix,
     };
-    this.strings_.set(id, d);
+    this._strings.set(id, d);
     self.postMessage(m);
     return d;
   }
 
-  private readonly onMessage = (ev: MessageEvent) => {
-    console.log(`[client] onMessage`, ev.data);
+  readonly onMessage = (ev: MessageEvent) => {
     if (isStringResponse(ev.data)) {
       const id = ev.data.id;
       const value = ev.data.value;
-      const d = this.string_.get(id);
+      const d = this._string.get(id);
       d?.resolve(value);
     } else if (isVoidResponse(ev.data)) {
       const id = ev.data.id;
-      const d = this.void_.get(id);
+      const d = this._void.get(id);
       d?.resolve();
     } else if (isStringsResponse(ev.data)) {
       const id = ev.data.id;
-      const d = this.strings_.get(id);
+      const d = this._strings.get(id);
       d?.resolve(ev.data.strings);
     }
   };
@@ -186,7 +195,7 @@ type PutQuery = {
   type: "put";
   id: string;
   key: string;
-  value: string;
+  buffer: Uint8Array;
 };
 
 function isPutQuery(x: any): x is PutQuery {
@@ -197,7 +206,7 @@ function isPutQuery(x: any): x is PutQuery {
     x["type"] === "put" &&
     typeof x["id"] === "string" &&
     typeof x["key"] === "string" &&
-    typeof x["value"] === "string"
+    !!x["buffer"]
   );
 }
 

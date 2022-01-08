@@ -96,9 +96,14 @@ bool DeleteAppendDb(intptr_t dbPtr) {
   return ok;
 }
 
-int AppendDbAppend(intptr_t dbPtr, string file, int pos, intptr_t key, int keySize) {
+int AppendDbAppend(intptr_t dbPtr, intptr_t valuePtr, intptr_t keyPtr, int keySize) {
   AppendDb *db = (AppendDb *)dbPtr;
-  return db->append(file, pos, key, keySize);
+  return db->append(valuePtr, keyPtr, keySize);
+}
+
+void RemoveAll(string dir) {
+  error_code ec;
+  fs::remove_all(fs::path(dir), ec);
 }
 
 #if defined(EMSCRIPTEN)
@@ -107,5 +112,6 @@ EMSCRIPTEN_BINDINGS(core_module) {
   emscripten::function("NewAppendDb", &NewAppendDb);
   emscripten::function("DeleteAppendDb", &DeleteAppendDb);
   emscripten::function("AppendDbAppend", &AppendDbAppend);
+  emscripten::function("RemoveAll", &RemoveAll);
 }
 #endif

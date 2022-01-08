@@ -4,7 +4,6 @@ import {
   CompactionThreadFinishedMessage,
   ConvertRegionDoneMessage,
   ConvertRegionMessage,
-  DbKey,
   isCompactionQueueMessage,
   isConvertRegionMessage,
 } from "../../share/messages";
@@ -17,8 +16,6 @@ import {
   unlink,
   writeFile,
 } from "../../share/fs-ext";
-import { packU8, unpackToU8 } from "../../share/string";
-import { Key } from "./post";
 import { KvsClient } from "../../share/kvs";
 
 self.importScripts("./region-wasm.js");
@@ -32,12 +29,12 @@ self.addEventListener("message", (ev: MessageEvent) => {
 });
 
 function startConvertRegion(m: ConvertRegionMessage) {
-  convertRegion(m);
+  convertRegion(m).catch(console.error);
 }
 
 async function convertRegion(m: ConvertRegionMessage): Promise<void> {
   const { id, rx, rz, dim, javaEditionMap } = m;
-  const fs = new KvsClient();
+  const kvs = new KvsClient();
   const root = `/je2be/${id}/in`;
   let worldDir: string;
   switch (dim) {
@@ -54,22 +51,20 @@ async function convertRegion(m: ConvertRegionMessage): Promise<void> {
   }
 
   const region = `${worldDir}/region/r.${rx}.${rz}.mca`;
-  let regionFile = await fs.get(region);
+  const regionFile = await kvs.get(region);
   if (!regionFile) {
     return;
   }
   mkdirp(dirname(region));
-  writeFile(region, unpackToU8(regionFile));
-  regionFile = undefined;
+  writeFile(region, regionFile);
 
   const entities = `${worldDir}/entities/r.${rx}.${rz}.mca`;
-  let entitiesFile = await fs.get(entities);
-  const entitiesFileExists = entitiesFile !== undefined;
+  const entitiesFile = await kvs.get(entities);
+  const entitiesFileExists: boolean = entitiesFile !== undefined;
   if (entitiesFile) {
     mkdirp(dirname(entities));
-    writeFile(entities, unpackToU8(entitiesFile));
+    writeFile(entities, entitiesFile);
   }
-  entitiesFile = undefined;
 
   const storage = Module._malloc(javaEditionMap.length * 4);
   for (let i = 0; i < javaEditionMap.length; i++) {
@@ -104,20 +99,16 @@ async function convertRegion(m: ConvertRegionMessage): Promise<void> {
       `${ldbDir}/r.${rx}.${rz}.${i}.keys`,
       `${ldbDir}/r.${rx}.${rz}.${i}.values`,
     ]) {
-      const data = packU8(readFile(path));
-      copy.push(fs.put(path, data).then(() => unlink(path)));
+      const data = readFile(path);
+      copy.push(kvs.put(path, data).then(() => unlink(path)));
     }
   }
   {
     const path = `${wdDir}/r.${rx}.${rz}.nbt`;
-    const data = packU8(readFile(path));
-    copy.push(fs.put(path, data).then(() => unlink(path)));
+    const data = readFile(path);
+    copy.push(kvs.put(path, data).then(() => unlink(path)));
   }
   await Promise.all(copy);
-  await fs.del(region);
-  if (entitiesFileExists) {
-    await fs.del(entities);
-  }
   const done: ConvertRegionDoneMessage = {
     type: "region_done",
     id,
@@ -138,20 +129,15 @@ function startCompaction(m: CompactionQueueMessage) {
   });
 }
 
-function keyFromDbKey(dbKey: DbKey): Key {
-  const { key, file, pos } = dbKey;
-  return { key: unpackToU8(key), file, pos };
-}
-
 async function compaction(m: CompactionQueueMessage): Promise<boolean> {
-  const { id, keys: rawKeys, index } = m;
-  const keys = rawKeys.map(keyFromDbKey);
+  const { id, keys, index } = m;
   const db = Module.NewAppendDb(id);
-  const fs = new KvsClient();
-  const file = `/je2be/${id}/tmp.bin`;
+  const kvs = new KvsClient();
 
-  let keyBuffer = Module._malloc(16);
+  let valueBufferSize = 16;
+  let valueBuffer = Module._malloc(valueBufferSize);
   let keyBufferSize = 16;
+  let keyBuffer = Module._malloc(keyBufferSize);
   let ok = true;
   let tableNumber = 0;
 
@@ -167,8 +153,15 @@ async function compaction(m: CompactionQueueMessage): Promise<boolean> {
         break;
       }
     }
-    const data = await fs.get(k.file);
-    writeFile(file, unpackToU8(data));
+    let data: Uint8Array = await kvs.get(k.file);
+    if (valueBufferSize < data.length) {
+      Module._free(valueBuffer);
+      valueBufferSize = data.length;
+      valueBuffer = Module._malloc(valueBufferSize);
+    }
+    for (let i = 0; i < data.length; i++) {
+      Module.HEAPU8[valueBuffer + i] = data[i];
+    }
     let maxTableNumber = tableNumber;
     for (let j = from; j <= to; j++) {
       const key = keys[j];
@@ -180,11 +173,10 @@ async function compaction(m: CompactionQueueMessage): Promise<boolean> {
       for (let i = 0; i < key.key.length; i++) {
         Module.HEAPU8[keyBuffer + i] = key.key[i];
       }
-      //int AppendDbAppend(intptr_t dbPtr, string file, intptr_t key, int keySize)
+      // int AppendDbAppend(intptr_t dbPtr, intptr_t valuePtr, intptr_t keyPtr, int keySize)
       const tn = Module.AppendDbAppend(
         db,
-        file,
-        key.pos,
+        valueBuffer + key.pos,
         keyBuffer,
         key.key.length
       );
@@ -203,9 +195,9 @@ async function compaction(m: CompactionQueueMessage): Promise<boolean> {
     }
     for (let i = tableNumber + 1; i <= maxTableNumber; i++) {
       const path = `/je2be/${id}/out/db/${tableName(i)}`;
-      const data = packU8(readFile(path));
+      const data = readFile(path);
       const p = `/je2be/${id}/out/db/${index}_${i}.ldb`;
-      await fs.put(p, data);
+      await kvs.put(p, data);
       unlink(path);
     }
     tableNumber = maxTableNumber;
@@ -219,24 +211,23 @@ async function compaction(m: CompactionQueueMessage): Promise<boolean> {
     if (!exists(path)) {
       break;
     }
-    const data = packU8(readFile(path));
+    const data = readFile(path);
     const p = `/je2be/${id}/out/db/${index}_${i}.ldb`;
-    await fs.put(p, data);
+    await kvs.put(p, data);
     unlink(path);
   }
 
   {
     const path = `/je2be/${id}/out/db/MANIFEST-000001`;
     const p = `/je2be/${id}/out/db/${index}.manifest`;
-    const data = packU8(readFile(path));
-    await fs.put(p, data);
+    const data = readFile(path);
+    await kvs.put(p, data);
     unlink(path);
   }
 
-  if (exists(file)) {
-    unlink(file);
-  }
   Module._free(keyBuffer);
+  Module._free(valueBuffer);
+  Module.RemoveAll(`/je2be/${id}/out`);
 
   return ok;
 }
