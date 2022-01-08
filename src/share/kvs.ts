@@ -18,6 +18,13 @@ export function defer<T = void>(): Deferred<T> {
 export class KvsServer {
   readonly storage = new Map<string, string>();
 
+  close() {
+    console.log(`[front] revoking object urls`);
+    this.storage.forEach((key, objectUrl) => {
+      URL.revokeObjectURL(objectUrl);
+    });
+  }
+
   onMessage(ev: MessageEvent) {
     const { target, data } = ev;
     if (!(target instanceof Worker)) {

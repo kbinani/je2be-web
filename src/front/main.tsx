@@ -50,6 +50,9 @@ export const MainComponent: FC = () => {
     ev.preventDefault();
     ev.returnValue = "Converter still working. Do you really leave the page?";
   };
+  const onUnload = () => {
+    session.current?.close();
+  };
   useEffect(() => {
     const { protocol, host, href } = window.location;
     const prefix = `${protocol}//${host}/`;
@@ -67,6 +70,7 @@ export const MainComponent: FC = () => {
       })
       .catch(console.error);
     window.addEventListener("beforeunload", onBeforeUnload);
+    window.addEventListener("unload", onUnload);
     return () => {
       window.removeEventListener("beforeunload", onBeforeUnload);
     };
@@ -88,6 +92,7 @@ export const MainComponent: FC = () => {
         forceUpdate();
       }
     });
+    session.current?.close();
     session.current = s;
     s.start(file);
     state.current = { ...kInitComponentState, id };

@@ -191,6 +191,10 @@ export class ConvertSession {
     this.post = post;
   }
 
+  close() {
+    this.kvs.close();
+  }
+
   get numTotalChunks(): number {
     return this._numTotalChunks;
   }
