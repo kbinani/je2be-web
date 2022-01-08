@@ -134,40 +134,56 @@ async function compaction(m: CompactionQueueMessage): Promise<boolean> {
   const fs = new FileStorage();
   const file = `/je2be/${id}/tmp.bin`;
 
-  let path: string = "";
-  let data: Uint8Array;
   let keyBuffer = Module._malloc(16);
   let keyBufferSize = 16;
   let ok = true;
   let tableNumber = 0;
-  for (let i = 0; i < keys.length; i++) {
-    const key = keys[i];
-    if (path !== key.file) {
-      const f = await fs.files.get(key.file);
-      data = f.data;
-      path = key.file;
+
+  let from = 0;
+  while (from < keys.length) {
+    const k = keys[from];
+    const path = k.file;
+    let to = from;
+    for (let i = from + 1; i < keys.length; i++) {
+      if (path === keys[i].file) {
+        to = i;
+      } else {
+        break;
+      }
     }
-    const size = ReadI32(key.pos, data);
-    FS.writeFile(file, data.slice(key.pos + 4, key.pos + 4 + size));
-    if (keyBufferSize < key.key.byteLength) {
-      Module._free(keyBuffer);
-      keyBufferSize = key.key.byteLength;
-      keyBuffer = Module._malloc(keyBufferSize);
-    }
-    for (let i = 0; i < key.key.length; i++) {
-      Module.HEAPU8[keyBuffer + i] = key.key[i];
-    }
-    //int AppendDbAppend(intptr_t dbPtr, string file, intptr_t key, int keySize)
-    const maxTableNumber = Module.AppendDbAppend(
-      db,
-      file,
-      keyBuffer,
-      key.key.length
-    );
-    if (maxTableNumber < 0) {
-      console.log(`[post] wasm::Append failed`);
-      ok = false;
-      break;
+    const { data } = await fs.files.get(k.file);
+    FS.writeFile(file, data);
+    let maxTableNumber = tableNumber;
+    for (let j = from; j <= to; j++) {
+      const key = keys[j];
+      if (keyBufferSize < key.key.byteLength) {
+        Module._free(keyBuffer);
+        keyBufferSize = key.key.byteLength;
+        keyBuffer = Module._malloc(keyBufferSize);
+      }
+      for (let i = 0; i < key.key.length; i++) {
+        Module.HEAPU8[keyBuffer + i] = key.key[i];
+      }
+      //int AppendDbAppend(intptr_t dbPtr, string file, intptr_t key, int keySize)
+      const tn = Module.AppendDbAppend(
+        db,
+        file,
+        key.pos,
+        keyBuffer,
+        key.key.length
+      );
+      if (tn < 0) {
+        console.log(`[post] wasm::Append failed`);
+        ok = false;
+        break;
+      }
+      maxTableNumber = Math.max(maxTableNumber, tn);
+      const m: CompactionProgressDeltaMessage = {
+        type: "compaction_progress_delta",
+        id,
+        delta: 1,
+      };
+      self.postMessage(m);
     }
     for (let i = tableNumber + 1; i <= maxTableNumber; i++) {
       const path = `/je2be/${id}/out/db/${tableName(i)}`;
@@ -177,12 +193,7 @@ async function compaction(m: CompactionQueueMessage): Promise<boolean> {
       FS.unlink(path);
     }
     tableNumber = maxTableNumber;
-    const m: CompactionProgressDeltaMessage = {
-      type: "compaction_progress_delta",
-      id,
-      delta: 1,
-    };
-    self.postMessage(m);
+    from = to + 1;
   }
 
   ok = Module.DeleteAppendDb(db) && ok;

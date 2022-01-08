@@ -66,11 +66,11 @@ public:
     return true;
   }
 
-  int append(std::string file, intptr_t keyBufferPtr, int keySize) {
+  int append(std::string file, int pos, intptr_t keyBufferPtr, int keySize) {
     if (!fValid) {
       return -1;
     }
-    if (doAppend(file, keyBufferPtr, keySize)) {
+    if (doAppend(file, pos, keyBufferPtr, keySize)) {
       if (fTableNumber > 0) {
         return fTableNumber - 1;
       } else {
@@ -82,7 +82,7 @@ public:
   }
 
 private:
-  bool doAppend(std::string file, intptr_t keyBufferPtr, int keySize) {
+  bool doAppend(std::string file, int pos, intptr_t keyBufferPtr, int keySize) {
     using namespace std;
     using namespace mcfile;
     using namespace leveldb;
@@ -90,13 +90,15 @@ private:
 
     char const *keyPtr = (char const *)keyBufferPtr;
 
-    error_code ec;
-    size_t compressedValueSize = fs::file_size(fs::path(file), ec);
-    if (ec) {
-      return false;
-    }
     je2be::ScopedFile fp(File::Open(fs::path(file), File::Mode::Read));
     if (!fp) {
+      return false;
+    }
+    if (!File::Fseek(fp, pos, SEEK_SET)) {
+      return false;
+    }
+    uint32_t compressedValueSize;
+    if (fread(&compressedValueSize, sizeof(compressedValueSize), 1, fp) != 1) {
       return false;
     }
     vector<uint8_t> valueBuffer(compressedValueSize);

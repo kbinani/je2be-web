@@ -96,9 +96,9 @@ bool DeleteAppendDb(intptr_t dbPtr) {
   return ok;
 }
 
-int AppendDbAppend(intptr_t dbPtr, string file, intptr_t key, int keySize) {
+int AppendDbAppend(intptr_t dbPtr, string file, int pos, intptr_t key, int keySize) {
   AppendDb *db = (AppendDb *)dbPtr;
-  return db->append(file, key, keySize);
+  return db->append(file, pos, key, keySize);
 }
 
 #if defined(EMSCRIPTEN)
