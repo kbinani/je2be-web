@@ -34,6 +34,7 @@ export class ConvertSession {
   private compactionDone = 0;
   private lastSequence = 0;
   private compactionProgress = 0;
+  private startTime: number;
 
   constructor(
     readonly id: string,
@@ -161,6 +162,8 @@ export class ConvertSession {
           filename = this.file.name.substring(0, dot) + ".mcworld";
         }
         this.post.terminate();
+        const elapsed = Date.now() - this.startTime;
+        console.log(`[front] (${id}) finished in ${elapsed / 1000.0} sec`);
         this.reduce((state) => {
           return {
             ...state,
@@ -192,6 +195,7 @@ export class ConvertSession {
     console.log(`[front] (${this.id}) start`);
     const start: StartPreMessage = { type: "pre", id: this.id, file };
     this.pre.postMessage(start);
+    this.startTime = Date.now();
   }
 
   queue(m: ConvertRegionMessage) {
