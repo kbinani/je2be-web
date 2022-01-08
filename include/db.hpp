@@ -19,10 +19,15 @@ public:
       fValid = false;
       return;
     }
-    fBuffer.push_back(std::make_pair(key, v));
-    if (fBuffer.size() >= 512) {
+    int nextSize = fSize + 4 + v.size();
+    if (nextSize > kMaxFileSize) {
       fValid = flush();
+      if (!fValid) {
+        return;
+      }
     }
+    fBuffer.push_back(std::make_pair(key, v));
+    fSize += 4 + v.size();
   }
 
   void del(std::string const &key) override {
@@ -92,6 +97,7 @@ public:
     }
 
     fNumFiles++;
+    fSize = 0;
     return true;
   }
 
@@ -100,7 +106,10 @@ public:
 
 private:
   bool fValid = true;
+  int fSize = 0;
   std::filesystem::path fDir;
   std::string fBasename;
   std::vector<std::pair<std::string, std::vector<uint8_t>>> fBuffer;
+
+  static constexpr int kMaxFileSize = 5 * 1024 * 1024;
 };
