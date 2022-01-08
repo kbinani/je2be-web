@@ -1,4 +1,5 @@
 import {
+  CompactionProgressDeltaMessage,
   CompactionQueueMessage,
   CompactionThreadFinishedMessage,
   ConvertRegionDoneMessage,
@@ -176,6 +177,12 @@ async function compaction(m: CompactionQueueMessage): Promise<boolean> {
       FS.unlink(path);
     }
     tableNumber = maxTableNumber;
+    const m: CompactionProgressDeltaMessage = {
+      type: "compaction_progress_delta",
+      id,
+      delta: 1,
+    };
+    self.postMessage(m);
   }
 
   ok = Module.DeleteAppendDb(db) && ok;

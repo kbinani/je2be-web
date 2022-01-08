@@ -251,6 +251,25 @@ export function isCompactionQueueMessage(x: any): x is CompactionQueueMessage {
   );
 }
 
+export type CompactionProgressDeltaMessage = {
+  type: "compaction_progress_delta";
+  id: string;
+  delta: number;
+};
+
+export function isCompactionProgressDeltaMessage(
+  x: any
+): x is CompactionProgressDeltaMessage {
+  if (!x) {
+    return false;
+  }
+  return (
+    x["type"] === "compaction_progress_delta" &&
+    typeof x["id"] === "string" &&
+    typeof x["delta"] === "number"
+  );
+}
+
 export type CompactionThreadFinishedMessage = {
   type: "compaction_thread_finished";
   index: number;

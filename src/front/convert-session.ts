@@ -1,5 +1,6 @@
 import {
   ConvertRegionMessage,
+  isCompactionProgressDeltaMessage,
   isCompactionQueueMessage,
   isCompactionThreadFinishedMessage,
   isConvertProgressDeltaMessage,
@@ -32,6 +33,7 @@ export class ConvertSession {
   levelDirectory: string = "";
   private compactionDone = 0;
   private lastSequence = 0;
+  private compactionProgress = 0;
 
   constructor(
     readonly id: string,
@@ -118,6 +120,21 @@ export class ConvertSession {
             };
             this.post.postMessage(m);
           }
+        } else if (
+          isCompactionProgressDeltaMessage(ev.data) &&
+          ev.data.id === id
+        ) {
+          this.compactionProgress += ev.data.delta;
+          const m: ProgressMessage = {
+            type: "progress",
+            stage: "compaction",
+            progress: this.compactionProgress,
+            total: this.lastSequence,
+            id,
+          };
+          this.reduce((state) => {
+            return updateProgress(state, m);
+          }, true);
         }
       };
       workers.push(w);
