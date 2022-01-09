@@ -36,18 +36,19 @@ const sKvs = new KvsClient();
 
 function startPost(m: StartPostMessage) {
   const { id } = m;
-  console.log(`[post] (${id}) start`);
-  post(m).then(() => console.log(`[post] (${id}) done`));
+  console.log(`[post] (${id}) start post`);
+  post(m).then(() => console.log(`[post] (${id}) post done`));
 }
 
 function startMerge(m: MergeCompactionMessage) {
   const { id } = m;
+  console.log(`[post] (${id}) start merge...`);
   merge(m).then(() => {
     const done: PostDoneMessage = {
       type: "post_done",
       id,
     };
-    console.log(`[post] (${id}) done`);
+    console.log(`[post] (${id}) merge done`);
     self.postMessage(done);
   });
 }
@@ -73,9 +74,9 @@ async function post(m: StartPostMessage): Promise<void> {
   console.log(`[post] (${id}) retrieveLdbFiles...`);
   await retrieveLdbFiles(id, numFiles);
   console.log(`[post] (${id}) retrieveLdbFiles done`);
-  console.log(`[post] (${id}) unloadWorldData...`);
-  await unloadWorldData(id);
-  console.log(`[post] (${id}) unloadWorldData done`);
+  console.log(`[post] (${id}) removeFilesNoMoreNeeded...`);
+  await removeFilesNoMoreNeeded(id);
+  console.log(`[post] (${id}) removeFilesNoMoreNeeded done`);
   console.log(`[post] (${id}) collectKeys...`);
   const keys = await collectKeys(id);
   console.log(`[post] (${id}) collectKeys done`);
@@ -160,15 +161,14 @@ async function loadWorldData(id: string): Promise<void> {
   );
 }
 
-async function unloadWorldData(id: string): Promise<void> {
-  const prefix = `/je2be/${id}/wd`;
-  Module.RemoveAll(prefix);
-  const files = await sKvs.keys({ withPrefix: prefix });
-  await Promise.all(
-    files.map(async (path) => {
-      await sKvs.del(path);
-    })
-  );
+async function removeFilesNoMoreNeeded(id: string): Promise<void> {
+  const wd = `/je2be/${id}/wd`;
+  Module.RemoveAll(wd);
+  await sKvs.removeKeys({ withPrefix: wd });
+
+  const in_ = `/je2be/${id}/in`;
+  Module.RemoveAll(in_);
+  await sKvs.removeKeys({ withPrefix: in_ });
 }
 
 async function retrieveLdbFiles(id: string, numFiles: number): Promise<void> {

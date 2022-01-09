@@ -98,12 +98,18 @@ export function isStartPreMessage(x: any): x is StartPreMessage {
   );
 }
 
+export type Chunk = {
+  cx: number;
+  cz: number;
+};
+
 export type ConvertRegionMessage = {
   type: "region";
   id: string;
   rx: number;
   rz: number;
   dim: number;
+  chunks: Chunk[];
   javaEditionMap: number[];
 };
 
@@ -117,6 +123,7 @@ export function isConvertRegionMessage(x: any): x is ConvertRegionMessage {
     typeof x["rx"] === "number" &&
     typeof x["rz"] === "number" &&
     typeof x["dim"] === "number" &&
+    !!x["chunks"] &&
     !!x["javaEditionMap"]
   );
 }

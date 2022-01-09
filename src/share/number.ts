@@ -3,9 +3,10 @@ export function clamp(v: number, min: number, max: number): number {
 }
 
 export function swapInt32(v: number) {
-  let r = v << 24;
-  r |= (v & 0x0000ff00) << 8;
-  r |= (v & 0x00ff0000) >> 8;
-  r |= v >> 24;
-  return r;
+  return (
+    (0xff000000 & (v << 24)) |
+    (0x00ff0000 & (v << 8)) |
+    (0x0000ff00 & (v >> 8)) |
+    (0x000000ff & (v >> 24))
+  );
 }

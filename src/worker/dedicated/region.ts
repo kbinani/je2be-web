@@ -28,13 +28,14 @@ self.addEventListener("message", (ev: MessageEvent) => {
   }
 });
 
+const sKvs = new KvsClient();
+
 function startConvertRegion(m: ConvertRegionMessage) {
   convertRegion(m).catch(console.error);
 }
 
 async function convertRegion(m: ConvertRegionMessage): Promise<void> {
-  const { id, rx, rz, dim, javaEditionMap } = m;
-  const kvs = new KvsClient();
+  const { id, rx, rz, dim, chunks, javaEditionMap } = m;
   const root = `/je2be/${id}/in`;
   let worldDir: string;
   switch (dim) {
@@ -50,17 +51,20 @@ async function convertRegion(m: ConvertRegionMessage): Promise<void> {
       break;
   }
 
-  const region = `${worldDir}/region/r.${rx}.${rz}.mca`;
-  const regionFile = await kvs.get(region);
-  if (!regionFile) {
-    return;
+  mkdirp(`${worldDir}/region`);
+  for (const chunk of chunks) {
+    const { cx, cz } = chunk;
+    const name = `${worldDir}/region/c.${cx}.${cz}.nbt.z`;
+    const data = await sKvs.get(name);
+    if (!data) {
+      console.warn(`[region] (${id}) ${name} not found`);
+      return;
+    }
+    writeFile(name, data);
   }
-  mkdirp(dirname(region));
-  writeFile(region, regionFile);
 
   const entities = `${worldDir}/entities/r.${rx}.${rz}.mca`;
-  const entitiesFile = await kvs.get(entities);
-  const entitiesFileExists: boolean = entitiesFile !== undefined;
+  const entitiesFile = await sKvs.get(entities);
   if (entitiesFile) {
     mkdirp(dirname(entities));
     writeFile(entities, entitiesFile);
@@ -85,10 +89,6 @@ async function convertRegion(m: ConvertRegionMessage): Promise<void> {
     javaEditionMap.length,
     numLdbFilesPtr
   );
-  unlink(region);
-  if (entitiesFileExists) {
-    unlink(entities);
-  }
   const numLdbFiles = readI32(numLdbFilesPtr);
   if (!ok) {
     return;
@@ -100,15 +100,26 @@ async function convertRegion(m: ConvertRegionMessage): Promise<void> {
       `${ldbDir}/r.${rx}.${rz}.${i}.values`,
     ]) {
       const data = readFile(path);
-      copy.push(kvs.put(path, data).then(() => unlink(path)));
+      copy.push(sKvs.put(path, data));
     }
   }
   {
     const path = `${wdDir}/r.${rx}.${rz}.nbt`;
     const data = readFile(path);
-    copy.push(kvs.put(path, data).then(() => unlink(path)));
+    copy.push(sKvs.put(path, data));
   }
   await Promise.all(copy);
+  const del: Promise<void>[] = [];
+  for (let x = 1; x <= 30; x++) {
+    for (let z = 1; z <= 30; z++) {
+      const cx = rx * 32 + x;
+      const cz = rz * 32 + z;
+      const name = `${worldDir}/region/c.${cx}.${cz}.nbt.z`;
+      del.push(sKvs.del(name));
+    }
+  }
+  await Promise.all(del);
+  Module.RemoveAll(`/je2be`);
   const done: ConvertRegionDoneMessage = { type: "region_done", id };
   self.postMessage(done);
 }
@@ -128,7 +139,6 @@ function startCompaction(m: CompactionQueueMessage) {
 async function compaction(m: CompactionQueueMessage): Promise<boolean> {
   const { id, keys, index } = m;
   const db = Module.NewAppendDb(id);
-  const kvs = new KvsClient();
 
   let valueBufferSize = 16;
   let valueBuffer = Module._malloc(valueBufferSize);
@@ -149,7 +159,7 @@ async function compaction(m: CompactionQueueMessage): Promise<boolean> {
         break;
       }
     }
-    let data: Uint8Array = await kvs.get(k.file);
+    let data: Uint8Array = await sKvs.get(k.file);
     if (valueBufferSize < data.length) {
       Module._free(valueBuffer);
       valueBufferSize = data.length;
@@ -193,7 +203,7 @@ async function compaction(m: CompactionQueueMessage): Promise<boolean> {
       const path = `/je2be/${id}/out/db/${tableName(i)}`;
       const data = readFile(path);
       const p = `/je2be/${id}/out/db/${index}_${i}.ldb`;
-      await kvs.put(p, data);
+      await sKvs.put(p, data);
       unlink(path);
     }
     tableNumber = maxTableNumber;
@@ -209,7 +219,7 @@ async function compaction(m: CompactionQueueMessage): Promise<boolean> {
     }
     const data = readFile(path);
     const p = `/je2be/${id}/out/db/${index}_${i}.ldb`;
-    await kvs.put(p, data);
+    await sKvs.put(p, data);
     unlink(path);
   }
 
@@ -217,7 +227,7 @@ async function compaction(m: CompactionQueueMessage): Promise<boolean> {
     const path = `/je2be/${id}/out/db/MANIFEST-000001`;
     const p = `/je2be/${id}/out/db/${index}.manifest`;
     const data = readFile(path);
-    await kvs.put(p, data);
+    await sKvs.put(p, data);
     unlink(path);
   }
 

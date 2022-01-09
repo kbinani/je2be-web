@@ -19,10 +19,19 @@ export class KvsServer {
   readonly storage = new Map<string, string>();
 
   close() {
-    console.log(`[front] revoking object urls`);
+    console.log(`[front] revoking object urls...`);
     this.storage.forEach((key, objectUrl) => {
       URL.revokeObjectURL(objectUrl);
     });
+    console.log(`[front] all object urls revoked`);
+  }
+
+  ls() {
+    const keys = [...this.storage.keys()];
+    keys.sort((a, b) => a.localeCompare(b));
+    for (const key of keys) {
+      console.log(key);
+    }
   }
 
   onMessage(ev: MessageEvent) {
@@ -71,6 +80,20 @@ export class KvsServer {
         type: "strings_response",
         id,
         strings: keys,
+      };
+      target.postMessage(m);
+    } else if (isRemoveKeysWithPrefixQuery(data)) {
+      const { id, prefix } = data;
+      for (const key of this.storage.keys()) {
+        if (key.startsWith(prefix)) {
+          const url = this.storage.get(key);
+          URL.revokeObjectURL(url);
+          this.storage.delete(key);
+        }
+      }
+      const m: VoidResponse = {
+        type: "void_response",
+        id,
       };
       target.postMessage(m);
     }
@@ -146,6 +169,19 @@ export class KvsClient {
     return d;
   }
 
+  async removeKeys({ withPrefix }: { withPrefix: string }): Promise<void> {
+    const id = uuidv4();
+    const d = defer<void>();
+    const m: RemoveKeysWithPrefixQuery = {
+      id,
+      prefix: withPrefix,
+      type: "remove_keys_with_prefix",
+    };
+    this._void.set(id, d);
+    self.postMessage(m);
+    return d;
+  }
+
   readonly onMessage = (ev: MessageEvent) => {
     if (isStringResponse(ev.data)) {
       const id = ev.data.id;
@@ -162,6 +198,23 @@ export class KvsClient {
       d?.resolve(ev.data.strings);
     }
   };
+}
+
+type RemoveKeysWithPrefixQuery = {
+  type: "remove_keys_with_prefix";
+  id: string;
+  prefix: string;
+};
+
+function isRemoveKeysWithPrefixQuery(x: any): x is RemoveKeysWithPrefixQuery {
+  if (!x) {
+    return false;
+  }
+  return (
+    x["type"] === "remove_keys_with_prefix" &&
+    typeof x["id"] === "string" &&
+    typeof x["prefix"] === "string"
+  );
 }
 
 type KeysWithPrefixQuery = {
