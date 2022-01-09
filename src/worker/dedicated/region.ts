@@ -9,14 +9,12 @@ import {
 } from "../../share/messages";
 import { readI32, writeI32 } from "../../share/heap";
 import {
-  dirname,
   exists,
   mkdirp,
   mount,
   readFile,
   unlink,
   unmount,
-  writeFile,
 } from "../../share/fs-ext";
 import { KvsClient } from "../../share/kvs";
 
@@ -54,23 +52,28 @@ async function convertRegion(m: ConvertRegionMessage): Promise<void> {
   }
 
   mkdirp(`${worldDir}/region`);
+  const files: File[] = [];
   for (const chunk of chunks) {
     const { cx, cz } = chunk;
     const name = `${worldDir}/region/c.${cx}.${cz}.nbt.z`;
-    const data = await sKvs.get(name);
-    if (!data) {
+    const file = await sKvs.file(name);
+    if (!file) {
       console.warn(`[region] (${id}) ${name} not found`);
       return;
     }
-    writeFile(name, data);
+    const renamed = `region/c.${cx}.${cz}.nbt.z`;
+    files.push(new File([file], renamed));
   }
 
   const entities = `${worldDir}/entities/r.${rx}.${rz}.mca`;
-  const entitiesFile = await sKvs.get(entities);
+  const entitiesFile = await sKvs.file(entities);
   if (entitiesFile) {
-    mkdirp(dirname(entities));
-    writeFile(entities, entitiesFile);
+    const renamed = `entities/r.${rx}.${rz}.mca`;
+    files.push(new File([entitiesFile], renamed));
   }
+
+  mkdirp("/wfs");
+  mount("worker", "/wfs", { files });
 
   const storage = Module._malloc(javaEditionMap.length * 4);
   for (let i = 0; i < javaEditionMap.length; i++) {
@@ -84,6 +87,7 @@ async function convertRegion(m: ConvertRegionMessage): Promise<void> {
   writeI32(numLdbFilesPtr, 0);
   const ok = Module.ConvertRegion(
     id,
+    "/wfs",
     rx,
     rz,
     dim,
@@ -93,6 +97,7 @@ async function convertRegion(m: ConvertRegionMessage): Promise<void> {
   );
   const numLdbFiles = readI32(numLdbFilesPtr);
   if (!ok) {
+    unmount("/wfs");
     return;
   }
   const copy: Promise<void>[] = [];
@@ -122,6 +127,7 @@ async function convertRegion(m: ConvertRegionMessage): Promise<void> {
   }
   await Promise.all(del);
   Module.RemoveAll(`/je2be`);
+  unmount("/wfs");
   const done: ConvertRegionDoneMessage = { type: "region_done", id };
   self.postMessage(done);
 }

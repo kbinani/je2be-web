@@ -62,8 +62,8 @@ static je2be::tobe::Chunk::Result ConvertChunk(mcfile::Dimension dim, DbInterfac
   }
 }
 
-//id, rx, rz, dim, storage, javaEditionMap.length
-bool ConvertRegion(string id, int rx, int rz, int dim, intptr_t javaEditionMap, int javaEditionMapSize, intptr_t numLdbFiles) {
+//id, worldDir, rx, rz, dim, storage, javaEditionMap.length
+bool ConvertRegion(string id, string worldDirString, int rx, int rz, int dim, intptr_t javaEditionMap, int javaEditionMapSize, intptr_t numLdbFiles) {
   std::unordered_map<int32_t, int8_t> entries;
   int32_t *ptr = (int32_t *)javaEditionMap;
   for (int i = 0; i + 1 < javaEditionMapSize; i += 2) {
@@ -79,7 +79,7 @@ bool ConvertRegion(string id, int rx, int rz, int dim, intptr_t javaEditionMap, 
   InputOption io;
   JavaEditionMap jem(entries);
   Dimension d = static_cast<Dimension>(dim);
-  fs::path worldDir = io.getWorldDirectory(fs::path("/je2be") / id / "in", d);
+  fs::path worldDir = fs::path(worldDirString);
   mcfile::je::World w(worldDir);
   auto region = w.region(rx, rz);
   if (!region) {
