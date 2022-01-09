@@ -71,13 +71,12 @@ export class ConvertSession {
     };
     this.pre = pre;
 
-    // "-2" stands for "pre" and "post" workers
-    let num = Math.max(4, navigator.hardwareConcurrency - 2);
+    let num = Math.min(4, navigator.hardwareConcurrency);
 
     const heapLimit = performance["memory"]?.["jsHeapSizeLimit"];
     if (typeof heapLimit === "number") {
-      const magic = 600 * 1024 * 1024;
-      num = Math.max(4, Math.floor(heapLimit / magic)) - 2;
+      const magic = 300 * 1024 * 1024;
+      num = Math.min(num, Math.floor(heapLimit / magic));
     }
 
     console.log(`[front] launch ${num} workers`);
