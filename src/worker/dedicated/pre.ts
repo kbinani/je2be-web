@@ -9,10 +9,10 @@ import {
 } from "../../share/messages";
 import { dirname, mkdirp, writeFile } from "../../share/fs-ext";
 import JSZip from "jszip";
-import { Point } from "../../share/cg";
-import { ReadI32 } from "../../share/heap";
+import { readI32 } from "../../share/heap";
 import { promiseUnzipFileInZip } from "../../share/zip-ext";
 import { KvsClient } from "../../share/kvs";
+import { swapInt32 } from "../../share/number";
 
 self.addEventListener("message", (ev: MessageEvent) => {
   if (isStartPreMessage(ev.data)) {
@@ -25,9 +25,18 @@ self.addEventListener("message", (ev: MessageEvent) => {
 
 self.importScripts("./pre-wasm.js");
 
+const sKvs = new KvsClient();
+
 type Region = {
   dim: number;
-  region: Point;
+  rx: number;
+  rz: number;
+  chunks: Chunk[];
+};
+
+type Chunk = {
+  cx: number;
+  cz: number;
 };
 
 async function start(m: StartPreMessage): Promise<void> {
@@ -68,10 +77,10 @@ async function start(m: StartPreMessage): Promise<void> {
 
   console.log(`[pre] (${id}) queue...`);
   const javaEditionMap = [];
-  const ptr = ReadI32(storage);
+  const ptr = readI32(storage);
   for (let i = 0; i + 1 < javaEditionMapSize; i += 2) {
-    const key = ReadI32(ptr + i * 4);
-    const value = ReadI32(ptr + i * 4 + 4);
+    const key = readI32(ptr + i * 4);
+    const value = readI32(ptr + i * 4 + 4);
     javaEditionMap.push(key);
     javaEditionMap.push(value);
   }
@@ -153,8 +162,6 @@ async function extract(
   };
   self.postMessage(m);
 
-  const kvs = new KvsClient();
-
   let progress = 0;
   const unzipToMemory = other.map(async (path) => {
     const rel = path.substring(prefix.length);
@@ -176,24 +183,12 @@ async function extract(
   });
   await Promise.all(unzipToMemory);
 
-  const unzipToIdb = [...mca, ...entities].map(async (path) => {
+  const regions: Region[] = [];
+  const unzipRegions = mca.map(async (path) => {
     const rel = path.substring(prefix.length);
     const target = `/je2be/${id}/in/${rel}`;
     const buffer = await promiseUnzipFileInZip({ zip, path });
-    await kvs.put(target, buffer);
-    progress++;
-    const m: ProgressMessage = {
-      type: "progress",
-      id,
-      stage: "unzip",
-      progress,
-      total,
-    };
-    self.postMessage(m);
-  });
-  await Promise.all(unzipToIdb);
-
-  const regions = mca.map((path) => {
+    const dir = dirname(target);
     let dim = 0;
     if (path.includes("/DIM1/")) {
       dim = 2;
@@ -204,16 +199,56 @@ async function extract(
     const token = s.split(".");
     const rx = parseInt(token[1], 10);
     const rz = parseInt(token[2], 10);
-    return { dim, region: new Point(rx, rz) };
+    const chunks: Chunk[] = [];
+    for (let x = 0; x < 16; x++) {
+      for (let z = 0; z < 16; z++) {
+        const chunk = await promiseExportToCompressedNbt(buffer, x, z);
+        const cx = rx * 32 + x;
+        const cz = rz * 32 + z;
+        const name = `${dir}/c.${cx}.${cz}.nbt.z`;
+        await sKvs.put(name, chunk);
+        const c: Chunk = { cx, cz };
+        chunks.push(c);
+      }
+    }
+    const region: Region = { rx, rz, dim, chunks };
+    regions.push(region);
+    progress++;
+    const m: ProgressMessage = {
+      type: "progress",
+      id,
+      stage: "unzip",
+      progress,
+      total,
+    };
+    self.postMessage(m);
   });
+  await Promise.all(unzipRegions);
+
+  const unzipEntities = entities.map(async (path) => {
+    const rel = path.substring(prefix.length);
+    const target = `/je2be/${id}/in/${rel}`;
+    const buffer = await promiseUnzipFileInZip({ zip, path });
+    await sKvs.put(target, buffer);
+    progress++;
+    const m: ProgressMessage = {
+      type: "progress",
+      id,
+      stage: "unzip",
+      progress,
+      total,
+    };
+    self.postMessage(m);
+  });
+  await Promise.all(unzipEntities);
+
   const levelDirectory = dirname(levelDatPath);
   return { regions, levelDirectory };
 }
 
 function queue(id: string, regions: Region[], javaEditionMap: number[]) {
   for (const r of regions) {
-    const { region, dim } = r;
-    const { x: rx, z: rz } = region;
+    const { rx, rz, dim, chunks } = r;
     const m: ConvertRegionMessage = {
       type: "region",
       id,
@@ -224,4 +259,37 @@ function queue(id: string, regions: Region[], javaEditionMap: number[]) {
     };
     self.postMessage(m);
   }
+}
+
+async function promiseExportToCompressedNbt(
+  mca: Uint8Array,
+  localChunkX: number,
+  localChunkZ: number
+): Promise<Uint8Array | undefined> {
+  if (localChunkX < 0 || 32 <= localChunkX) {
+    return;
+  }
+  if (localChunkZ < 0 || 32 <= localChunkZ) {
+    return;
+  }
+
+  const index = (localChunkX & 31) + (localChunkZ & 31) * 32;
+  let pos = 4 * index;
+  const loc = swapInt32(readI32(pos, mca));
+  pos += 4;
+  if (loc == 0) {
+    // The chunk is not saved yet
+    return;
+  }
+
+  const kSectorSize = 4096;
+  const sectorOffset = loc >> 8;
+  pos = sectorOffset * kSectorSize;
+  const chunkSize = swapInt32(readI32(pos, mca)) - 1;
+  const compressionType = mca[pos];
+  pos++;
+  if (pos + chunkSize >= mca.length) {
+    return;
+  }
+  return mca.slice(pos, pos + chunkSize);
 }

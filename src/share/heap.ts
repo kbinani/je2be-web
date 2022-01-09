@@ -1,4 +1,4 @@
-export function ReadI32(ptr: number, heap: Uint8Array = Module.HEAPU8): number {
+export function readI32(ptr: number, heap: Uint8Array = Module.HEAPU8): number {
   let v = 0;
   for (let i = 0; i < 4; i++) {
     v = v * 256 + heap[ptr + 3 - i];
@@ -6,7 +6,7 @@ export function ReadI32(ptr: number, heap: Uint8Array = Module.HEAPU8): number {
   return v;
 }
 
-export function WriteI32(ptr: number, i32: number, heap = Module.HEAPU8) {
+export function writeI32(ptr: number, i32: number, heap = Module.HEAPU8) {
   let v = i32;
   for (let i = 0; i < 4; i++) {
     heap[ptr + i] = 0xff & v;

@@ -19,7 +19,7 @@ import {
 } from "../../share/fs-ext";
 import JSZip from "jszip";
 import { promiseUnzipFileInZip } from "../../share/zip-ext";
-import { ReadI32 } from "../../share/heap";
+import { readI32 } from "../../share/heap";
 import { KvsClient } from "../../share/kvs";
 
 self.addEventListener("message", (ev: MessageEvent) => {
@@ -209,9 +209,9 @@ async function collectKeys(id: string): Promise<DbKey[]> {
       const valuesFile =
         path.substring(0, path.length - ".keys".length) + ".values";
       while (ptr < data.length) {
-        const pos = ReadI32(ptr, data);
+        const pos = readI32(ptr, data);
         ptr += 4;
-        const keySize = ReadI32(ptr, data);
+        const keySize = readI32(ptr, data);
         ptr += 4;
         const key = new Uint8Array(keySize);
         for (let i = 0; i < keySize; i++) {

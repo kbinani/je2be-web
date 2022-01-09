@@ -7,7 +7,7 @@ import {
   isCompactionQueueMessage,
   isConvertRegionMessage,
 } from "../../share/messages";
-import { ReadI32, WriteI32 } from "../../share/heap";
+import { readI32, writeI32 } from "../../share/heap";
 import {
   dirname,
   exists,
@@ -68,14 +68,14 @@ async function convertRegion(m: ConvertRegionMessage): Promise<void> {
 
   const storage = Module._malloc(javaEditionMap.length * 4);
   for (let i = 0; i < javaEditionMap.length; i++) {
-    WriteI32(storage + i, javaEditionMap[i]);
+    writeI32(storage + i, javaEditionMap[i]);
   }
   const ldbDir = `/je2be/${id}/ldb/${dim}`;
   mkdirp(ldbDir);
   const wdDir = `/je2be/${id}/wd/${dim}`;
   mkdirp(wdDir);
   const numLdbFilesPtr = Module._malloc(4);
-  WriteI32(numLdbFilesPtr, 0);
+  writeI32(numLdbFilesPtr, 0);
   const ok = Module.ConvertRegion(
     id,
     rx,
@@ -89,7 +89,7 @@ async function convertRegion(m: ConvertRegionMessage): Promise<void> {
   if (entitiesFileExists) {
     unlink(entities);
   }
-  const numLdbFiles = ReadI32(numLdbFilesPtr);
+  const numLdbFiles = readI32(numLdbFilesPtr);
   if (!ok) {
     return;
   }
