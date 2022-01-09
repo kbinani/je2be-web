@@ -78,6 +78,11 @@ export const MainComponent: FC = () => {
       window.removeEventListener("beforeunload", onBeforeUnload);
     };
   }, []);
+  useEffect(() => {
+    if (state.current.id === undefined) {
+      input.current.value = "";
+    }
+  }, [state.current.id]);
   const { unzip, compaction, convert, convertTotal, copy } = state.current;
   const disableLink =
     state.current.id !== undefined || state.current.dl !== undefined;
