@@ -44,6 +44,9 @@ int Post(string id) {
   auto worldDataDir = fs::path("/je2be") / id / "wd";
   for (Dimension dim : {Dimension::Overworld, Dimension::Nether, Dimension::End}) {
     auto dir = worldDataDir / to_string(static_cast<uint8_t>(dim));
+    if (!fs::is_directory(dir)) {
+      continue;
+    }
     for (auto it : fs::directory_iterator(dir)) {
       auto file = it.path();
       auto s = make_shared<stream::FileInputStream>(file);
@@ -78,9 +81,6 @@ int Post(string id) {
       ok = levelData->put(db, *data);
     }
   }
-
-  ec.clear();
-  fs::remove_all(inputDir, ec);
 
   if (!db.valid()) {
     return -5;

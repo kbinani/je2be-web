@@ -145,7 +145,6 @@ export function isConvertQueueingFinishedMessage(
 export type StartPostMessage = {
   type: "post";
   id: string;
-  file: File;
   levelDirectory: string;
   numWorkers: number;
 };
@@ -157,7 +156,6 @@ export function isStartPostMessage(x: any): x is StartPostMessage {
   return (
     x["type"] === "post" &&
     typeof x["id"] === "string" &&
-    x["file"] instanceof File &&
     typeof x["levelDirectory"] === "string" &&
     typeof x["numWorkers"] === "number"
   );

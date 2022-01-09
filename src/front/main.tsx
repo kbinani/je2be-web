@@ -94,12 +94,17 @@ export const MainComponent: FC = () => {
     }
     const id = uuidv4();
     const file = files.item(0);
-    const s = new ConvertSession(id, file, sw.current, (reducer, update) => {
-      state.current = reducer(state.current);
-      if (update) {
-        forceUpdate();
+    const s = new ConvertSession(
+      id,
+      file.name,
+      sw.current,
+      (reducer, update) => {
+        state.current = reducer(state.current);
+        if (update) {
+          forceUpdate();
+        }
       }
-    });
+    );
     session.current?.close();
     session.current = s;
     s.start(file);

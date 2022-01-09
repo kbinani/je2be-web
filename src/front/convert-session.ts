@@ -41,7 +41,7 @@ export class ConvertSession {
 
   constructor(
     readonly id: string,
-    readonly file: File,
+    readonly filename: string,
     readonly sw: ServiceWorker,
     readonly reduce: (
       reducer: MainComponentStateReducer,
@@ -166,10 +166,10 @@ export class ConvertSession {
         }, true);
       } else if (isPostDoneMessage(ev.data) && id === ev.data.id) {
         this.markPostDone();
-        const dot = this.file.name.lastIndexOf(".");
+        const dot = this.filename.lastIndexOf(".");
         let filename = "world.mcworld";
         if (dot > 0) {
-          filename = this.file.name.substring(0, dot) + ".mcworld";
+          filename = this.filename.substring(0, dot) + ".mcworld";
         }
         this.post.terminate();
         const elapsed = Date.now() - this.startTime;
@@ -276,7 +276,6 @@ export class ConvertSession {
       const m: StartPostMessage = {
         type: "post",
         id: this.id,
-        file: this.file,
         levelDirectory: this.levelDirectory,
         numWorkers: this.workers.length,
       };

@@ -101,6 +101,17 @@ export class KvsServer {
       const entity = this.storage.get(key);
       const m: FileResponse = { type: "file_response", id, file: entity?.file };
       target.postMessage(m);
+    } else if (isFilesWithPrefixQuery(data)) {
+      const { id, prefix } = data;
+      const files: File[] = [];
+      for (const key of this.storage.keys()) {
+        if (key.startsWith(prefix)) {
+          const { file } = this.storage.get(key);
+          files.push(file);
+        }
+      }
+      const m: FilesResponse = { type: "files_response", id, files };
+      target.postMessage(m);
     }
   }
 }
@@ -109,7 +120,8 @@ export class KvsClient {
   private readonly _string = new Map<string, Deferred<string | undefined>>();
   private readonly _void = new Map<string, Deferred<void>>();
   private readonly _strings = new Map<string, Deferred<string[]>>();
-  private readonly _files = new Map<string, Deferred<File>>();
+  private readonly _file = new Map<string, Deferred<File>>();
+  private readonly _files = new Map<string, Deferred<File[]>>();
 
   constructor() {
     self.addEventListener("message", this.onMessage);
@@ -139,7 +151,7 @@ export class KvsClient {
     const id = uuidv4();
     const d = defer<File | undefined>();
     const m: FileQuery = { type: "file", id, key };
-    this._files.set(id, d);
+    this._file.set(id, d);
     self.postMessage(m);
     return d;
   }
@@ -184,6 +196,19 @@ export class KvsClient {
     return d;
   }
 
+  async files({ withPrefix }: { withPrefix: string }): Promise<File[]> {
+    const id = uuidv4();
+    const d = defer<File[]>();
+    const m: FilesWithPrefixQuery = {
+      type: "files_with_prefix",
+      id,
+      prefix: withPrefix,
+    };
+    this._files.set(id, d);
+    self.postMessage(m);
+    return d;
+  }
+
   async removeKeys({ withPrefix }: { withPrefix: string }): Promise<void> {
     const id = uuidv4();
     const d = defer<void>();
@@ -216,11 +241,50 @@ export class KvsClient {
       d?.resolve(ev.data.strings);
     } else if (isFileResponse(ev.data)) {
       const id = ev.data.id;
+      const d = this._file.get(id);
+      this._file.delete(id);
+      d?.resolve(ev.data.file);
+    } else if (isFilesResponse(ev.data)) {
+      const id = ev.data.id;
       const d = this._files.get(id);
       this._files.delete(id);
-      d?.resolve(ev.data.file);
+      d?.resolve(ev.data.files);
     }
   };
+}
+
+type FilesResponse = {
+  type: "files_response";
+  id: string;
+  files: File[];
+};
+
+function isFilesResponse(x: any): x is FilesResponse {
+  if (!x) {
+    return false;
+  }
+  return (
+    x["type"] === "files_response" &&
+    typeof x["id"] === "string" &&
+    !!x["files"]
+  );
+}
+
+type FilesWithPrefixQuery = {
+  type: "files_with_prefix";
+  id: string;
+  prefix: string;
+};
+
+function isFilesWithPrefixQuery(x: any): x is FilesWithPrefixQuery {
+  if (!x) {
+    return false;
+  }
+  return (
+    x["type"] === "files_with_prefix" &&
+    typeof x["id"] === "string" &&
+    typeof x["prefix"] === "string"
+  );
 }
 
 type FileQuery = {

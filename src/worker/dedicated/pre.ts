@@ -8,12 +8,13 @@ import {
   StartPreMessage,
   WorkerError,
 } from "../../share/messages";
-import { dirname, mkdirp, writeFile } from "../../share/fs-ext";
+import { dirname, mkdirp, unmount } from "../../share/fs-ext";
 import JSZip from "jszip";
 import { readI32 } from "../../share/heap";
 import { promiseUnzipFileInZip } from "../../share/zip-ext";
 import { KvsClient } from "../../share/kvs";
 import { swapInt32 } from "../../share/number";
+import { mountFilesAsWorkerFs } from "../../share/kvs-ext";
 
 self.addEventListener("message", (ev: MessageEvent) => {
   if (isStartPreMessage(ev.data)) {
@@ -60,6 +61,11 @@ async function start(m: StartPreMessage): Promise<void> {
   console.log(`[pre] (${id}) extract done`);
 
   console.log(`[pre] (${id}) pre...`);
+  await mountFilesAsWorkerFs({
+    kvs: sKvs,
+    prefix: `/je2be/${id}/in`,
+    mountPoint: `/je2be/${id}/in`,
+  });
   const levelStructure = 0; //TODO: 0 = vanilla, 1 = spigot/paper
   const storage = Module._malloc(4);
   const javaEditionMapSize = Module.Pre(
@@ -69,6 +75,7 @@ async function start(m: StartPreMessage): Promise<void> {
     levelStructure,
     storage
   );
+  unmount(`/je2be/${id}/in`);
   console.log(`[pre] (${id}) pre done`);
 
   console.log(`[pre] (${id}) queue...`);
@@ -165,7 +172,7 @@ async function extract(
     const directory = dirname(target);
     mkdirp(directory);
     const buffer = await promiseUnzipFileInZip({ zip, path });
-    writeFile(target, buffer);
+    await sKvs.put(target, buffer);
 
     progress++;
     const m: ProgressMessage = {

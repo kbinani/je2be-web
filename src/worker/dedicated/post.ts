@@ -7,20 +7,18 @@ import {
   PostDoneMessage,
   ProgressMessage,
   StartPostMessage,
-  WorkerError,
 } from "../../share/messages";
 import {
-  dirname,
   iterate,
   mkdirp,
   readFile,
   unlink,
+  unmount,
   writeFile,
 } from "../../share/fs-ext";
-import JSZip from "jszip";
-import { promiseUnzipFileInZip } from "../../share/zip-ext";
-import { readI32 } from "../../share/heap";
+import { memcmp, readI32 } from "../../share/heap";
 import { KvsClient } from "../../share/kvs";
+import { mountFilesAsWorkerFs } from "../../share/kvs-ext";
 
 self.addEventListener("message", (ev: MessageEvent) => {
   if (isStartPostMessage(ev.data)) {
@@ -54,26 +52,21 @@ function startMerge(m: MergeCompactionMessage) {
 }
 
 async function post(m: StartPostMessage): Promise<void> {
-  const { id, file, levelDirectory, numWorkers } = m;
-  console.log(`[post] (${id}) extract...`);
-  await extract(id, file, levelDirectory);
-  console.log(`[post] (${id}) extract done`);
-  console.log(`[post] (${id}) loadWorldData...`);
-  await loadWorldData(id);
-  console.log(`[post] (${id}) loadWorldData done`);
+  const { id, numWorkers } = m;
+  console.log(`[post] (${id}) mountInputFiles...`);
+  await mountInputFiles(id);
+  console.log(`[post] (${id}) mountInputFiles done`);
   console.log(`[post] (${id}) wasm::Post...`);
   const numFiles = Module.Post(id);
   if (numFiles < 0) {
     console.log(`[post] (${id}) wasm::Post failed: code=${numFiles}`);
     return;
   }
+  unmountInputFiles(id);
   console.log(`[post] (${id}) wasm::Post done`);
-  console.log(`[post] (${id}) retrieveMemFsFiles...`);
-  await retrieveMemFsFiles(id);
-  console.log(`[post] (${id}) retrieveMemFsFiles done`);
-  console.log(`[post] (${id}) retrieveLdbFiles...`);
-  await retrieveLdbFiles(id, numFiles);
-  console.log(`[post] (${id}) retrieveLdbFiles done`);
+  console.log(`[post] (${id}) collectOutputFiles...`);
+  await collectOutputFiles(id);
+  console.log(`[post] (${id}) collectOutputFiles done`);
   console.log(`[post] (${id}) removeFilesNoMoreNeeded...`);
   await removeFilesNoMoreNeeded(id);
   console.log(`[post] (${id}) removeFilesNoMoreNeeded done`);
@@ -85,13 +78,23 @@ async function post(m: StartPostMessage): Promise<void> {
   console.log(`[post] (${id}) queueCompaction done`);
 }
 
-function memcmp(a: Uint8Array, b: Uint8Array, n: number): number {
-  for (let i = 0; i < n; i++) {
-    if (a[i] !== b[i]) {
-      return a[i] - b[i];
-    }
-  }
-  return 0;
+async function mountInputFiles(id: string): Promise<void> {
+  await mountFilesAsWorkerFs({
+    kvs: sKvs,
+    prefix: `/je2be/${id}/wd`,
+    mountPoint: `/je2be/${id}/wd`,
+  });
+
+  await mountFilesAsWorkerFs({
+    kvs: sKvs,
+    prefix: `/je2be/${id}/in`,
+    mountPoint: `/je2be/${id}/in`,
+  });
+}
+
+function unmountInputFiles(id: string) {
+  unmount(`/je2be/${id}/in`);
+  unmount(`/je2be/${id}/wd`);
 }
 
 function bytewiseComparator(a: Uint8Array, b: Uint8Array): number {
@@ -107,92 +110,31 @@ function bytewiseComparator(a: Uint8Array, b: Uint8Array): number {
   }
 }
 
-async function extract(
-  id: string,
-  file: globalThis.File,
-  levelDirectory: string
-): Promise<void> {
-  let zip: any;
-  try {
-    zip = await JSZip.loadAsync(file);
-  } catch (e) {
-    const error: WorkerError = {
-      type: "Unzip",
-      native: e,
-    };
-    throw error;
-  }
-  mkdirp(`/je2be/${id}/in`);
-  const files: string[] = [];
-  const prefix = `${levelDirectory}/`;
-  zip.forEach((p: string, f: JSZip.JSZipObject) => {
-    if (f.dir) {
-      return;
-    }
-    if (!p.startsWith(prefix)) {
-      return;
-    }
-    if (p.endsWith(".mca")) {
-      return;
-    }
-    files.push(p);
-  });
-  const promises = files.map(async (path) => {
-    const buffer = await promiseUnzipFileInZip({ zip, path });
-    const rel = path.substring(prefix.length);
-    const target = `/je2be/${id}/in/${rel}`;
-    mkdirp(dirname(target));
-    writeFile(target, buffer);
-  });
-  await Promise.all(promises);
-}
-
-async function loadWorldData(id: string): Promise<void> {
-  const prefix = `/je2be/${id}/wd`;
-  mkdirp(`${prefix}/0`);
-  mkdirp(`${prefix}/1`);
-  mkdirp(`${prefix}/2`);
-  const files = await sKvs.keys({ withPrefix: `${prefix}/` });
-  await Promise.all(
-    files.map(async (path) => {
-      const data = await sKvs.get(path);
-      writeFile(path, data);
-    })
-  );
-}
-
 async function removeFilesNoMoreNeeded(id: string): Promise<void> {
   const wd = `/je2be/${id}/wd`;
-  Module.RemoveAll(wd);
   await sKvs.removeKeys({ withPrefix: wd });
 
   const in_ = `/je2be/${id}/in`;
-  Module.RemoveAll(in_);
   await sKvs.removeKeys({ withPrefix: in_ });
 }
 
-async function retrieveLdbFiles(id: string, numFiles: number): Promise<void> {
-  const prefix = `/je2be/${id}/ldb/`;
-  for (let i = 0; i < numFiles; i++) {
-    const keys = `${prefix}/level.${i}.keys`;
-    const values = `${prefix}/level.${i}.values`;
-    for (const path of [keys, values]) {
-      const data = readFile(path);
-      await sKvs.put(path, data);
-      unlink(path);
+async function collectOutputFiles(id: string): Promise<void> {
+  await iterate(`/je2be/${id}/ldb`, async ({ path, dir }) => {
+    if (dir) {
+      return;
     }
-  }
-}
+    const data = readFile(path);
+    await sKvs.put(path, data);
+    unlink(path);
+  });
 
-async function retrieveMemFsFiles(id: string): Promise<void> {
   await iterate(`/je2be/${id}/out`, async ({ path, dir }) => {
     if (dir) {
-      mkdirp(path);
-    } else {
-      const data = readFile(path);
-      await sKvs.put(path, data);
-      unlink(path);
+      return;
     }
+    const data = readFile(path);
+    await sKvs.put(path, data);
+    unlink(path);
   });
 }
 
