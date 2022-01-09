@@ -16,6 +16,7 @@ set(je2be_common_em_link_options
   ${je2be_common_em_compile_and_link_options}
   -g2
   --bind
+  -lworkerfs.js
   -sSINGLE_FILE=1
   -sALLOW_MEMORY_GROWTH=1
   -sINLINING_LIMIT=1
@@ -25,7 +26,8 @@ set(je2be_common_em_link_options
 
 add_executable(region-wasm
   src/worker/dedicated/region-wasm.cpp
-  include/db.hpp)
+  include/db.hpp
+  include/append-db.hpp)
 target_link_libraries(region-wasm je2be)
 target_include_directories(region-wasm PRIVATE include)
 target_compile_options(region-wasm PRIVATE ${je2be_common_em_compile_options})
@@ -39,11 +41,14 @@ target_link_options(pre-wasm PRIVATE ${je2be_common_em_link_options})
 add_executable(post-wasm
   src/worker/dedicated/post-wasm.cpp
   include/db.hpp
-  include/append-db.hpp
   deps/zlib/contrib/minizip/zip.c
   deps/zlib/contrib/minizip/ioapi.c)
-target_include_directories(post-wasm PRIVATE include deps/zlib/contrib/minizip)
+target_include_directories(post-wasm PRIVATE
+  include
+  deps/zlib/contrib/minizip)
 target_link_libraries(post-wasm je2be)
 target_compile_definitions(post-wasm PRIVATE NOCRYPT)
-target_compile_options(post-wasm PRIVATE -Wno-unused-value ${je2be_common_em_compile_options})
+target_compile_options(post-wasm PRIVATE
+  -Wno-unused-value
+  ${je2be_common_em_compile_options})
 target_link_options(post-wasm PRIVATE ${je2be_common_em_link_options})

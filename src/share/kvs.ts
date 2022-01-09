@@ -15,14 +15,21 @@ export function defer<T = void>(): Deferred<T> {
   return Object.assign(promise, { resolve, reject });
 }
 
+type Entity = {
+  file: File;
+  url: string;
+  size: number;
+};
+
 export class KvsServer {
-  readonly storage = new Map<string, string>();
+  readonly storage = new Map<string, Entity>();
 
   close() {
     console.log(`[front] revoking object urls...`);
-    this.storage.forEach((key, objectUrl) => {
-      URL.revokeObjectURL(objectUrl);
+    this.storage.forEach((entity, key) => {
+      URL.revokeObjectURL(entity.url);
     });
+    this.storage.clear();
     console.log(`[front] all object urls revoked`);
   }
 
@@ -41,32 +48,28 @@ export class KvsServer {
     }
     if (isGetQuery(data)) {
       const { id, key } = data;
-      const value = this.storage.get(key);
+      const entity = this.storage.get(key);
       const m: StringResponse = {
         type: "string_response",
         id,
-        value,
+        value: entity?.url,
       };
       target.postMessage(m);
     } else if (isPutQuery(data)) {
       const { id, key, buffer } = data;
-      const blob = new Blob([buffer]);
-      const url = URL.createObjectURL(blob);
-      this.storage.set(key, url);
-      const m: VoidResponse = {
-        type: "void_response",
-        id,
-      };
+      const file = new File([buffer], key);
+      const url = URL.createObjectURL(file);
+      this.storage.set(key, { url, file, size: buffer.length });
+      const m: VoidResponse = { type: "void_response", id };
       target.postMessage(m);
     } else if (isDelQuery(data)) {
       const { id, key } = data;
-      const url = this.storage.get(key);
-      URL.revokeObjectURL(url);
-      this.storage.delete(key);
-      const m: VoidResponse = {
-        type: "void_response",
-        id,
-      };
+      const entity = this.storage.get(key);
+      if (entity) {
+        URL.revokeObjectURL(entity.url);
+        this.storage.delete(key);
+      }
+      const m: VoidResponse = { type: "void_response", id };
       target.postMessage(m);
     } else if (isKeysWithPrefixQuery(data)) {
       const { id, prefix } = data;
@@ -86,15 +89,17 @@ export class KvsServer {
       const { id, prefix } = data;
       for (const key of this.storage.keys()) {
         if (key.startsWith(prefix)) {
-          const url = this.storage.get(key);
-          URL.revokeObjectURL(url);
+          const entity = this.storage.get(key);
+          URL.revokeObjectURL(entity.url);
           this.storage.delete(key);
         }
       }
-      const m: VoidResponse = {
-        type: "void_response",
-        id,
-      };
+      const m: VoidResponse = { type: "void_response", id };
+      target.postMessage(m);
+    } else if (isFileQuery(data)) {
+      const { id, key } = data;
+      const entity = this.storage.get(key);
+      const m: FileResponse = { type: "file_response", id, file: entity?.file };
       target.postMessage(m);
     }
   }
@@ -104,6 +109,7 @@ export class KvsClient {
   private readonly _string = new Map<string, Deferred<string | undefined>>();
   private readonly _void = new Map<string, Deferred<void>>();
   private readonly _strings = new Map<string, Deferred<string[]>>();
+  private readonly _files = new Map<string, Deferred<File>>();
 
   constructor() {
     self.addEventListener("message", this.onMessage);
@@ -127,6 +133,15 @@ export class KvsClient {
       const buffer = await res.arrayBuffer();
       return new Uint8Array(buffer);
     });
+  }
+
+  async file(key: string): Promise<File | undefined> {
+    const id = uuidv4();
+    const d = defer<File | undefined>();
+    const m: FileQuery = { type: "file", id, key };
+    this._files.set(id, d);
+    self.postMessage(m);
+    return d;
   }
 
   async put(key: string, value: Uint8Array): Promise<void> {
@@ -187,17 +202,42 @@ export class KvsClient {
       const id = ev.data.id;
       const value = ev.data.value;
       const d = this._string.get(id);
+      this._string.delete(id);
       d?.resolve(value);
     } else if (isVoidResponse(ev.data)) {
       const id = ev.data.id;
       const d = this._void.get(id);
+      this._void.delete(id);
       d?.resolve();
     } else if (isStringsResponse(ev.data)) {
       const id = ev.data.id;
       const d = this._strings.get(id);
+      this._strings.delete(id);
       d?.resolve(ev.data.strings);
+    } else if (isFileResponse(ev.data)) {
+      const id = ev.data.id;
+      const d = this._files.get(id);
+      this._files.delete(id);
+      d?.resolve(ev.data.file);
     }
   };
+}
+
+type FileQuery = {
+  type: "file";
+  id: string;
+  key: string;
+};
+
+function isFileQuery(x: any): x is FileQuery {
+  if (!x) {
+    return false;
+  }
+  return (
+    x["type"] === "file" &&
+    typeof x["id"] === "string" &&
+    typeof x["key"] === "string"
+  );
 }
 
 type RemoveKeysWithPrefixQuery = {
@@ -327,4 +367,17 @@ function isStringsResponse(x: any): x is StringsResponse {
     typeof x["id"] === "string" &&
     !!x["strings"]
   );
+}
+
+type FileResponse = {
+  type: "file_response";
+  id: string;
+  file: File | undefined;
+};
+
+function isFileResponse(x: any): x is FileResponse {
+  if (!x) {
+    return false;
+  }
+  return x["type"] === "file_response" && typeof x["id"] === "string";
 }

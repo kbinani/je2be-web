@@ -127,9 +127,9 @@ bool DeleteAppendDb(intptr_t dbPtr) {
   return ok;
 }
 
-int AppendDbAppend(intptr_t dbPtr, intptr_t valuePtr, intptr_t keyPtr, int keySize) {
+int AppendDbAppend(intptr_t dbPtr, string file, int pos, intptr_t keyPtr, int keySize) {
   AppendDb *db = (AppendDb *)dbPtr;
-  return db->append(valuePtr, keyPtr, keySize);
+  return db->append(file, pos, keyPtr, keySize);
 }
 
 void RemoveAll(string dir) {

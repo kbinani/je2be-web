@@ -17,6 +17,18 @@ export function dirname(p: string): string {
   return subs.slice(0, subs.length - 1).join("/");
 }
 
+export function basename(p: string): string {
+  let s = p;
+  while (s.endsWith("/")) {
+    s = s.substring(0, s.length - 1);
+  }
+  const subs = p.split("/");
+  if (subs.length === 1) {
+    return p;
+  }
+  return subs.pop();
+}
+
 export function exists(p: string): boolean {
   try {
     FS.stat(p);
@@ -113,6 +125,29 @@ export function unlink(path: string) {
     if (exists(path)) {
       FS.unlink(path);
     }
+  } catch (e) {
+    console.trace(e);
+  }
+}
+
+export function mount(type: "mem" | "worker", path: string, options: any = {}) {
+  try {
+    switch (type) {
+      case "mem":
+        FS.mount(MEMFS, options, path);
+        break;
+      case "worker":
+        FS.mount(WORKERFS, options, path);
+        break;
+    }
+  } catch (e) {
+    console.trace(e);
+  }
+}
+
+export function unmount(path: string) {
+  try {
+    FS.unmount(path);
   } catch (e) {
     console.trace(e);
   }

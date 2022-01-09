@@ -12,8 +12,10 @@ import {
   dirname,
   exists,
   mkdirp,
+  mount,
   readFile,
   unlink,
+  unmount,
   writeFile,
 } from "../../share/fs-ext";
 import { KvsClient } from "../../share/kvs";
@@ -138,67 +140,55 @@ function startCompaction(m: CompactionQueueMessage) {
 
 async function compaction(m: CompactionQueueMessage): Promise<boolean> {
   const { id, keys, index } = m;
+
+  mkdirp("/wfs");
+  const names = [...new Set<string>(keys.map((key) => key.file))];
+  const files = await Promise.all(names.map(async (path) => sKvs.file(path)));
+  const map = new Map<string, string>();
+  const option: File[] = [];
+  let count = 0;
+  for (const file of files) {
+    const name = `${count}.bin`;
+    const path = `/wfs/${name}`;
+    const renamed = new File([file], name);
+    option.push(renamed);
+    count++;
+    map.set(file.name, path);
+  }
+  mount("worker", "/wfs", { files: option });
+
   const db = Module.NewAppendDb(id);
 
-  let valueBufferSize = 16;
-  let valueBuffer = Module._malloc(valueBufferSize);
   let keyBufferSize = 16;
   let keyBuffer = Module._malloc(keyBufferSize);
   let ok = true;
   let tableNumber = 0;
+  let maxTableNumber = 0;
 
-  let from = 0;
-  while (from < keys.length) {
-    const k = keys[from];
-    const path = k.file;
-    let to = from;
-    for (let i = from + 1; i < keys.length; i++) {
-      if (path === keys[i].file) {
-        to = i;
-      } else {
-        break;
-      }
+  for (const key of keys) {
+    if (keyBufferSize < key.key.byteLength) {
+      Module._free(keyBuffer);
+      keyBufferSize = key.key.byteLength;
+      keyBuffer = Module._malloc(keyBufferSize);
     }
-    let data: Uint8Array = await sKvs.get(k.file);
-    if (valueBufferSize < data.length) {
-      Module._free(valueBuffer);
-      valueBufferSize = data.length;
-      valueBuffer = Module._malloc(valueBufferSize);
+    for (let i = 0; i < key.key.length; i++) {
+      Module.HEAPU8[keyBuffer + i] = key.key[i];
     }
-    for (let i = 0; i < data.length; i++) {
-      Module.HEAPU8[valueBuffer + i] = data[i];
+    const renamed = map.get(key.file);
+    // int AppendDbAppend(intptr_t dbPtr, string file, int pos, intptr_t keyPtr, int keySize) {
+    const tn = Module.AppendDbAppend(
+      db,
+      renamed,
+      key.pos,
+      keyBuffer,
+      key.key.length
+    );
+    if (tn < 0) {
+      console.log(`[post] wasm::Append failed`);
+      ok = false;
+      break;
     }
-    let maxTableNumber = tableNumber;
-    for (let j = from; j <= to; j++) {
-      const key = keys[j];
-      if (keyBufferSize < key.key.byteLength) {
-        Module._free(keyBuffer);
-        keyBufferSize = key.key.byteLength;
-        keyBuffer = Module._malloc(keyBufferSize);
-      }
-      for (let i = 0; i < key.key.length; i++) {
-        Module.HEAPU8[keyBuffer + i] = key.key[i];
-      }
-      // int AppendDbAppend(intptr_t dbPtr, intptr_t valuePtr, intptr_t keyPtr, int keySize)
-      const tn = Module.AppendDbAppend(
-        db,
-        valueBuffer + key.pos,
-        keyBuffer,
-        key.key.length
-      );
-      if (tn < 0) {
-        console.log(`[post] wasm::Append failed`);
-        ok = false;
-        break;
-      }
-      maxTableNumber = Math.max(maxTableNumber, tn);
-      const m: CompactionProgressDeltaMessage = {
-        type: "compaction_progress_delta",
-        id,
-        delta: 1,
-      };
-      self.postMessage(m);
-    }
+    maxTableNumber = Math.max(maxTableNumber, tn);
     for (let i = tableNumber + 1; i <= maxTableNumber; i++) {
       const path = `/je2be/${id}/out/db/${tableName(i)}`;
       const data = readFile(path);
@@ -207,7 +197,12 @@ async function compaction(m: CompactionQueueMessage): Promise<boolean> {
       unlink(path);
     }
     tableNumber = maxTableNumber;
-    from = to + 1;
+    const m: CompactionProgressDeltaMessage = {
+      type: "compaction_progress_delta",
+      id,
+      delta: 1,
+    };
+    self.postMessage(m);
   }
 
   ok = Module.DeleteAppendDb(db) && ok;
@@ -232,8 +227,8 @@ async function compaction(m: CompactionQueueMessage): Promise<boolean> {
   }
 
   Module._free(keyBuffer);
-  Module._free(valueBuffer);
   Module.RemoveAll(`/je2be/${id}/out`);
+  unmount("/wfs");
 
   return ok;
 }

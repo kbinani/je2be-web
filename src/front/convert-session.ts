@@ -181,8 +181,8 @@ export class ConvertSession {
         );
         const files: string[][] = [];
         for (const filename of fileNames) {
-          const url = this.kvs.storage.get(filename);
-          files.push([filename, url]);
+          const entity = this.kvs.storage.get(filename);
+          files.push([filename, entity.url]);
         }
         const m: ResultFilesMessage = { type: "result_message", id, files };
         this.sw.postMessage(m);
