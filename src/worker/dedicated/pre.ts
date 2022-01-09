@@ -153,16 +153,6 @@ async function extract(
   };
   self.postMessage(m);
 
-  await new Promise<void>((resolve, reject) => {
-    const req = indexedDB.deleteDatabase("je2be-fs");
-    req.onsuccess = () => {
-      resolve();
-    };
-    req.onerror = (e) => {
-      reject(e);
-    };
-  });
-
   const kvs = new KvsClient();
 
   let progress = 0;
