@@ -13,12 +13,3 @@ export function writeI32(ptr: number, i32: number, heap = Module.HEAPU8) {
     v = v >> 8;
   }
 }
-
-export function memcmp(a: Uint8Array, b: Uint8Array, n: number): number {
-  for (let i = 0; i < n; i++) {
-    if (a[i] !== b[i]) {
-      return a[i] - b[i];
-    }
-  }
-  return 0;
-}

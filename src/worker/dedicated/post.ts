@@ -2,10 +2,10 @@ import {
   DbPutMessage,
   isDbPutMessage,
   isStartPostMessage,
+  PostDoneMessage,
   StartPostMessage,
 } from "../../share/messages";
 import { iterate, readFile, unlink, unmount } from "../../share/fs-ext";
-import { memcmp } from "../../share/heap";
 import { KvsClient } from "../../share/kvs";
 import { mountFilesAsWorkerFs } from "../../share/kvs-ext";
 
@@ -59,6 +59,7 @@ async function post(m: StartPostMessage): Promise<void> {
     return;
   }
   const numFiles = Module.Post(id, db);
+  sDb.delete(id);
   if (numFiles < 0) {
     console.log(`[post] (${id}) wasm::Post failed: code=${numFiles}`);
     return;
@@ -68,9 +69,11 @@ async function post(m: StartPostMessage): Promise<void> {
   console.log(`[post] (${id}) collectOutputFiles...`);
   await collectOutputFiles(id);
   console.log(`[post] (${id}) collectOutputFiles done`);
-  console.log(`[post] (${id}) removeFilesNoMoreNeeded...`);
-  await removeFilesNoMoreNeeded(id);
-  console.log(`[post] (${id}) removeFilesNoMoreNeeded done`);
+  console.log(`[post] (${id}) cleanup...`);
+  await cleanup(id);
+  console.log(`[post] (${id}) cleanup done`);
+  const done: PostDoneMessage = { type: "post_done", id };
+  self.postMessage(done);
 }
 
 async function mountInputFiles(id: string): Promise<void> {
@@ -79,7 +82,6 @@ async function mountInputFiles(id: string): Promise<void> {
     prefix: `/je2be/${id}/wd`,
     mountPoint: `/je2be/${id}/wd`,
   });
-
   await mountFilesAsWorkerFs({
     kvs: sKvs,
     prefix: `/je2be/${id}/in`,
@@ -88,24 +90,11 @@ async function mountInputFiles(id: string): Promise<void> {
 }
 
 function unmountInputFiles(id: string) {
-  unmount(`/je2be/${id}/in`);
   unmount(`/je2be/${id}/wd`);
+  unmount(`/je2be/${id}/in`);
 }
 
-function bytewiseComparator(a: Uint8Array, b: Uint8Array): number {
-  const n = Math.min(a.length, b.length);
-  const r = memcmp(a, b, n);
-  if (r !== 0) {
-    return r;
-  }
-  if (a.length < b.length) {
-    return -1;
-  } else if (a.length > b.length) {
-    return 1;
-  }
-}
-
-async function removeFilesNoMoreNeeded(id: string): Promise<void> {
+async function cleanup(id: string): Promise<void> {
   const wd = `/je2be/${id}/wd`;
   await sKvs.removeKeys({ withPrefix: wd });
 
@@ -114,20 +103,14 @@ async function removeFilesNoMoreNeeded(id: string): Promise<void> {
 }
 
 async function collectOutputFiles(id: string): Promise<void> {
-  await iterate(`/je2be/${id}/ldb`, async ({ path, dir }) => {
+  const directory = `/je2be/${id}/out`;
+  await iterate(directory, async ({ path, dir }) => {
     if (dir) {
       return;
     }
     const data = readFile(path);
-    await sKvs.put(path, data);
-    unlink(path);
-  });
-
-  await iterate(`/je2be/${id}/out`, async ({ path, dir }) => {
-    if (dir) {
-      return;
-    }
-    const data = readFile(path);
+    const subpath = path.substring(`${directory}/`.length);
+    console.log(`[post] (${id}) ${subpath} ${data.length} bytes`);
     await sKvs.put(path, data);
     unlink(path);
   });

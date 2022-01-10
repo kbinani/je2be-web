@@ -72,8 +72,6 @@ bool ConvertRegion(string id, string worldDirString, int rx, int rz, int dim, in
   }
   free(ptr);
 
-  string basename("r." + to_string(rx) + "." + to_string(rz));
-  auto dir = fs::path("/je2be") / id / "ldb" / to_string(dim);
   ::ProxyDb db(id);
   InputOption io;
   JavaEditionMap jem(entries);
@@ -101,6 +99,8 @@ bool ConvertRegion(string id, string worldDirString, int rx, int rz, int dim, in
   }
 
   auto nbt = wd->toNbt();
+
+  string basename("r." + to_string(rx) + "." + to_string(rz));
   auto file = fs::path("/je2be") / id / "wd" / to_string(dim) / (basename + ".nbt");
   auto stream = make_shared<mcfile::stream::FileOutputStream>(file);
   mcfile::stream::OutputStreamWriter writer(stream);

@@ -19,6 +19,7 @@ static void Report(std::string id, double progress, double total) {
     //ProgressMessage
     const m = {};
     m["type"] = "progress";
+    m["stage"] = "compaction";
     m["id"] = UTF8ToString($0, $1);
     m["progress"] = $2;
     m["total"] = $3;
@@ -121,22 +122,16 @@ void AbandonDb(intptr_t ptr) {
   delete db;
 }
 
-void CloseDb(intptr_t ptr) {
-  RawDb *db = (RawDb *)ptr;
-  db->close();
-  delete db;
-}
-
 void PutToDb(intptr_t ptr, intptr_t key, int keySize, intptr_t value, int valueSize) {
   RawDb *db = (RawDb *)ptr;
   char const *keyPtr = (char const *)key;
   char const *valuePtr = (char const *)value;
   string k;
   k.assign(keyPtr, keySize);
-  free((void*)key);
+  free((void *)key);
   string v;
   v.assign(valuePtr, valueSize);
-  free((void*)value);
+  free((void *)value);
   db->putCompressed(k, v);
 }
 
@@ -146,7 +141,6 @@ EMSCRIPTEN_BINDINGS() {
   emscripten::function("RemoveAll", &RemoveAll);
   emscripten::function("NewDb", &NewDb);
   emscripten::function("AbandonDb", &AbandonDb);
-  emscripten::function("CloseDb", &CloseDb);
   emscripten::function("PutToDb", &PutToDb);
 }
 #endif

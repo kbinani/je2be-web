@@ -66,8 +66,6 @@ async function convertRegion(m: ConvertRegionMessage): Promise<void> {
   for (let i = 0; i < javaEditionMap.length; i++) {
     writeI32(storage + i, javaEditionMap[i]);
   }
-  const ldbDir = `/je2be/${id}/ldb/${dim}`;
-  mkdirp(ldbDir);
   const wdDir = `/je2be/${id}/wd/${dim}`;
   mkdirp(wdDir);
   const ok = Module.ConvertRegion(

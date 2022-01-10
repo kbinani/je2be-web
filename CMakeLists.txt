@@ -24,23 +24,21 @@ set(je2be_common_em_link_options
   -sINVOKE_RUN=0
   -O3)
 
+add_executable(pre-wasm src/worker/dedicated/pre-wasm.cpp)
+target_link_libraries(pre-wasm je2be)
+target_compile_options(pre-wasm PRIVATE ${je2be_common_em_compile_options})
+target_link_options(pre-wasm PRIVATE ${je2be_common_em_link_options})
+
 add_executable(region-wasm
   src/worker/dedicated/region-wasm.cpp
-  include/db.hpp
   include/proxy-db.hpp)
 target_link_libraries(region-wasm je2be)
 target_include_directories(region-wasm PRIVATE include)
 target_compile_options(region-wasm PRIVATE ${je2be_common_em_compile_options})
 target_link_options(region-wasm PRIVATE ${je2be_common_em_link_options})
 
-add_executable(pre-wasm src/worker/dedicated/pre-wasm.cpp)
-target_link_libraries(pre-wasm je2be)
-target_compile_options(pre-wasm PRIVATE ${je2be_common_em_compile_options})
-target_link_options(pre-wasm PRIVATE ${je2be_common_em_link_options})
-
 add_executable(post-wasm
   src/worker/dedicated/post-wasm.cpp
-  include/db.hpp
   deps/zlib/contrib/minizip/zip.c
   deps/zlib/contrib/minizip/ioapi.c)
 target_include_directories(post-wasm PRIVATE

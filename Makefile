@@ -10,7 +10,7 @@ build_docker_image:
 	docker build -t je2be_build_wasm .
 
 
-.wasm-built: src/worker/dedicated/pre-wasm.cpp src/worker/dedicated/region-wasm.cpp src/worker/dedicated/post-wasm.cpp include/db.hpp include/append-db.hpp CMakeLists.txt
+.wasm-built: src/worker/dedicated/pre-wasm.cpp src/worker/dedicated/region-wasm.cpp src/worker/dedicated/post-wasm.cpp include/proxy-db.hpp CMakeLists.txt
 	mkdir -p build
 	docker run --rm -v $$(pwd):/src/je2be-web -u $$(id -u):$$(id -g) -w /src/je2be-web je2be_build_wasm make wasm_target
 	touch .wasm-built

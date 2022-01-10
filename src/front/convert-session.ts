@@ -259,8 +259,6 @@ function updateProgress(
       };
     case "compaction":
       return { ...state, compaction: p };
-    case "copy":
-      return { ...state, copy: p };
   }
   return { ...state };
 }
