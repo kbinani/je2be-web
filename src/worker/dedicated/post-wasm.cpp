@@ -101,6 +101,8 @@ int Post(string id, intptr_t dbPtr) {
     Report(id, progress, 1);
   });
 
+  delete db;
+
   return 0;
 }
 
