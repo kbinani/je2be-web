@@ -4,7 +4,7 @@ import {
   isConvertRegionMessage,
 } from "../../share/messages";
 import { writeI32 } from "../../share/heap";
-import { exists, mkdirp, readFile, unmount } from "../../share/fs-ext";
+import { exists, mkdirp, readFile } from "../../share/fs-ext";
 import { KvsClient } from "../../share/kvs";
 import { mountFilesAsWorkerFs } from "../../share/kvs-ext";
 
@@ -42,7 +42,7 @@ async function convertRegion(m: ConvertRegionMessage): Promise<void> {
 
   const storage = Module._malloc(javaEditionMap.length * 4);
   for (let i = 0; i < javaEditionMap.length; i++) {
-    writeI32(storage + i, javaEditionMap[i]);
+    writeI32(storage + i * 4, javaEditionMap[i]);
   }
   const wdDir = `/je2be/${id}/wd/${dim}`;
   mkdirp(wdDir);
