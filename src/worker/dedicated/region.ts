@@ -4,7 +4,7 @@ import {
   isConvertRegionMessage,
 } from "../../share/messages";
 import { writeI32 } from "../../share/heap";
-import { mkdirp, mount, unmount } from "../../share/fs-ext";
+import { mkdirp, mount, readFile, unmount } from "../../share/fs-ext";
 import { KvsClient } from "../../share/kvs";
 
 self.importScripts("./region-wasm.js");
@@ -81,6 +81,10 @@ async function convertRegion(m: ConvertRegionMessage): Promise<void> {
     unmount("/wfs");
     return;
   }
+  const path = `${wdDir}/r.${rx}.${rz}.nbt`;
+  const data = readFile(path);
+  await sKvs.put(path, data);
+
   const del: Promise<void>[] = [];
   for (let x = 1; x <= 30; x++) {
     for (let z = 1; z <= 30; z++) {
