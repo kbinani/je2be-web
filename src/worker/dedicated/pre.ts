@@ -163,7 +163,7 @@ async function extract(
   self.postMessage(m);
 
   let progress = 0;
-  const unzipToMemory = other.map(async (path) => {
+  const unzipOthers = [...other, ...entities].map(async (path) => {
     const rel = path.substring(prefix.length);
     const target = `/je2be/${id}/in/${rel}`;
     const directory = dirname(target);
@@ -181,7 +181,7 @@ async function extract(
     };
     self.postMessage(m);
   });
-  await Promise.all(unzipToMemory);
+  await Promise.all(unzipOthers);
 
   const regions: Region[] = [];
   const unzipRegions = mca.map(async (path) => {
@@ -212,23 +212,6 @@ async function extract(
     self.postMessage(m);
   });
   await Promise.all(unzipRegions);
-
-  const unzipEntities = entities.map(async (path) => {
-    const rel = path.substring(prefix.length);
-    const target = `/je2be/${id}/in/${rel}`;
-    const buffer = await promiseUnzipFileInZip({ zip, path });
-    await sKvs.put(target, buffer);
-    progress++;
-    const m: ProgressMessage = {
-      type: "progress",
-      id,
-      stage: "unzip",
-      progress,
-      total,
-    };
-    self.postMessage(m);
-  });
-  await Promise.all(unzipEntities);
 
   const levelDirectory = dirname(levelDatPath);
   return { regions, levelDirectory };

@@ -4,7 +4,7 @@ import {
   isConvertRegionMessage,
 } from "../../share/messages";
 import { writeI32 } from "../../share/heap";
-import { mkdirp, readFile, unmount } from "../../share/fs-ext";
+import { mkdirp, readFile } from "../../share/fs-ext";
 import { KvsClient } from "../../share/kvs";
 import { mountFilesAsWorkerFs } from "../../share/kvs-ext";
 
@@ -17,6 +17,7 @@ self.addEventListener("message", (ev: MessageEvent) => {
 });
 
 const sKvs = new KvsClient();
+const sMounted = new Set<string>();
 
 function startConvertRegion(m: ConvertRegionMessage) {
   convertRegion(m).catch(console.error);
@@ -25,11 +26,14 @@ function startConvertRegion(m: ConvertRegionMessage) {
 async function convertRegion(m: ConvertRegionMessage): Promise<void> {
   const { id, rx, rz, dim, javaEditionMap } = m;
 
-  await mountFilesAsWorkerFs({
-    kvs: sKvs,
-    prefix: `/je2be/${id}/in`,
-    mountPoint: "/wfs",
-  });
+  if (!sMounted.has(id)) {
+    sMounted.add(id);
+    await mountFilesAsWorkerFs({
+      kvs: sKvs,
+      prefix: `/je2be/${id}/in`,
+      mountPoint: "/wfs",
+    });
+  }
 
   const storage = Module._malloc(javaEditionMap.length * 4);
   for (let i = 0; i < javaEditionMap.length; i++) {
@@ -47,7 +51,6 @@ async function convertRegion(m: ConvertRegionMessage): Promise<void> {
     javaEditionMap.length
   );
   if (!ok) {
-    unmount("/wfs");
     return;
   }
   const path = `${wdDir}/r.${rx}.${rz}.nbt`;
@@ -55,7 +58,6 @@ async function convertRegion(m: ConvertRegionMessage): Promise<void> {
   await sKvs.put(path, data);
 
   Module.RemoveAll(`/je2be`);
-  unmount("/wfs");
   const done: ConvertRegionDoneMessage = { type: "region_done", id };
   self.postMessage(done);
 }
