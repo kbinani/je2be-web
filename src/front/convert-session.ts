@@ -15,6 +15,7 @@ import {
 } from "../share/messages";
 import { MainComponentState, MainComponentStateReducer } from "./main";
 import { KvsServer } from "../share/kvs";
+import { clamp } from "../share/number";
 
 export class ConvertSession {
   private readonly pre: Worker;
@@ -32,16 +33,21 @@ export class ConvertSession {
   levelDirectory: string = "";
   private startTime: number;
   private readonly kvs = new KvsServer();
+  private filename: string;
+  private filesize: number;
 
   constructor(
     readonly id: string,
-    readonly filename: string,
+    file: File,
     readonly sw: ServiceWorker,
     readonly reduce: (
       reducer: MainComponentStateReducer,
       forceUpdate: boolean
     ) => void
   ) {
+    this.filename = file.name;
+    this.filesize = file.size;
+
     const pre = new Worker("./script/pre.js", { name: "pre" });
     pre.onmessage = (ev: MessageEvent) => {
       const id = this.id;
@@ -65,14 +71,17 @@ export class ConvertSession {
     };
     this.pre = pre;
 
-    let num = Math.min(4, navigator.hardwareConcurrency);
-
+    let maxConcurrency = Math.max(2, navigator.hardwareConcurrency);
     const heapLimit = performance["memory"]?.["jsHeapSizeLimit"];
     if (typeof heapLimit === "number") {
-      const magic = 300 * 1024 * 1024;
-      num = Math.min(num, Math.floor(heapLimit / magic));
+      const minimumFileSize = this.filesize * 2;
+      const approxRuntimeSize = 300 * 1024 * 1024;
+      const availableMemory = heapLimit - minimumFileSize;
+      const candidate = Math.floor(availableMemory / approxRuntimeSize);
+      maxConcurrency = clamp(candidate, 2, navigator.hardwareConcurrency);
     }
 
+    const num = maxConcurrency - 1; // pre + num * workers + post
     console.log(`[front] launch ${num} workers`);
     const workers: Worker[] = [];
     for (let i = 0; i < num; i++) {
