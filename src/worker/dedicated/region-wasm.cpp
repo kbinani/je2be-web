@@ -31,8 +31,13 @@ static void Report(std::string id, int delta) {
 }
 
 static shared_ptr<je::Chunk> ChunkFromRegionBuffer(vector<uint8_t> const &buffer, int cx, int cz) {
-  int index = cz * 32 + cx;
-  if (4 * index + 4 >= buffer.size()) {
+  static constexpr int kSectorSize = 4096;
+  int rx = Coordinate::RegionFromChunk(cx);
+  int rz = Coordinate::RegionFromChunk(cz);
+  int x = cx - rx * 32;
+  int z = cz - rz * 32;
+  int index = z * 32 + x;
+  if (4 * index + 4 > buffer.size()) {
     return nullptr;
   }
   uint32_t loc = *(uint32_t *)(buffer.data() + 4 * index);
@@ -40,26 +45,27 @@ static shared_ptr<je::Chunk> ChunkFromRegionBuffer(vector<uint8_t> const &buffer
   if (loc == 0) {
     return nullptr;
   }
+
   uint32_t sectorOffset = loc >> 8;
-  if (sectorOffset * 4096 + 4 >= buffer.size()) {
+  if (sectorOffset * kSectorSize + 4 > buffer.size()) {
     return nullptr;
   }
-  uint32_t chunkSize = *(uint32_t *)(buffer.data() + sectorOffset * 4096);
+  uint32_t chunkSize = *(uint32_t *)(buffer.data() + sectorOffset * kSectorSize);
   chunkSize = Int32FromBE(chunkSize);
   if (chunkSize == 0) {
     return nullptr;
   }
   chunkSize -= 1;
-  if (sectorOffset * 4096 + 4 + 1 + chunkSize >= buffer.size()) {
+  if (sectorOffset * kSectorSize + 4 + 1 + chunkSize > buffer.size()) {
     return nullptr;
   }
-  uint8_t compressionType = *(buffer.data() + sectorOffset * 4096 + 4);
+  uint8_t compressionType = *(buffer.data() + sectorOffset * kSectorSize + 4);
   if (compressionType != 2) {
     return nullptr;
   }
   vector<uint8_t> chunkBuffer;
   chunkBuffer.reserve(chunkSize);
-  copy_n(buffer.begin() + sectorOffset * 4096 + 4 + 1, chunkSize, back_inserter(chunkBuffer));
+  copy_n(buffer.begin() + sectorOffset * kSectorSize + 4 + 1, chunkSize, back_inserter(chunkBuffer));
   if (!Compression::decompress(chunkBuffer)) {
     return nullptr;
   }
