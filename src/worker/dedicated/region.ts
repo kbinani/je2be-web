@@ -51,6 +51,7 @@ async function convertRegion(m: ConvertRegionMessage): Promise<void> {
     javaEditionMap.length
   );
   if (!ok) {
+    console.error(`[region] (${id}) ConvertRegion failed`);
     return;
   }
   const path = `${wdDir}/r.${rx}.${rz}.nbt`;
