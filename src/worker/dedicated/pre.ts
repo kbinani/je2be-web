@@ -7,7 +7,7 @@ import {
   StartPreMessage,
   WorkerError,
 } from "../../share/messages";
-import { dirname, mkdirp, unmount } from "../../share/fs-ext";
+import { dirname, unmount } from "../../share/fs-ext";
 import JSZip from "jszip";
 import { readI32 } from "../../share/heap";
 import { promiseUnzipFileInZip } from "../../share/zip-ext";
@@ -36,10 +36,6 @@ type Region = {
 async function start(m: StartPreMessage): Promise<void> {
   console.log(`[pre] (${m.id}) start`);
   const { id, file } = m;
-
-  mkdirp(`/je2be`);
-  mkdirp(`/je2be/${id}/in`);
-  mkdirp(`/je2be/${id}/out`);
 
   const req = indexedDB.deleteDatabase("je2be-dl");
   req.onerror = (e) => console.error(e);
@@ -103,10 +99,7 @@ async function extract(
   try {
     zip = await JSZip.loadAsync(file);
   } catch (e) {
-    const error: WorkerError = {
-      type: "Unzip",
-      native: e,
-    };
+    const error: WorkerError = { type: "Unzip", native: e };
     throw error;
   }
   const foundLevelDat: string[] = [];
@@ -117,14 +110,10 @@ async function extract(
     foundLevelDat.push(p);
   });
   if (foundLevelDat.length === 0) {
-    const error: WorkerError = {
-      type: "NoLevelDatFound",
-    };
+    const error: WorkerError = { type: "NoLevelDatFound" };
     throw error;
   } else if (foundLevelDat.length !== 1) {
-    const error: WorkerError = {
-      type: "2OrMoreLevelDatFound",
-    };
+    const error: WorkerError = { type: "2OrMoreLevelDatFound" };
     throw error;
   }
   const levelDatPath = foundLevelDat[0];
@@ -166,8 +155,6 @@ async function extract(
   const unzipOthers = [...other, ...entities].map(async (path) => {
     const rel = path.substring(prefix.length);
     const target = `/je2be/${id}/in/${rel}`;
-    const directory = dirname(target);
-    mkdirp(directory);
     const buffer = await promiseUnzipFileInZip({ zip, path });
     await sKvs.put(target, buffer);
 

@@ -58,10 +58,10 @@ async function post(m: StartPostMessage): Promise<void> {
     console.error(`[post] (${id}) db is not opened yet`);
     return;
   }
-  const numFiles = Module.Post(id, db);
+  const code = Module.Post(id, db);
   sDb.delete(id);
-  if (numFiles < 0) {
-    console.log(`[post] (${id}) wasm::Post failed: code=${numFiles}`);
+  if (code < 0) {
+    console.log(`[post] (${id}) wasm::Post failed: code=${code}`);
     return;
   }
   unmountInputFiles(id);
