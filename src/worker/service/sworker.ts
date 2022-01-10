@@ -1,8 +1,12 @@
-import { ChunksStore } from "../share/chunk-store";
+import { downloadZip } from "../../../deps/client-zip/src";
+import { isResultFilesMessage } from "../../share/messages";
 
 self.addEventListener("install", onInstall);
 self.addEventListener("activate", onActivate);
 self.addEventListener("fetch", onFetch);
+self.addEventListener("message", onMessage);
+
+const sResultFiles = new Map<string, string[][]>();
 
 function onInstall(ev) {
   console.log(`[sworker] install`);
@@ -48,45 +52,39 @@ function onFetch(ev: FetchEvent) {
   }
 }
 
+function onMessage(ev: MessageEvent) {
+  if (isResultFilesMessage(ev.data)) {
+    const { id, files } = ev.data;
+    sResultFiles.set(id, files);
+  }
+}
+
+async function* objectUrlsAsFile(
+  files: string[][],
+  prefix: string
+): AsyncIterable<File> {
+  for (const file of files) {
+    const [name, url] = file;
+    const res = await fetch(url);
+    const blob = await res.blob();
+    yield new File([blob], name.substring(prefix.length));
+  }
+}
+
 async function respondDownload(
   id: string,
   filename: string
 ): Promise<Response> {
-  const db = new ChunksStore();
-  let count = 0;
-  const pull = async (controller) => {
-    if (controller.desiredSize <= 0) {
-      return;
-    }
-    if (count === 0) {
-      console.log(`[sworker] (${id}) pull: start`);
-    }
-    const name = `/je2be/dl/${id}/${count}.bin`;
-    try {
-      const entry = await db.chunks.get({ name });
-      if (!entry) {
-        console.log(`[sworker] (${id}) pull: close`);
-        controller.close();
-        db.close();
-        return;
-      }
-      const buffer: Uint8Array = entry.data;
-      controller.enqueue(buffer);
-    } catch (e) {
-      console.log(`[sworker] (${id}) pull: error`, e);
-      controller.error(e);
-      db.close();
-      return;
-    }
-    count++;
-  };
-  const stream = new ReadableStream({ pull });
-  const headers = {
-    "Content-Type": "application/octet-stream",
-    "Cache-Control": "no-cache",
-    "Content-Disposition": `attachment; filename=\"${filename}\"`,
-  };
-  return new Response(stream, {
-    headers,
+  const urls = sResultFiles.get(id);
+  if ((urls?.length ?? 0) === 0) {
+    return new Response(null, { status: 404 });
+  }
+  const prefix = `/je2be/${id}/out/`;
+  return downloadZip(objectUrlsAsFile(urls, prefix), {
+    headers: {
+      "Content-Type": "application/octet-stream",
+      "Cache-Control": "no-cache",
+      "Content-Disposition": `attachment; filename=\"${filename}\"`,
+    },
   });
 }

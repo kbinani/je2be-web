@@ -1,38 +1,31 @@
 import * as React from "react";
-import { ChangeEvent, FC, useEffect, useMemo, useReducer, useRef } from "react";
-import {
-  isFailedMessage,
-  isProgressMessage,
-  isSuccessMessage,
-  ProgressMessage,
-  StartMessage,
-  WorkerError,
-} from "../share/messages";
+import { ChangeEvent, FC, useEffect, useReducer, useRef } from "react";
+import { WorkerError } from "../share/messages";
 import { v4 as uuidv4 } from "uuid";
 import { Header } from "./header";
 import { Footer } from "./footer";
 import { Progress } from "./progress";
-import { ChunksStore } from "../share/chunk-store";
+import { ConvertSession } from "./convert-session";
 
-type MainComponentState = {
+export type MainComponentState = {
   unzip: number;
   convert: number;
   convertTotal: number;
   compaction: number;
-  zip: number;
-  copy: number;
   dl?: { id: string; filename: string };
   error?: WorkerError;
   id?: string;
 };
+
+export type MainComponentStateReducer = (
+  state: MainComponentState
+) => MainComponentState;
 
 const kInitComponentState: MainComponentState = {
   unzip: 0,
   convert: 0,
   convertTotal: 1,
   compaction: 0,
-  zip: 0,
-  copy: 0,
 };
 
 export const useForceUpdate = () => {
@@ -44,9 +37,10 @@ export const useForceUpdate = () => {
 };
 
 export const MainComponent: FC = () => {
-  const worker = useMemo(() => new Worker("./script/conv.js"), []);
   const state = useRef<MainComponentState>({ ...kInitComponentState });
   const input = useRef<HTMLInputElement>(null);
+  const session = useRef<ConvertSession>(null);
+  const sw = useRef<ServiceWorker>(null);
   const forceUpdate = useForceUpdate();
   const onBeforeUnload = (ev: BeforeUnloadEvent) => {
     if (state.current.id === undefined) {
@@ -55,6 +49,9 @@ export const MainComponent: FC = () => {
     ev.preventDefault();
     ev.returnValue = "Converter still working. Do you really leave the page?";
   };
+  const onUnload = () => {
+    session.current?.close();
+  };
   useEffect(() => {
     const { protocol, host, href } = window.location;
     const prefix = `${protocol}//${host}/`;
@@ -62,9 +59,11 @@ export const MainComponent: FC = () => {
     const scope = `/${path}dl`;
     navigator.serviceWorker
       .register("./sworker.js", { scope })
-      .then((sw) => {
+      .then((swr) => {
         console.log(`[front] sworker registered`);
-        sw.update()
+        sw.current = swr.active;
+        swr
+          .update()
           .then(() => {
             console.log(`[front] sworker updated`);
           })
@@ -72,15 +71,20 @@ export const MainComponent: FC = () => {
       })
       .catch(console.error);
     window.addEventListener("beforeunload", onBeforeUnload);
+    window.addEventListener("unload", onUnload);
     return () => {
       window.removeEventListener("beforeunload", onBeforeUnload);
-      const id = state.current.id;
-      if (id) {
-        cleanup(id);
-      }
     };
   }, []);
-  const onChange = (ev: ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    if (state.current.id === undefined) {
+      input.current.value = "";
+    }
+  }, [state.current.id]);
+  const { unzip, compaction, convert, convertTotal } = state.current;
+  const disableLink =
+    state.current.id !== undefined || state.current.dl !== undefined;
+  const onStartPoc = (ev: ChangeEvent<HTMLInputElement>) => {
     const files = ev.target.files;
     if (!files || files.length !== 1) {
       console.error("no file selected, or one or more files selected");
@@ -88,52 +92,18 @@ export const MainComponent: FC = () => {
     }
     const id = uuidv4();
     const file = files.item(0);
-    const message: StartMessage = { type: "start", file, id };
-    console.log(`[front] (${id}) posting StartMessage`);
-    state.current = { ...kInitComponentState, id, unzip: -1 };
+    const s = new ConvertSession(id, file, sw.current, (reducer, update) => {
+      state.current = reducer(state.current);
+      if (update) {
+        forceUpdate();
+      }
+    });
+    session.current?.close();
+    session.current = s;
+    s.start(file);
+    state.current = { ...kInitComponentState, id };
     forceUpdate();
-    worker.postMessage(message);
-    let lastUpdate = Date.now();
-    worker.onmessage = (msg: MessageEvent) => {
-      if (msg.data["id"] !== state.current.id) {
-        return;
-      }
-      if (isSuccessMessage(msg.data)) {
-        const { id } = msg.data;
-        const dot = file.name.lastIndexOf(".");
-        let filename = "world.mcworld";
-        if (dot > 0) {
-          filename = file.name.substring(0, dot) + ".mcworld";
-        }
-        state.current = {
-          ...state.current,
-          dl: { id, filename },
-          error: undefined,
-          id: undefined,
-        };
-        input.current.value = "";
-        forceUpdate();
-      } else if (isProgressMessage(msg.data)) {
-        state.current = updateProgress(state.current, msg.data);
-        const now = Date.now();
-        if (lastUpdate + 1000.0 / 60.0 <= now) {
-          lastUpdate = now;
-          forceUpdate();
-        }
-      } else if (isFailedMessage(msg.data)) {
-        state.current = {
-          ...state.current,
-          error: msg.data.error,
-          id: undefined,
-        };
-        input.current.value = "";
-        forceUpdate();
-      }
-    };
   };
-  const { unzip, compaction, zip, copy, convert, convertTotal } = state.current;
-  const disableLink =
-    state.current.id !== undefined || state.current.dl !== undefined;
   return (
     <div className="main">
       <Header disableLink={disableLink} />
@@ -145,7 +115,7 @@ export const MainComponent: FC = () => {
           <input
             name={"input_zip"}
             type={"file"}
-            onChange={onChange}
+            onChange={onStartPoc}
             accept={".zip"}
             ref={input}
             disabled={state.current.id !== undefined}
@@ -164,8 +134,6 @@ export const MainComponent: FC = () => {
             total={1}
             label={"LevelDB Compaction"}
           />
-          <Progress progress={zip} total={1} label={"Zip"} />
-          <Progress progress={copy} total={1} label={"Copy"} />
           <div className="message">
             {state.current.dl && (
               <div className="downloadMessage">
@@ -189,46 +157,3 @@ export const MainComponent: FC = () => {
     </div>
   );
 };
-
-function updateProgress(
-  state: MainComponentState,
-  m: ProgressMessage
-): MainComponentState {
-  const p = m.progress / m.total;
-  switch (m.stage) {
-    case "unzip":
-      return { ...state, unzip: p };
-    case "convert":
-      return {
-        ...state,
-        convert: m.progress,
-        convertTotal: m.total,
-      };
-    case "compaction":
-      return { ...state, compaction: p };
-    case "zip":
-      return { ...state, zip: p };
-    case "copy":
-      return { ...state, copy: p };
-  }
-  return { ...state };
-}
-
-async function cleanup(id: string) {
-  const db = new ChunksStore();
-  try {
-    const keys: string[] = [];
-    await db.chunks.each((item) => {
-      const { name } = item;
-      if (name.startsWith(`/je2be/dl/${id}/`)) {
-        keys.push(name);
-      }
-    });
-    await db.chunks.bulkDelete(keys);
-  } catch (e) {
-    db.close();
-    console.error(e);
-    throw e;
-  }
-  db.close();
-}

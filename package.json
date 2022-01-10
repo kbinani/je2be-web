@@ -5,7 +5,6 @@
   "author": "kbinani <kbinani.bt@gmail.com>",
   "license": "AGPL-3.0-or-later",
   "devDependencies": {
-    "@types/dexie": "^1.3.1",
     "@types/jszip": "^3.4.1",
     "@types/react": "^17.0.38",
     "@types/react-dom": "^17.0.11",
@@ -16,7 +15,6 @@
   "dependencies": {
     "@bugsnag/js": "^7.14.1",
     "@bugsnag/plugin-react": "^7.14.0",
-    "dexie": "^3.2.0",
     "jszip": "^3.7.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
@@ -24,8 +22,10 @@
   },
   "scripts": {
     "front": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/front/index.tsx --bundle --outfile=public/script/front.js",
-    "conv": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/conv/conv.ts --bundle --outfile=public/script/conv.js",
-    "sworker": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/sworker/sworker.ts --bundle --outfile=public/sworker.js",
+    "sworker": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/worker/service/sworker.ts --bundle --outfile=public/sworker.js",
+    "pre": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/worker/dedicated/pre.ts --bundle --outfile=public/script/pre.js",
+    "post": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/worker/dedicated/post.ts --bundle --outfile=public/script/post.js",
+    "region": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/worker/dedicated/region.ts --bundle --outfile=public/script/region.js",
     "fmt": "prettier --write 'src/**/*.ts' 'src/**/*.tsx' 'public/style/*.css'",
     "dev": "yarn front --servedir=public --serve=3000"
   }
