@@ -127,13 +127,19 @@ export class ConvertSession {
           return updateProgress(state, ev.data);
         }, true);
       } else if (isPostDoneMessage(ev.data) && id === ev.data.id) {
-        this.markPostDone();
+        console.log(`[front] (${this.id}) post done`);
+
+        for (const worker of this.workers) {
+          worker.terminate();
+        }
+        this.post.terminate();
+
         const dot = this.filename.lastIndexOf(".");
         let filename = "world.mcworld";
         if (dot > 0) {
           filename = this.filename.substring(0, dot) + ".mcworld";
         }
-        this.post.terminate();
+
         const elapsed = Date.now() - this.startTime;
         console.log(`[front] (${id}) finished in ${elapsed / 1000.0} sec`);
 
@@ -235,10 +241,6 @@ export class ConvertSession {
       };
       this.post.postMessage(m);
     }
-  }
-
-  markPostDone() {
-    console.log(`[front] (${this.id}) post done`);
   }
 }
 
