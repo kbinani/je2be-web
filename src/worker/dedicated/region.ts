@@ -4,8 +4,9 @@ import {
   isConvertRegionMessage,
 } from "../../share/messages";
 import { writeI32 } from "../../share/heap";
-import { mkdirp, mount, readFile, unmount } from "../../share/fs-ext";
+import { mkdirp, readFile, unmount } from "../../share/fs-ext";
 import { KvsClient } from "../../share/kvs";
+import { mountFilesAsWorkerFs } from "../../share/kvs-ext";
 
 self.importScripts("./region-wasm.js");
 
@@ -22,45 +23,13 @@ function startConvertRegion(m: ConvertRegionMessage) {
 }
 
 async function convertRegion(m: ConvertRegionMessage): Promise<void> {
-  const { id, rx, rz, dim, chunks, javaEditionMap } = m;
-  const root = `/je2be/${id}/in`;
-  let worldDir: string;
-  switch (dim) {
-    case 2:
-      worldDir = `${root}/DIM1`;
-      break;
-    case 1:
-      worldDir = `${root}/DIM-1`;
-      break;
-    case 0:
-    default:
-      worldDir = `${root}`;
-      break;
-  }
+  const { id, rx, rz, dim, javaEditionMap } = m;
 
-  mkdirp(`${worldDir}/region`);
-  const files: File[] = [];
-  for (const chunk of chunks) {
-    const { cx, cz } = chunk;
-    const name = `${worldDir}/region/c.${cx}.${cz}.nbt.z`;
-    const file = await sKvs.file(name);
-    if (!file) {
-      console.warn(`[region] (${id}) ${name} not found`);
-      return;
-    }
-    const renamed = `region/c.${cx}.${cz}.nbt.z`;
-    files.push(new File([file], renamed));
-  }
-
-  const entities = `${worldDir}/entities/r.${rx}.${rz}.mca`;
-  const entitiesFile = await sKvs.file(entities);
-  if (entitiesFile) {
-    const renamed = `entities/r.${rx}.${rz}.mca`;
-    files.push(new File([entitiesFile], renamed));
-  }
-
-  mkdirp("/wfs");
-  mount("worker", "/wfs", { files });
+  await mountFilesAsWorkerFs({
+    kvs: sKvs,
+    prefix: `/je2be/${id}/in`,
+    mountPoint: "/wfs",
+  });
 
   const storage = Module._malloc(javaEditionMap.length * 4);
   for (let i = 0; i < javaEditionMap.length; i++) {
@@ -85,16 +54,6 @@ async function convertRegion(m: ConvertRegionMessage): Promise<void> {
   const data = readFile(path);
   await sKvs.put(path, data);
 
-  const del: Promise<void>[] = [];
-  for (let x = 1; x <= 30; x++) {
-    for (let z = 1; z <= 30; z++) {
-      const cx = rx * 32 + x;
-      const cz = rz * 32 + z;
-      const name = `${worldDir}/region/c.${cx}.${cz}.nbt.z`;
-      del.push(sKvs.del(name));
-    }
-  }
-  await Promise.all(del);
   Module.RemoveAll(`/je2be`);
   unmount("/wfs");
   const done: ConvertRegionDoneMessage = { type: "region_done", id };

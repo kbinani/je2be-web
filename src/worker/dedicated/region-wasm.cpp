@@ -30,37 +30,6 @@ static void Report(std::string id, int delta) {
 #endif
 }
 
-static je2be::tobe::Chunk::Result ConvertChunk(mcfile::Dimension dim, DbInterface &db, mcfile::je::Region region, int cx, int cz, JavaEditionMap mapInfo) {
-  using namespace std;
-  using namespace mcfile;
-  try {
-    auto chunkFile = region.fFilePath.parent_path() / je::Region::GetDefaultCompressedChunkNbtFileName(cx, cz);
-    auto const &chunk = je::Chunk::LoadFromCompressedChunkNbtFile(chunkFile, cx, cz);
-    Chunk::Result r;
-    r.fOk = true;
-    if (!chunk) {
-      return r;
-    }
-    if (chunk->status() != mcfile::je::Chunk::Status::FULL) {
-      return r;
-    }
-    if (chunk->fDataVersion >= 2724) {
-      vector<shared_ptr<nbt::CompoundTag>> entities;
-      if (region.entitiesAt(cx, cz, entities)) {
-        chunk->fEntities.swap(entities);
-      }
-    }
-    r.fData = je2be::tobe::Chunk::MakeWorldData(chunk, region, dim, db, mapInfo);
-    return r;
-  } catch (...) {
-    Chunk::Result r;
-    r.fData = make_shared<WorldData>(dim);
-    r.fData->addStatError(dim, cx, cz);
-    r.fOk = false;
-    return r;
-  }
-}
-
 //id, worldDir, rx, rz, dim, storage, javaEditionMap.length
 bool ConvertRegion(string id, string worldDirString, int rx, int rz, int dim, intptr_t javaEditionMap, int javaEditionMapSize) {
   std::unordered_map<int32_t, int8_t> entries;
@@ -86,7 +55,7 @@ bool ConvertRegion(string id, string worldDirString, int rx, int rz, int dim, in
   auto wd = make_shared<WorldData>(d);
   for (int cx = region->minChunkX(); cx <= region->maxChunkX(); cx++) {
     for (int cz = region->minChunkZ(); cz <= region->maxChunkZ(); cz++) {
-      auto result = ConvertChunk(d, db, *region, cx, cz, jem);
+      auto result = je2be::tobe::Chunk::Convert(d, db, *region, cx, cz, jem);
       Report(id, 1);
       if (!result.fData) {
         continue;
