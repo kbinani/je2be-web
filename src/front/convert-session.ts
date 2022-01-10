@@ -137,10 +137,6 @@ export class ConvertSession {
         }, true);
       } else if (isPostDoneMessage(ev.data) && id === ev.data.id) {
         console.log(`[front] (${this.id}) post done`);
-
-        for (const worker of this.workers) {
-          worker.terminate();
-        }
         this.post.terminate();
 
         const dot = this.filename.lastIndexOf(".");
@@ -234,13 +230,23 @@ export class ConvertSession {
 
   done(worker: Worker) {
     this.done_++;
+    let idx = -1;
     for (let i = 0; i < this.workers.length; i++) {
       if (worker === this.workers[i]) {
-        this.active[i] = false;
+        idx = i;
         break;
       }
     }
-    this.enqueue();
+    if (idx < 0) {
+      return;
+    }
+    this.active[idx] = false;
+    if (this.buffer.length === 0) {
+      worker.terminate();
+      console.log(`[front] (${this.id}) terminate #${idx} worker`);
+    } else {
+      this.enqueue();
+    }
     if (this.finalCount === this.done_) {
       console.log(`[front] (${this.id}) all chunk conversion finished`);
       const m: StartPostMessage = {
