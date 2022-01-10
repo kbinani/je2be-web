@@ -37,16 +37,8 @@ target_include_directories(region-wasm PRIVATE include)
 target_compile_options(region-wasm PRIVATE ${je2be_common_em_compile_options})
 target_link_options(region-wasm PRIVATE ${je2be_common_em_link_options})
 
-add_executable(post-wasm
-  src/worker/dedicated/post-wasm.cpp
-  deps/zlib/contrib/minizip/zip.c
-  deps/zlib/contrib/minizip/ioapi.c)
-target_include_directories(post-wasm PRIVATE
-  include
-  deps/zlib/contrib/minizip)
+add_executable(post-wasm src/worker/dedicated/post-wasm.cpp)
+target_include_directories(post-wasm PRIVATE include)
 target_link_libraries(post-wasm je2be)
-target_compile_definitions(post-wasm PRIVATE NOCRYPT)
-target_compile_options(post-wasm PRIVATE
-  -Wno-unused-value
-  ${je2be_common_em_compile_options})
+target_compile_options(post-wasm PRIVATE ${je2be_common_em_compile_options})
 target_link_options(post-wasm PRIVATE ${je2be_common_em_link_options})
