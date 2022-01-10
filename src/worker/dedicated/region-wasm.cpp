@@ -42,11 +42,18 @@ static shared_ptr<je::Chunk> ChunkFromRegionBuffer(vector<uint8_t> const &buffer
     return nullptr;
   }
   uint32_t chunkSize = *(uint32_t *)(buffer.data() + sectorOffset * 4096);
-  chunkSize = Int32FromBE(chunkSize) - 1;
+  chunkSize = Int32FromBE(chunkSize);
+  if (chunkSize == 0) {
+    return nullptr;
+  }
+  chunkSize -= 1;
   if (sectorOffset * 4096 + 4 + 1 + chunkSize >= buffer.size()) {
     return nullptr;
   }
   uint8_t compressionType = *(buffer.data() + sectorOffset * 4096 + 4);
+  if (compressionType != 2) {
+    return nullptr;
+  }
   vector<uint8_t> chunkBuffer;
   chunkBuffer.reserve(chunkSize);
   copy_n(buffer.begin() + sectorOffset * 4096 + 4 + 1, chunkSize, back_inserter(chunkBuffer));
@@ -119,7 +126,7 @@ bool ConvertRegion(string id, string worldDirString, int rx, int rz, int dim, in
   if (ec) {
     return false;
   }
-  ScopedFile fp(File::Open(region->fFilePath, File::Mode::Read));
+  ScopedFile fp(File::Open(regionFile, File::Mode::Read));
   if (!fp) {
     return false;
   }
