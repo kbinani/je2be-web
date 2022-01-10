@@ -27,7 +27,7 @@ set(je2be_common_em_link_options
 add_executable(region-wasm
   src/worker/dedicated/region-wasm.cpp
   include/db.hpp
-  include/append-db.hpp)
+  include/proxy-db.hpp)
 target_link_libraries(region-wasm je2be)
 target_include_directories(region-wasm PRIVATE include)
 target_compile_options(region-wasm PRIVATE ${je2be_common_em_compile_options})

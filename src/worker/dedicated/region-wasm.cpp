@@ -7,8 +7,7 @@
 
 #include <je2be.hpp>
 
-#include "append-db.hpp"
-#include "db.hpp"
+#include "proxy-db.hpp"
 
 using namespace std;
 using namespace mcfile;
@@ -63,7 +62,7 @@ static je2be::tobe::Chunk::Result ConvertChunk(mcfile::Dimension dim, DbInterfac
 }
 
 //id, worldDir, rx, rz, dim, storage, javaEditionMap.length
-bool ConvertRegion(string id, string worldDirString, int rx, int rz, int dim, intptr_t javaEditionMap, int javaEditionMapSize, intptr_t numLdbFiles) {
+bool ConvertRegion(string id, string worldDirString, int rx, int rz, int dim, intptr_t javaEditionMap, int javaEditionMapSize) {
   std::unordered_map<int32_t, int8_t> entries;
   int32_t *ptr = (int32_t *)javaEditionMap;
   for (int i = 0; i + 1 < javaEditionMapSize; i += 2) {
@@ -75,7 +74,7 @@ bool ConvertRegion(string id, string worldDirString, int rx, int rz, int dim, in
 
   string basename("r." + to_string(rx) + "." + to_string(rz));
   auto dir = fs::path("/je2be") / id / "ldb" / to_string(dim);
-  ::Db db(dir, basename);
+  ::ProxyDb db(id);
   InputOption io;
   JavaEditionMap jem(entries);
   Dimension d = static_cast<Dimension>(dim);
@@ -100,9 +99,6 @@ bool ConvertRegion(string id, string worldDirString, int rx, int rz, int dim, in
       }
     }
   }
-  if (!db.flush()) {
-    return false;
-  }
 
   auto nbt = wd->toNbt();
   auto file = fs::path("/je2be") / id / "wd" / to_string(dim) / (basename + ".nbt");
@@ -112,24 +108,7 @@ bool ConvertRegion(string id, string worldDirString, int rx, int rz, int dim, in
     return false;
   }
 
-  (*(int32_t *)numLdbFiles) = db.fNumFiles;
   return true;
-}
-
-intptr_t NewAppendDb(string id) {
-  return (intptr_t) new AppendDb(id);
-}
-
-bool DeleteAppendDb(intptr_t dbPtr) {
-  AppendDb *db = (AppendDb *)dbPtr;
-  bool ok = db->close();
-  delete db;
-  return ok;
-}
-
-int AppendDbAppend(intptr_t dbPtr, string file, int pos, intptr_t keyPtr, int keySize) {
-  AppendDb *db = (AppendDb *)dbPtr;
-  return db->append(file, pos, keyPtr, keySize);
 }
 
 void RemoveAll(string dir) {
@@ -140,9 +119,6 @@ void RemoveAll(string dir) {
 #if defined(EMSCRIPTEN)
 EMSCRIPTEN_BINDINGS(core_module) {
   emscripten::function("ConvertRegion", &ConvertRegion);
-  emscripten::function("NewAppendDb", &NewAppendDb);
-  emscripten::function("DeleteAppendDb", &DeleteAppendDb);
-  emscripten::function("AppendDbAppend", &AppendDbAppend);
   emscripten::function("RemoveAll", &RemoveAll);
 }
 #endif

@@ -1,16 +1,13 @@
 import {
   ConvertRegionMessage,
-  isCompactionProgressDeltaMessage,
-  isCompactionQueueMessage,
-  isCompactionThreadFinishedMessage,
   isConvertProgressDeltaMessage,
   isConvertQueueingFinishedMessage,
   isConvertRegionDoneMessage,
   isConvertRegionMessage,
+  isDbPutMessage,
   isExportDoneMessage,
   isPostDoneMessage,
   isProgressMessage,
-  MergeCompactionMessage,
   ProgressMessage,
   ResultFilesMessage,
   StartPostMessage,
@@ -33,9 +30,6 @@ export class ConvertSession {
   numDoneChunks = 0;
   lastProgressUpdate: number = 0;
   levelDirectory: string = "";
-  private compactionDone = 0;
-  private lastSequence = 0;
-  private compactionProgress = 0;
   private startTime: number;
   private readonly kvs = new KvsServer();
 
@@ -114,39 +108,8 @@ export class ConvertSession {
           this.reduce((state) => {
             return updateProgress(state, m);
           }, forceUpdate);
-        } else if (
-          isCompactionThreadFinishedMessage(ev.data) &&
-          ev.data.id === id
-        ) {
-          const index = ev.data.index;
-          if (0 <= index && index < this.workers.length) {
-            this.workers[index].terminate();
-          }
-          this.compactionDone++;
-          if (this.compactionDone === this.workers.length) {
-            const m: MergeCompactionMessage = {
-              type: "merge_compaction",
-              id,
-              numWorkers: this.workers.length,
-              lastSequence: this.lastSequence,
-            };
-            this.post.postMessage(m);
-          }
-        } else if (
-          isCompactionProgressDeltaMessage(ev.data) &&
-          ev.data.id === id
-        ) {
-          this.compactionProgress += ev.data.delta;
-          const m: ProgressMessage = {
-            type: "progress",
-            stage: "compaction",
-            progress: this.compactionProgress,
-            total: this.lastSequence,
-            id,
-          };
-          this.reduce((state) => {
-            return updateProgress(state, m);
-          }, true);
+        } else if (isDbPutMessage(ev.data)) {
+          this.post.postMessage(ev.data);
         } else {
           this.kvs.onMessage(ev);
         }
@@ -193,13 +156,6 @@ export class ConvertSession {
             id: undefined,
           };
         }, true);
-      } else if (isCompactionQueueMessage(ev.data) && id === ev.data.id) {
-        const { index, lastSequence } = ev.data;
-        if (0 <= index && index < this.workers.length) {
-          this.lastSequence = lastSequence;
-          const worker = this.workers[index];
-          worker.postMessage(ev.data);
-        }
       } else {
         this.kvs.onMessage(ev);
       }
@@ -276,7 +232,6 @@ export class ConvertSession {
         type: "post",
         id: this.id,
         levelDirectory: this.levelDirectory,
-        numWorkers: this.workers.length,
       };
       this.post.postMessage(m);
     }

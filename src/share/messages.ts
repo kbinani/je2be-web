@@ -146,7 +146,6 @@ export type StartPostMessage = {
   type: "post";
   id: string;
   levelDirectory: string;
-  numWorkers: number;
 };
 
 export function isStartPostMessage(x: any): x is StartPostMessage {
@@ -156,8 +155,7 @@ export function isStartPostMessage(x: any): x is StartPostMessage {
   return (
     x["type"] === "post" &&
     typeof x["id"] === "string" &&
-    typeof x["levelDirectory"] === "string" &&
-    typeof x["numWorkers"] === "number"
+    typeof x["levelDirectory"] === "string"
   );
 }
 
@@ -225,90 +223,6 @@ export function isConvertProgressDeltaMessage(
   );
 }
 
-export type DbKey = {
-  key: Uint8Array;
-  file: string;
-  pos: number;
-};
-
-export type CompactionQueueMessage = {
-  type: "compaction_queue";
-  index: number;
-  id: string;
-  keys: DbKey[];
-  lastSequence: number;
-};
-
-export function isCompactionQueueMessage(x: any): x is CompactionQueueMessage {
-  if (!x) {
-    return false;
-  }
-  return (
-    x["type"] === "compaction_queue" &&
-    typeof x["index"] === "number" &&
-    typeof x["id"] === "string" &&
-    !!x["keys"] &&
-    typeof x["lastSequence"] === "number"
-  );
-}
-
-export type CompactionProgressDeltaMessage = {
-  type: "compaction_progress_delta";
-  id: string;
-  delta: number;
-};
-
-export function isCompactionProgressDeltaMessage(
-  x: any
-): x is CompactionProgressDeltaMessage {
-  if (!x) {
-    return false;
-  }
-  return (
-    x["type"] === "compaction_progress_delta" &&
-    typeof x["id"] === "string" &&
-    typeof x["delta"] === "number"
-  );
-}
-
-export type CompactionThreadFinishedMessage = {
-  type: "compaction_thread_finished";
-  index: number;
-  id: string;
-};
-
-export function isCompactionThreadFinishedMessage(
-  x: any
-): x is CompactionThreadFinishedMessage {
-  if (!x) {
-    return false;
-  }
-  return (
-    x["type"] === "compaction_thread_finished" &&
-    typeof x["index"] === "number" &&
-    typeof x["id"] === "string"
-  );
-}
-
-export type MergeCompactionMessage = {
-  type: "merge_compaction";
-  id: string;
-  numWorkers: number;
-  lastSequence: number;
-};
-
-export function isMergeCompactionMessage(x: any): x is MergeCompactionMessage {
-  if (!x) {
-    return false;
-  }
-  return (
-    x["type"] === "merge_compaction" &&
-    typeof x["id"] === "string" &&
-    typeof x["numWorkers"] === "number" &&
-    typeof x["lastSequence"] === "number"
-  );
-}
-
 export type ResultFilesMessage = {
   type: "result_message";
   id: string;
@@ -323,5 +237,24 @@ export function isResultFilesMessage(x: any): x is ResultFilesMessage {
     x["type"] === "result_message" &&
     typeof x["id"] === "string" &&
     !!x["files"]
+  );
+}
+
+export type DbPutMessage = {
+  type: "db_put";
+  id: string;
+  key: Uint8Array;
+  value: Uint8Array;
+};
+
+export function isDbPutMessage(x: any): x is DbPutMessage {
+  if (!x) {
+    return false;
+  }
+  return (
+    x["type"] === "db_put" &&
+    typeof x["id"] === "string" &&
+    !!x["key"] &&
+    !!x["value"]
   );
 }
