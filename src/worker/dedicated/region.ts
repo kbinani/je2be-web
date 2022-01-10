@@ -4,7 +4,7 @@ import {
   isConvertRegionMessage,
 } from "../../share/messages";
 import { writeI32 } from "../../share/heap";
-import { mkdirp, readFile } from "../../share/fs-ext";
+import { exists, mkdirp, readFile, unmount } from "../../share/fs-ext";
 import { KvsClient } from "../../share/kvs";
 import { mountFilesAsWorkerFs } from "../../share/kvs-ext";
 
@@ -17,7 +17,6 @@ self.addEventListener("message", (ev: MessageEvent) => {
 });
 
 const sKvs = new KvsClient();
-const sMounted = new Set<string>();
 
 function startConvertRegion(m: ConvertRegionMessage) {
   convertRegion(m).catch(console.error);
@@ -26,13 +25,19 @@ function startConvertRegion(m: ConvertRegionMessage) {
 async function convertRegion(m: ConvertRegionMessage): Promise<void> {
   const { id, rx, rz, dim, javaEditionMap } = m;
 
-  if (!sMounted.has(id)) {
-    sMounted.add(id);
+  if (!exists("/wfs")) {
     await mountFilesAsWorkerFs({
       kvs: sKvs,
       prefix: `/je2be/${id}/in`,
       mountPoint: "/wfs",
     });
+  }
+
+  let worldDir = "/wfs";
+  if (dim === 1) {
+    worldDir = "/wfs/DIM-1";
+  } else if (dim === 2) {
+    worldDir = "/wfs/DIM1";
   }
 
   const storage = Module._malloc(javaEditionMap.length * 4);
@@ -41,9 +46,10 @@ async function convertRegion(m: ConvertRegionMessage): Promise<void> {
   }
   const wdDir = `/je2be/${id}/wd/${dim}`;
   mkdirp(wdDir);
+  //string id, string worldDirString, int rx, int rz, int dim, intptr_t javaEditionMap, int javaEditionMapSize
   const ok = Module.ConvertRegion(
     id,
-    "/wfs",
+    worldDir,
     rx,
     rz,
     dim,
