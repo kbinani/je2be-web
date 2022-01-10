@@ -87,7 +87,7 @@ async function start(m: StartPreMessage): Promise<void> {
   Module._free(ptr);
   Module._free(storage);
   queue(id, regions, javaEditionMap);
-  console.log(`[pre] (${id}) queue done: queue length=${numTotalChunks}`);
+  console.log(`[pre] (${id}) queue done: queue length=${regions.length}`);
   const last: ConvertQueueingFinishedMessage = {
     id,
     type: "queueing_finished",
