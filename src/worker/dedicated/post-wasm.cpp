@@ -124,13 +124,11 @@ void AbandonDb(intptr_t ptr) {
 
 void PutToDb(intptr_t ptr, intptr_t key, int keySize, intptr_t value, int valueSize) {
   RawDb *db = (RawDb *)ptr;
-  char const *keyPtr = (char const *)key;
-  char const *valuePtr = (char const *)value;
   string k;
-  k.assign(keyPtr, keySize);
+  k.assign((char const *)key, keySize);
   free((void *)key);
   string v;
-  v.assign(valuePtr, valueSize);
+  v.assign((char const *)value, valueSize);
   free((void *)value);
   db->putCompressed(k, v);
 }

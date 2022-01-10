@@ -32,13 +32,16 @@ static void Report(std::string id, int delta) {
 
 static shared_ptr<je::Chunk> ChunkFromRegionBuffer(vector<uint8_t> const &buffer, int cx, int cz) {
   int index = cz * 32 + cx;
-  if (4 * index >= buffer.size()) {
+  if (4 * index + 4 >= buffer.size()) {
     return nullptr;
   }
   uint32_t loc = *(uint32_t *)(buffer.data() + 4 * index);
   loc = Int32FromBE(loc);
+  if (loc == 0) {
+    return nullptr;
+  }
   uint32_t sectorOffset = loc >> 8;
-  if (sectorOffset * 4096 >= buffer.size()) {
+  if (sectorOffset * 4096 + 4 >= buffer.size()) {
     return nullptr;
   }
   uint32_t chunkSize = *(uint32_t *)(buffer.data() + sectorOffset * 4096);
@@ -149,6 +152,7 @@ bool ConvertRegion(string id, string worldDirString, int rx, int rz, int dim, in
       }
     }
   }
+  vector<uint8_t>().swap(buffer);
 
   auto nbt = wd->toNbt();
 
