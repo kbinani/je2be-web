@@ -29,6 +29,38 @@ static void Report(std::string id, double progress, double total) {
 #endif
 }
 
+static void PutFile(string id, fs::path p) {
+  string path = p.string();
+  error_code ec;
+  int size = fs::file_size(p, ec);
+  if (ec) {
+    return;
+  }
+  ScopedFile fp(File::Open(p, File::Mode::Read));
+  if (!fp) {
+    return;
+  }
+  vector<uint8_t> buffer(size);
+  if (fread(buffer.data(), size, 1, fp) != 1) {
+    return;
+  }
+  fp.close();
+  fs::remove(p);
+#if defined(EMSCRIPTEN)
+  EM_ASM({
+    // PutQuery
+    const m = {};
+    m["type"] = "put";
+    m["id"] = UTF8ToString($0, $1);
+    m["key"] = UTF8ToString($2, $3);
+    const buffer = Module.HEAPU8.slice($4, $4 + $5);
+    m["buffer"] = buffer;
+    self.postMessage(m);
+  },
+         id.c_str(), id.size(), path.c_str(), path.size(), buffer.data(), size);
+#endif
+}
+
 int Post(string id, intptr_t dbPtr) {
   fs::path inputDir = fs::path("/je2be") / id / "in";
   fs::path outputDir = fs::path("/je2be") / id / "out";
@@ -97,6 +129,9 @@ int Post(string id, intptr_t dbPtr) {
     return -5;
   }
 
+  db->fOnFileCreated = [id](fs::path p) {
+    PutFile(id, p);
+  };
   db->close([id](double progress) {
     Report(id, progress, 1);
   });
