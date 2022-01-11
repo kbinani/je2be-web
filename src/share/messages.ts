@@ -232,6 +232,20 @@ export function isResultFilesMessage(x: any): x is ResultFilesMessage {
   );
 }
 
+export type ForgetResultFilesMessage = {
+  type: "forget_result_files";
+  id: string;
+};
+
+export function isForgetResultFilesMessage(
+  x: any
+): x is ForgetResultFilesMessage {
+  if (!x) {
+    return false;
+  }
+  return x["type"] === "forget_result_files" && typeof x["id"] === "string";
+}
+
 export type DbPutMessage = {
   type: "db_put";
   id: string;

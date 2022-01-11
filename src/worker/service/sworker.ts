@@ -1,5 +1,8 @@
 import { downloadZip } from "../../../deps/client-zip/src";
-import { isResultFilesMessage } from "../../share/messages";
+import {
+  isForgetResultFilesMessage,
+  isResultFilesMessage,
+} from "../../share/messages";
 
 self.addEventListener("install", onInstall);
 self.addEventListener("activate", onActivate);
@@ -53,9 +56,13 @@ function onFetch(ev: FetchEvent) {
 }
 
 function onMessage(ev: MessageEvent) {
-  if (isResultFilesMessage(ev.data)) {
-    const { id, files } = ev.data;
+  const message = ev.data;
+  if (isResultFilesMessage(message)) {
+    const { id, files } = message;
     sResultFiles.set(id, files);
+  } else if (isForgetResultFilesMessage(message)) {
+    const { id } = message;
+    sResultFiles.delete(id);
   }
 }
 

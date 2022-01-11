@@ -1,5 +1,6 @@
 import {
   ConvertRegionMessage,
+  ForgetResultFilesMessage,
   isConvertProgressDeltaMessage,
   isConvertQueueingFinishedMessage,
   isConvertRegionDoneMessage,
@@ -175,6 +176,11 @@ export class ConvertSession {
   }
 
   close() {
+    const forget: ForgetResultFilesMessage = {
+      type: "forget_result_files",
+      id: this.id,
+    };
+    this.sw.postMessage(forget);
     this.kvs.close();
   }
 
