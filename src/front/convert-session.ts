@@ -17,6 +17,7 @@ import {
 import { MainComponentState, MainComponentStateReducer } from "./main";
 import { KvsServer } from "../share/kvs";
 import { clamp } from "../share/number";
+import { ServiceWorkerLauncher } from "./service-worker-launcher";
 
 export class ConvertSession {
   private readonly pre: Worker;
@@ -34,13 +35,13 @@ export class ConvertSession {
   levelDirectory: string = "";
   private startTime: number;
   private readonly kvs = new KvsServer();
-  private filename: string;
-  private filesize: number;
+  private readonly filename: string;
+  private readonly filesize: number;
+  private readonly sw: ServiceWorkerLauncher;
 
   constructor(
     readonly id: string,
     file: File,
-    readonly sw: ServiceWorker,
     readonly reduce: (
       reducer: MainComponentStateReducer,
       forceUpdate: boolean
@@ -48,6 +49,7 @@ export class ConvertSession {
   ) {
     this.filename = file.name;
     this.filesize = file.size;
+    this.sw = new ServiceWorkerLauncher();
 
     const pre = new Worker("./script/pre.js", { name: "pre" });
     pre.onmessage = (ev: MessageEvent) => {
@@ -159,8 +161,7 @@ export class ConvertSession {
           files.push([filename, entity.url]);
         }
         const m: ResultFilesMessage = { type: "result_message", id, files };
-        this.sw.postMessage(m);
-
+        this.sw.post({ message: m, launch: true }).catch(console.error);
         this.reduce((state) => {
           return {
             ...state,
@@ -180,7 +181,7 @@ export class ConvertSession {
       type: "forget_result_files",
       id: this.id,
     };
-    this.sw.postMessage(forget);
+    this.sw.post({ message: forget, launch: false }).catch(console.error);
     this.kvs.close();
   }
 

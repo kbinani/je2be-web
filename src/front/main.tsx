@@ -40,7 +40,6 @@ export const MainComponent: FC = () => {
   const state = useRef<MainComponentState>({ ...kInitComponentState });
   const input = useRef<HTMLInputElement>(null);
   const session = useRef<ConvertSession>(null);
-  const sw = useRef<ServiceWorker>(null);
   const forceUpdate = useForceUpdate();
   const onBeforeUnload = (ev: BeforeUnloadEvent) => {
     if (state.current.id === undefined) {
@@ -53,23 +52,6 @@ export const MainComponent: FC = () => {
     session.current?.close();
   };
   useEffect(() => {
-    const { protocol, host, href } = window.location;
-    const prefix = `${protocol}//${host}/`;
-    const path = href.substring(prefix.length);
-    const scope = `/${path}dl`;
-    navigator.serviceWorker
-      .register("./sworker.js", { scope })
-      .then((swr) => {
-        console.log(`[front] sworker registered`);
-        sw.current = swr.active;
-        swr
-          .update()
-          .then(() => {
-            console.log(`[front] sworker updated`);
-          })
-          .catch(console.error);
-      })
-      .catch(console.error);
     window.addEventListener("beforeunload", onBeforeUnload);
     window.addEventListener("unload", onUnload);
     return () => {
@@ -92,7 +74,7 @@ export const MainComponent: FC = () => {
     }
     const id = uuidv4();
     const file = files.item(0);
-    const s = new ConvertSession(id, file, sw.current, (reducer, update) => {
+    const s = new ConvertSession(id, file, (reducer, update) => {
       state.current = reducer(state.current);
       if (update) {
         forceUpdate();
