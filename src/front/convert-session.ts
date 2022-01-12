@@ -32,7 +32,6 @@ export class ConvertSession {
   private _numTotalChunks = -1;
   numDoneChunks = 0;
   lastProgressUpdate: number = 0;
-  levelDirectory: string = "";
   private startTime: number;
   private readonly kvs = new KvsServer();
   private readonly filename: string;
@@ -67,7 +66,6 @@ export class ConvertSession {
         }, true);
       } else if (isExportDoneMessage(ev.data) && ev.data.id === id) {
         this.setNumTotalChunks(ev.data.numTotalChunks);
-        this.levelDirectory = ev.data.levelDirectory;
       } else {
         this.kvs.onMessage(ev);
       }
@@ -256,11 +254,7 @@ export class ConvertSession {
     }
     if (this.finalCount === this.done_) {
       console.log(`[front] (${this.id}) all chunk conversion finished`);
-      const m: StartPostMessage = {
-        type: "post",
-        id: this.id,
-        levelDirectory: this.levelDirectory,
-      };
+      const m: StartPostMessage = { type: "post", id: this.id };
       this.post.postMessage(m);
     }
   }

@@ -137,18 +137,13 @@ export function isConvertQueueingFinishedMessage(
 export type StartPostMessage = {
   type: "post";
   id: string;
-  levelDirectory: string;
 };
 
 export function isStartPostMessage(x: any): x is StartPostMessage {
   if (!x) {
     return false;
   }
-  return (
-    x["type"] === "post" &&
-    typeof x["id"] === "string" &&
-    typeof x["levelDirectory"] === "string"
-  );
+  return x["type"] === "post" && typeof x["id"] === "string";
 }
 
 export type PostDoneMessage = {
@@ -181,7 +176,6 @@ export type ExportDoneMessage = {
   type: "export_done";
   id: string;
   numTotalChunks: number;
-  levelDirectory: string;
 };
 
 export function isExportDoneMessage(x: any): x is ExportDoneMessage {
@@ -191,8 +185,7 @@ export function isExportDoneMessage(x: any): x is ExportDoneMessage {
   return (
     x["type"] === "export_done" &&
     typeof x["id"] === "string" &&
-    typeof x["numTotalChunks"] === "number" &&
-    typeof x["levelDirectory"] === "string"
+    typeof x["numTotalChunks"] === "number"
   );
 }
 

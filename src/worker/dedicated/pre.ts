@@ -48,7 +48,6 @@ async function start(m: StartPreMessage): Promise<void> {
     type: "export_done",
     id,
     numTotalChunks,
-    levelDirectory,
   };
   self.postMessage(exportDone);
   console.log(`[pre] (${id}) extract done`);
