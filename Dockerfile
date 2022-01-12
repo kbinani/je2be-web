@@ -1,4 +1,4 @@
-ARG EMSCRIPTEN_VERSION=3.1.0
+ARG EMSCRIPTEN_VERSION=3.1.1
 FROM emscripten/emsdk:${EMSCRIPTEN_VERSION}
 ARG CMAKE_VERSION=3.22.1
 RUN apt update \
@@ -15,6 +15,6 @@ RUN apt update \
     && sh ./cmake-${CMAKE_VERSION}-linux-x86_64.sh --skip-license --prefix=/usr/local --exclude-subdir \
     && rm -f /src/cmake-${CMAKE_VERSION}-linux-x86_64.sh
 RUN cd /emsdk/upstream/emscripten \
-    && ./embuilder.py build --lto libembind-rtti libGL libal libhtml5 libstubs libc libcompiler_rt libc++ libc++abi libdlmalloc libc_rt libsockets \
+    && ./embuilder.py build --lto libembind-rtti libGL libal libhtml5 libstubs libc libcompiler_rt libc++ libc++abi libdlmalloc libc_rt libsockets libnoexit \
     && chown emscripten:emscripten -R /emsdk/upstream/emscripten/cache/sysroot/lib/wasm32-emscripten/lto \
     && chmod og+w /emsdk/upstream/emscripten/cache/sysroot/lib/wasm32-emscripten/lto
