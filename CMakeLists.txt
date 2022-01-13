@@ -5,16 +5,6 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-if("${EMSCRIPTEN}" STREQUAL "1")
-  set(ZLIB_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/deps/je2be/deps/libminecraft-file/deps/zlib-ng")
-  set(ZLIB_LIBRARY "${CMAKE_CURRENT_BINARY_DIR}/deps/je2be/deps/libminecraft-file/deps/zlib-ng")
-
-  include_directories(
-    "${CMAKE_SOURCE_DIR}/deps/je2be/deps/libminecraft-file/deps/zlib-ng"
-    "${CMAKE_CURRENT_BINARY_DIR}/deps/je2be/deps/libminecraft-file/deps/zlib-ng")
-  link_directories("${CMAKE_CURRENT_BINARY_DIR}/deps/je2be/deps/libminecraft-file/deps/zlib-ng")
-endif()
-
 add_subdirectory(deps/je2be EXCLUDE_FROM_ALL)
 
 set(je2be_common_em_compile_and_link_options
