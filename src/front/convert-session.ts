@@ -72,7 +72,11 @@ export class ConvertSession {
     };
     this.pre = pre;
 
-    let maxConcurrency = Math.max(2, navigator.hardwareConcurrency);
+    const hardwareConcurrency =
+      typeof navigator.hardwareConcurrency === "number"
+        ? navigator.hardwareConcurrency
+        : 8;
+    let maxConcurrency = Math.max(2, hardwareConcurrency);
     const heapLimit = performance["memory"]?.["jsHeapSizeLimit"];
     if (typeof heapLimit === "number") {
       const minimumFileSize = this.filesize * 2;
