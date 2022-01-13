@@ -66,7 +66,7 @@ export const MainComponent: FC = () => {
   const { unzip, compaction, convert, convertTotal } = state.current;
   const disableLink =
     state.current.id !== undefined || state.current.dl !== undefined;
-  const onStartPoc = (ev: ChangeEvent<HTMLInputElement>) => {
+  const onStart = (ev: ChangeEvent<HTMLInputElement>) => {
     const files = ev.target.files;
     if (!files || files.length !== 1) {
       console.error("no file selected, or one or more files selected");
@@ -97,7 +97,7 @@ export const MainComponent: FC = () => {
           <input
             name={"input_zip"}
             type={"file"}
-            onChange={onStartPoc}
+            onChange={onStart}
             accept={".zip"}
             ref={input}
             disabled={state.current.id !== undefined}
