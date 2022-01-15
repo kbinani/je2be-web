@@ -1,5 +1,12 @@
 import * as React from "react";
-import { ChangeEvent, FC, useEffect, useReducer, useRef } from "react";
+import {
+  ChangeEvent,
+  FC,
+  useEffect,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 import { WorkerError } from "../share/messages";
 import { v4 as uuidv4 } from "uuid";
 import { Header } from "./header";
@@ -86,56 +93,111 @@ export const MainComponent: FC = () => {
     state.current = { ...kInitComponentState, id };
     forceUpdate();
   };
+  const je2be = useRef<HTMLDivElement>(null);
+  const be2je = useRef<HTMLDivElement>(null);
+  const mode = useRef<"je2be" | "be2je">("je2be");
+  const onClickHeader = () => {
+    if (mode.current === "je2be") {
+      setMode("be2je");
+    } else {
+      setMode("je2be");
+    }
+  };
+  const setMode = (next: "je2be" | "be2je") => {
+    if (next === mode.current) {
+      return;
+    }
+    const j2b = je2be.current;
+    const b2j = be2je.current;
+    switch (next) {
+      case "je2be": {
+        j2b.classList.remove("transitionHide");
+        j2b.classList.add("transitionAppear");
+
+        b2j.classList.remove("transitionAppear");
+        b2j.classList.add("transitionHide");
+        break;
+      }
+      case "be2je": {
+        j2b.classList.remove("transitionAppear");
+        j2b.classList.add("transitionHide");
+
+        b2j.classList.remove("transitionHide");
+        b2j.classList.add("transitionAppear");
+        break;
+      }
+    }
+    mode.current = next;
+  };
   return (
-    <div className="main">
-      <Header disableLink={disableLink} />
-      <div className="container">
-        <div className="inputZip">
-          <label className="inputZipLabel" htmlFor={"input_zip"}>
-            Choose a zip archive of Java Edition world data
-          </label>
-          <input
-            name={"input_zip"}
-            type={"file"}
-            onChange={onStart}
-            accept={".zip"}
-            ref={input}
-            disabled={state.current.id !== undefined}
-          />
-        </div>
-        <div className="progressContainer">
-          <Progress progress={unzip} total={1} label={"Unzip"} />
-          <Progress
-            progress={Math.floor(convert)}
-            total={convertTotal}
-            unit={"chunks"}
-            label={"Conversion"}
-          />
-          <Progress
-            progress={compaction}
-            total={1}
-            label={"LevelDB Compaction"}
-          />
-          <div className="message">
-            {state.current.dl && (
-              <div className="downloadMessage">
-                {`Completed: download `}
-                <a
-                  href={`./dl/${state.current.dl.id}?action=download&filename=${state.current.dl.filename}`}
-                >
-                  {state.current.dl.filename}
-                </a>
-              </div>
-            )}
-            {state.current.error && (
-              <div className="errorMessage">
-                Failed: ErrorType={state.current.error.type}
-              </div>
-            )}
+    <>
+      <div className="je2be" ref={je2be}>
+        <Header disableLink={disableLink} onClick={onClickHeader} />
+        <div className="container">
+          <div className="inputZip">
+            <label className="inputZipLabel" htmlFor={"input_zip"}>
+              Choose a zip archive of Java Edition world data
+            </label>
+            <input
+              name={"input_zip"}
+              type={"file"}
+              onChange={onStart}
+              accept={".zip"}
+              ref={input}
+              disabled={state.current.id !== undefined}
+            />
+          </div>
+          <div className="progressContainer">
+            <Progress progress={unzip} total={1} label={"Unzip"} />
+            <Progress
+              progress={Math.floor(convert)}
+              total={convertTotal}
+              unit={"chunks"}
+              label={"Conversion"}
+            />
+            <Progress
+              progress={compaction}
+              total={1}
+              label={"LevelDB Compaction"}
+            />
+            <div className="message">
+              {state.current.dl && (
+                <div className="downloadMessage">
+                  {`Completed: download `}
+                  <a
+                    href={`./dl/${state.current.dl.id}?action=download&filename=${state.current.dl.filename}`}
+                  >
+                    {state.current.dl.filename}
+                  </a>
+                </div>
+              )}
+              {state.current.error && (
+                <div className="errorMessage">
+                  Failed: ErrorType={state.current.error.type}
+                </div>
+              )}
+            </div>
           </div>
         </div>
+        <Footer />
       </div>
-      <Footer />
-    </div>
+      <div className="be2je" ref={be2je}>
+        <Header disableLink={disableLink} onClick={onClickHeader} />
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            fontSize: 30,
+            fontWeight: 900,
+            marginTop: 90,
+            color: "var(--background-dark)",
+            textAlign: "center",
+          }}
+        >
+          Bedrock to Java conversion functionality is in-dev!
+        </div>
+        <Footer />
+      </div>
+    </>
   );
 };
