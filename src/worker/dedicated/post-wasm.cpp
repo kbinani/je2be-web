@@ -167,7 +167,7 @@ void PutToDb(intptr_t ptr, intptr_t key, int keySize, intptr_t value, int valueS
   string v;
   v.assign((char const *)value, valueSize);
   free((void *)value);
-  db->putCompressed(k, v);
+  db->put(k, v);
 }
 
 #if defined(EMSCRIPTEN)

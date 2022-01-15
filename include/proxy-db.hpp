@@ -24,15 +24,6 @@ public:
 
   void put(std::string const &key, leveldb::Slice const &value) override {
     using namespace std;
-    string k = key;
-    vector<uint8_t> buffer;
-    buffer.reserve(value.size());
-    copy_n(value.data(), value.size(), back_inserter(buffer));
-    if (!mcfile::Compression::compress(buffer)) {
-      return;
-    }
-    string v;
-    v.assign((char const *)buffer.data(), buffer.size());
 #if defined(EMSCRIPTEN)
     EM_ASM({
       const m = {};
@@ -51,7 +42,7 @@ public:
       m["id"] = id;
       self.postMessage(m);
     },
-           k.c_str(), k.size(), v.c_str(), v.size(), fId.c_str(), fId.size());
+           key.c_str(), key.size(), value.data(), value.size(), fId.c_str(), fId.size());
 #endif
   }
 
