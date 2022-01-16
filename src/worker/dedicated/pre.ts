@@ -7,7 +7,7 @@ import {
   StartPreMessage,
   WorkerError,
 } from "../../share/messages";
-import { dirname, unmount } from "../../share/fs-ext";
+import { unmount } from "../../share/fs-ext";
 import JSZip from "jszip";
 import { readI32 } from "../../share/heap";
 import { promiseUnzipFileInZip } from "../../share/zip-ext";
@@ -46,7 +46,7 @@ async function start(m: StartPreMessage): Promise<void> {
   await db.dlFiles.clear();
 
   console.log(`[pre] (${id}) extract...`);
-  const { regions, levelDirectory } = await extract(file, id);
+  const regions = await extract(file, id);
   const numTotalChunks = regions.length * 32 * 32;
   const exportDone: ExportDoneMessage = {
     type: "export_done",
@@ -94,10 +94,7 @@ async function start(m: StartPreMessage): Promise<void> {
   self.postMessage(last);
 }
 
-async function extract(
-  file: File,
-  id: string
-): Promise<{ regions: Region[]; levelDirectory: string }> {
+async function extract(file: File, id: string): Promise<Region[]> {
   let zip: any;
   try {
     zip = await JSZip.loadAsync(file);
@@ -206,9 +203,7 @@ async function extract(
     self.postMessage(m);
   });
   await Promise.all(unzipRegions);
-
-  const levelDirectory = dirname(levelDatPath);
-  return { regions, levelDirectory };
+  return regions;
 }
 
 function queue(id: string, regions: Region[], javaEditionMap: number[]) {
