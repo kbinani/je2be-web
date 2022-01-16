@@ -26,7 +26,7 @@ export function basename(p: string): string {
   if (subs.length === 1) {
     return p;
   }
-  return subs.pop();
+  return subs.pop()!;
 }
 
 export function exists(p: string): boolean {
@@ -40,7 +40,7 @@ export function exists(p: string): boolean {
 
 export async function syncfs(populate: boolean): Promise<void> {
   return new Promise((resolve, reject) => {
-    FS.syncfs(populate, (err) => {
+    FS.syncfs(populate, (err: any) => {
       if (err) {
         reject(err);
       } else {
@@ -84,7 +84,7 @@ export function fread({
 
 export async function iterate(
   directory: string,
-  callback: ({ path: string, dir: boolean }) => Promise<void>
+  callback: ({ path, dir }: { path: string; dir: boolean }) => Promise<void>
 ): Promise<void> {
   const visit = async (item: any) => {
     const { path, node } = item;
@@ -112,7 +112,7 @@ export function writeFile(path: string, data: Uint8Array) {
   }
 }
 
-export function readFile(path: string): Uint8Array {
+export function readFile(path: string): Uint8Array | undefined {
   try {
     return FS.readFile(path);
   } catch (e) {

@@ -102,7 +102,7 @@ async function extract(
   try {
     zip = await JSZip.loadAsync(file);
   } catch (e) {
-    const error: WorkerError = { type: "Unzip", native: e };
+    const error: WorkerError = { type: "Unzip" };
     throw error;
   }
   const foundLevelDat: string[] = [];
@@ -179,12 +179,16 @@ async function extract(
     const target = `/je2be/${id}/in/${rel}`;
     const buffer = await promiseUnzipFileInZip({ zip, path });
     let dim = 0;
-    if (path.includes("/DIM1/")) {
+    if (rel.startsWith("region/")) {
+      dim = 0;
+    } else if (rel.startsWith("DIM1/region/")) {
       dim = 2;
-    } else if (path.includes("/DIM-1/")) {
+    } else if (rel.startsWith("DIM-1/region/")) {
       dim = 1;
+    } else {
+      return;
     }
-    const s = path.split("/").pop();
+    const s = path.split("/").pop()!;
     const token = s.split(".");
     const rx = parseInt(token[1], 10);
     const rz = parseInt(token[2], 10);

@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
     plugins: [new BugsnagPluginReact()],
     appVersion,
   });
-  const ErrorBoundary = Bugsnag.getPlugin("react").createErrorBoundary(React);
+  const ErrorBoundary = Bugsnag.getPlugin("react")!.createErrorBoundary(React);
   ReactDOM.render(
     <ErrorBoundary>
       <MainComponent />

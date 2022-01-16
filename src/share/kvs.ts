@@ -90,7 +90,9 @@ export class KvsServer {
       for (const key of this.storage.keys()) {
         if (key.startsWith(prefix)) {
           const entity = this.storage.get(key);
-          URL.revokeObjectURL(entity.url);
+          if (entity) {
+            URL.revokeObjectURL(entity.url);
+          }
           this.storage.delete(key);
         }
       }
@@ -122,7 +124,10 @@ export class KvsClient {
   private readonly _string = new Map<string, Deferred<string | undefined>>();
   private readonly _void = new Map<string, Deferred<void>>();
   private readonly _strings = new Map<string, Deferred<string[]>>();
-  private readonly _file = new Map<string, Deferred<FileWithMeta>>();
+  private readonly _file = new Map<
+    string,
+    Deferred<FileWithMeta | undefined>
+  >();
   private readonly _files = new Map<string, Deferred<FileWithMeta[]>>();
 
   constructor() {
@@ -198,11 +203,7 @@ export class KvsClient {
     return d;
   }
 
-  async files_({
-    withPrefix,
-  }: {
-    withPrefix: string;
-  }): Promise<FileWithMeta[]> {
+  async files({ withPrefix }: { withPrefix: string }): Promise<FileWithMeta[]> {
     const id = uuidv4();
     const d = defer<FileWithMeta[]>();
     const m: FilesWithPrefixQuery = {

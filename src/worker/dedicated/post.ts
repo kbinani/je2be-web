@@ -110,12 +110,15 @@ async function collectOutputFiles(id: string): Promise<void> {
       return;
     }
     const data = readFile(path);
+    if (!data) {
+      throw new Error(`Cannot read file: ${path}`);
+    }
     const subpath = path.substring(`${directory}/`.length);
     console.log(`[post] (${id}) ${subpath} ${data.length} bytes`);
     await sKvs.put(path, data);
     unlink(path);
   });
-  const response = await sKvs.files_({ withPrefix: `${directory}/` });
+  const response = await sKvs.files({ withPrefix: `${directory}/` });
   const files: FileMeta[] = response.map((f) => ({
     name: f.file.name,
     url: f.url,

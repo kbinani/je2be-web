@@ -3,15 +3,16 @@ import { DlStore, FileMeta } from "../../share/dl";
 
 self.addEventListener("install", onInstall);
 self.addEventListener("activate", onActivate);
+//@ts-ignore
 self.addEventListener("fetch", onFetch);
 
-function onInstall(ev) {
+function onInstall(ev: any) {
   console.log(`[sworker] install`);
   //@ts-ignore
   ev.waitUntil(self.skipWaiting());
 }
 
-function onActivate(ev) {
+function onActivate(ev: any) {
   console.log(`[sworker] activate`);
   //@ts-ignore
   ev.waitUntil(self.clients.claim());

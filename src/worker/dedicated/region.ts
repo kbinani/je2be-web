@@ -62,6 +62,9 @@ async function convertRegion(m: ConvertRegionMessage): Promise<void> {
   }
   const path = `${wdDir}/r.${rx}.${rz}.nbt`;
   const data = readFile(path);
+  if (!data) {
+    throw new Error(`Cannot read file ${path}`);
+  }
   await sKvs.put(path, data);
 
   Module.RemoveAll(`/je2be`);

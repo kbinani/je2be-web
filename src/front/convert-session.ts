@@ -30,7 +30,7 @@ export class ConvertSession {
   private _numTotalChunks = -1;
   numDoneChunks = 0;
   lastProgressUpdate: number = 0;
-  private startTime: number;
+  private startTime: number = 0;
   private readonly kvs = new KvsServer();
   private readonly filename: string;
   private readonly filesize: number;
@@ -73,6 +73,7 @@ export class ConvertSession {
         ? navigator.hardwareConcurrency
         : 8;
     let maxConcurrency = Math.max(2, hardwareConcurrency);
+    //@ts-ignore
     const heapLimit = performance["memory"]?.["jsHeapSizeLimit"];
     if (typeof heapLimit === "number") {
       const minimumFileSize = this.filesize * 2;

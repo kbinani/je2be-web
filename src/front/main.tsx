@@ -40,7 +40,7 @@ export const useForceUpdate = () => {
 export const MainComponent: FC = () => {
   const state = useRef<MainComponentState>({ ...kInitComponentState });
   const input = useRef<HTMLInputElement>(null);
-  const session = useRef<ConvertSession>(null);
+  const session = useRef<ConvertSession | null>(null);
   const forceUpdate = useForceUpdate();
   const onBeforeUnload = (ev: BeforeUnloadEvent) => {
     if (state.current.id === undefined) {
@@ -65,7 +65,7 @@ export const MainComponent: FC = () => {
     };
   }, []);
   useEffect(() => {
-    if (state.current.id === undefined) {
+    if (state.current.id === undefined && input.current) {
       input.current.value = "";
     }
   }, [state.current.id]);
@@ -79,7 +79,7 @@ export const MainComponent: FC = () => {
       return;
     }
     const id = uuidv4();
-    const file = files.item(0);
+    const file = files.item(0)!;
     const s = new ConvertSession(id, file, (reducer, update) => {
       state.current = reducer(state.current);
       if (update) {
@@ -110,19 +110,19 @@ export const MainComponent: FC = () => {
     const b2j = be2je.current;
     switch (next) {
       case "je2be": {
-        j2b.classList.remove("transitionHide");
-        j2b.classList.add("transitionAppear");
+        j2b?.classList.remove("transitionHide");
+        j2b?.classList.add("transitionAppear");
 
-        b2j.classList.remove("transitionAppear");
-        b2j.classList.add("transitionHide");
+        b2j?.classList.remove("transitionAppear");
+        b2j?.classList.add("transitionHide");
         break;
       }
       case "be2je": {
-        j2b.classList.remove("transitionAppear");
-        j2b.classList.add("transitionHide");
+        j2b?.classList.remove("transitionAppear");
+        j2b?.classList.add("transitionHide");
 
-        b2j.classList.remove("transitionHide");
-        b2j.classList.add("transitionAppear");
+        b2j?.classList.remove("transitionHide");
+        b2j?.classList.add("transitionAppear");
         break;
       }
     }
