@@ -11,8 +11,9 @@ export async function mountFilesAsWorkerFs({
   mountPoint: string;
 }) {
   const p = prefix.endsWith("/") ? prefix : `${prefix}/`;
-  const original = await kvs.files({ withPrefix: p });
-  const files = original.map((file) => {
+  const original = await kvs.files_({ withPrefix: p });
+  const files = original.map((item) => {
+    const file = item.file;
     const subpath = file.name.substring(p.length);
     return new File([file], subpath);
   });

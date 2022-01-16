@@ -8,6 +8,7 @@ import {
 import { iterate, readFile, unlink, unmount } from "../../share/fs-ext";
 import { KvsClient } from "../../share/kvs";
 import { mountFilesAsWorkerFs } from "../../share/kvs-ext";
+import { DlStore, FileMeta } from "../../share/dl";
 
 self.importScripts("./post-wasm.js");
 
@@ -114,4 +115,11 @@ async function collectOutputFiles(id: string): Promise<void> {
     await sKvs.put(path, data);
     unlink(path);
   });
+  const response = await sKvs.files_({ withPrefix: `${directory}/` });
+  const files: FileMeta[] = response.map((f) => ({
+    name: f.file.name,
+    url: f.url,
+  }));
+  const db = new DlStore();
+  await db.dlFiles.put({ id, files: files });
 }

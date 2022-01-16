@@ -13,6 +13,7 @@ import { readI32 } from "../../share/heap";
 import { promiseUnzipFileInZip } from "../../share/zip-ext";
 import { KvsClient } from "../../share/kvs";
 import { mountFilesAsWorkerFs } from "../../share/kvs-ext";
+import { DlStore } from "../../share/dl";
 
 self.addEventListener("message", (ev: MessageEvent) => {
   if (isStartPreMessage(ev.data)) {
@@ -40,6 +41,9 @@ async function start(m: StartPreMessage): Promise<void> {
   const req = indexedDB.deleteDatabase("je2be-dl");
   req.onerror = (e) => console.error(e);
   req.onsuccess = () => console.log(`[pre] deleted legacy "je2be-dl" table`);
+
+  const db = new DlStore();
+  await db.dlFiles.clear();
 
   console.log(`[pre] (${id}) extract...`);
   const { regions, levelDirectory } = await extract(file, id);

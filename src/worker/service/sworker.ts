@@ -1,15 +1,9 @@
 import { downloadZip } from "../../../deps/client-zip/src";
-import {
-  isForgetResultFilesMessage,
-  isResultFilesMessage,
-} from "../../share/messages";
+import { DlStore, FileMeta } from "../../share/dl";
 
 self.addEventListener("install", onInstall);
 self.addEventListener("activate", onActivate);
 self.addEventListener("fetch", onFetch);
-self.addEventListener("message", onMessage);
-
-const sResultFiles = new Map<string, string[][]>();
 
 function onInstall(ev) {
   console.log(`[sworker] install`);
@@ -55,23 +49,12 @@ function onFetch(ev: FetchEvent) {
   }
 }
 
-function onMessage(ev: MessageEvent) {
-  const message = ev.data;
-  if (isResultFilesMessage(message)) {
-    const { id, files } = message;
-    sResultFiles.set(id, files);
-  } else if (isForgetResultFilesMessage(message)) {
-    const { id } = message;
-    sResultFiles.delete(id);
-  }
-}
-
 async function* objectUrlsAsFile(
-  files: string[][],
+  files: FileMeta[],
   prefix: string
 ): AsyncIterable<File> {
   for (const file of files) {
-    const [name, url] = file;
+    const { name, url } = file;
     const res = await fetch(url);
     const blob = await res.blob();
     yield new File([blob], name.substring(prefix.length));
@@ -82,12 +65,13 @@ async function respondDownload(
   id: string,
   filename: string
 ): Promise<Response> {
-  const urls = sResultFiles.get(id);
-  if ((urls?.length ?? 0) === 0) {
+  const prefix = `/je2be/${id}/out/`;
+  const db = new DlStore();
+  const response = await db.dlFiles.get(id);
+  if (!response) {
     return new Response(null, { status: 404 });
   }
-  const prefix = `/je2be/${id}/out/`;
-  return downloadZip(objectUrlsAsFile(urls, prefix), {
+  return downloadZip(objectUrlsAsFile(response.files, prefix), {
     headers: {
       "Content-Type": "application/octet-stream",
       "Cache-Control": "no-cache",

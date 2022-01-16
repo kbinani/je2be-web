@@ -1,18 +1,12 @@
 import * as React from "react";
-import {
-  ChangeEvent,
-  FC,
-  useEffect,
-  useReducer,
-  useRef,
-  useState,
-} from "react";
+import { ChangeEvent, FC, useEffect, useReducer, useRef } from "react";
 import { WorkerError } from "../share/messages";
 import { v4 as uuidv4 } from "uuid";
 import { Header } from "./header";
 import { Footer } from "./footer";
 import { Progress } from "./progress";
 import { ConvertSession } from "./convert-session";
+import { ServiceWorkerLauncher } from "./service-worker-launcher";
 
 export type MainComponentState = {
   unzip: number;
@@ -59,6 +53,11 @@ export const MainComponent: FC = () => {
     session.current?.close();
   };
   useEffect(() => {
+    const launcher = new ServiceWorkerLauncher();
+    launcher
+      .launch()
+      .then(() => console.log(`[front] sw launched`))
+      .catch(console.error);
     window.addEventListener("beforeunload", onBeforeUnload);
     window.addEventListener("unload", onUnload);
     return () => {

@@ -15,14 +15,14 @@ export function defer<T = void>(): Deferred<T> {
   return Object.assign(promise, { resolve, reject });
 }
 
-type Entity = {
+type FileWithMeta = {
   file: File;
   url: string;
   size: number;
 };
 
 export class KvsServer {
-  readonly storage = new Map<string, Entity>();
+  readonly storage = new Map<string, FileWithMeta>();
 
   close() {
     console.log(`[front] revoking object urls...`);
@@ -99,15 +99,17 @@ export class KvsServer {
     } else if (isFileQuery(data)) {
       const { id, key } = data;
       const entity = this.storage.get(key);
-      const m: FileResponse = { type: "file_response", id, file: entity?.file };
+      const m: FileResponse = { type: "file_response", id, file: entity };
       target.postMessage(m);
     } else if (isFilesWithPrefixQuery(data)) {
       const { id, prefix } = data;
-      const files: File[] = [];
+      const files: FileWithMeta[] = [];
       for (const key of this.storage.keys()) {
         if (key.startsWith(prefix)) {
-          const { file } = this.storage.get(key);
-          files.push(file);
+          const file = this.storage.get(key);
+          if (file) {
+            files.push(file);
+          }
         }
       }
       const m: FilesResponse = { type: "files_response", id, files };
@@ -120,8 +122,8 @@ export class KvsClient {
   private readonly _string = new Map<string, Deferred<string | undefined>>();
   private readonly _void = new Map<string, Deferred<void>>();
   private readonly _strings = new Map<string, Deferred<string[]>>();
-  private readonly _file = new Map<string, Deferred<File>>();
-  private readonly _files = new Map<string, Deferred<File[]>>();
+  private readonly _file = new Map<string, Deferred<FileWithMeta>>();
+  private readonly _files = new Map<string, Deferred<FileWithMeta[]>>();
 
   constructor() {
     self.addEventListener("message", this.onMessage);
@@ -147,9 +149,9 @@ export class KvsClient {
     });
   }
 
-  async file(key: string): Promise<File | undefined> {
+  async file_(key: string): Promise<FileWithMeta | undefined> {
     const id = uuidv4();
-    const d = defer<File | undefined>();
+    const d = defer<FileWithMeta | undefined>();
     const m: FileQuery = { type: "file", id, key };
     this._file.set(id, d);
     self.postMessage(m);
@@ -196,9 +198,13 @@ export class KvsClient {
     return d;
   }
 
-  async files({ withPrefix }: { withPrefix: string }): Promise<File[]> {
+  async files_({
+    withPrefix,
+  }: {
+    withPrefix: string;
+  }): Promise<FileWithMeta[]> {
     const id = uuidv4();
-    const d = defer<File[]>();
+    const d = defer<FileWithMeta[]>();
     const m: FilesWithPrefixQuery = {
       type: "files_with_prefix",
       id,
@@ -256,7 +262,7 @@ export class KvsClient {
 type FilesResponse = {
   type: "files_response";
   id: string;
-  files: File[];
+  files: FileWithMeta[];
 };
 
 function isFilesResponse(x: any): x is FilesResponse {
@@ -436,7 +442,7 @@ function isStringsResponse(x: any): x is StringsResponse {
 type FileResponse = {
   type: "file_response";
   id: string;
-  file: File | undefined;
+  file: FileWithMeta | undefined;
 };
 
 function isFileResponse(x: any): x is FileResponse {

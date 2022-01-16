@@ -1,6 +1,5 @@
 import {
   ConvertRegionMessage,
-  ForgetResultFilesMessage,
   isConvertProgressDeltaMessage,
   isConvertQueueingFinishedMessage,
   isConvertRegionDoneMessage,
@@ -10,7 +9,6 @@ import {
   isPostDoneMessage,
   isProgressMessage,
   ProgressMessage,
-  ResultFilesMessage,
   StartPostMessage,
   StartPreMessage,
 } from "../share/messages";
@@ -36,7 +34,6 @@ export class ConvertSession {
   private readonly kvs = new KvsServer();
   private readonly filename: string;
   private readonly filesize: number;
-  private readonly sw: ServiceWorkerLauncher;
 
   constructor(
     readonly id: string,
@@ -48,7 +45,6 @@ export class ConvertSession {
   ) {
     this.filename = file.name;
     this.filesize = file.size;
-    this.sw = new ServiceWorkerLauncher();
 
     const pre = new Worker("./script/pre.js", { name: "pre" });
     pre.onmessage = (ev: MessageEvent) => {
@@ -153,24 +149,16 @@ export class ConvertSession {
         const elapsed = Date.now() - this.startTime;
         console.log(`[front] (${id}) finished in ${elapsed / 1000.0} sec`);
 
-        const prefix = `/je2be/${id}/out/`;
-        const fileNames = [...this.kvs.storage.keys()].filter((path) =>
-          path.startsWith(prefix)
-        );
-        const files: string[][] = [];
-        for (const filename of fileNames) {
-          const entity = this.kvs.storage.get(filename);
-          files.push([filename, entity.url]);
-        }
-        const m: ResultFilesMessage = { type: "result_message", id, files };
-        this.sw.post({ message: m, launch: true }).catch(console.error);
-        this.reduce((state) => {
-          return {
-            ...state,
-            dl: { id, filename },
-            id: undefined,
-          };
-        }, true);
+        const sw = new ServiceWorkerLauncher();
+        sw.launch().then(() => {
+          this.reduce((state) => {
+            return {
+              ...state,
+              dl: { id, filename },
+              id: undefined,
+            };
+          }, true);
+        });
       } else {
         this.kvs.onMessage(ev);
       }
@@ -179,11 +167,6 @@ export class ConvertSession {
   }
 
   close() {
-    const forget: ForgetResultFilesMessage = {
-      type: "forget_result_files",
-      id: this.id,
-    };
-    this.sw.post({ message: forget, launch: false }).catch(console.error);
     this.kvs.close();
   }
 
