@@ -88,11 +88,17 @@ async function mountInputFiles(id: string): Promise<void> {
     prefix: `/je2be/${id}/in`,
     mountPoint: `/je2be/${id}/in`,
   });
+  await mountFilesAsWorkerFs({
+    kvs: sKvs,
+    prefix: `/je2be/${id}/entities`,
+    mountPoint: `/je2be/${id}/entities`,
+  });
 }
 
 function unmountInputFiles(id: string) {
   unmount(`/je2be/${id}/wd`);
   unmount(`/je2be/${id}/in`);
+  unmount(`/je2be/${id}/entities`);
 }
 
 async function cleanup(id: string): Promise<void> {
@@ -101,6 +107,9 @@ async function cleanup(id: string): Promise<void> {
 
   const in_ = `/je2be/${id}/in`;
   await sKvs.removeKeys({ withPrefix: in_ });
+
+  const entities = `/je2be/${id}/entities`;
+  await sKvs.removeKeys({ withPrefix: entities });
 }
 
 async function collectOutputFiles(id: string): Promise<void> {

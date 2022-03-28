@@ -41,7 +41,7 @@ static shared_ptr<je::Chunk> ChunkFromRegionBuffer(vector<uint8_t> const &buffer
     return nullptr;
   }
   uint32_t loc = *(uint32_t *)(buffer.data() + 4 * index);
-  loc = Int32FromBE(loc);
+  loc = I32FromBE(loc);
   if (loc == 0) {
     return nullptr;
   }
@@ -51,7 +51,7 @@ static shared_ptr<je::Chunk> ChunkFromRegionBuffer(vector<uint8_t> const &buffer
     return nullptr;
   }
   uint32_t chunkSize = *(uint32_t *)(buffer.data() + sectorOffset * kSectorSize);
-  chunkSize = Int32FromBE(chunkSize);
+  chunkSize = I32FromBE(chunkSize);
   if (chunkSize == 0) {
     return nullptr;
   }
@@ -66,7 +66,7 @@ static shared_ptr<je::Chunk> ChunkFromRegionBuffer(vector<uint8_t> const &buffer
   vector<uint8_t> chunkBuffer;
   chunkBuffer.reserve(chunkSize);
   copy_n(buffer.begin() + sectorOffset * kSectorSize + 4 + 1, chunkSize, back_inserter(chunkBuffer));
-  if (!Compression::decompress(chunkBuffer)) {
+  if (!Compression::Decompress(chunkBuffer)) {
     return nullptr;
   }
   auto root = std::make_shared<mcfile::nbt::CompoundTag>();
@@ -78,7 +78,16 @@ static shared_ptr<je::Chunk> ChunkFromRegionBuffer(vector<uint8_t> const &buffer
   return je::Chunk::MakeChunk(cx, cz, root);
 }
 
-static je2be::tobe::Chunk::Result ConvertChunk(mcfile::Dimension dim, DbInterface &db, mcfile::je::Region const &region, vector<uint8_t> const &buffer, int cx, int cz, JavaEditionMap mapInfo) {
+static je2be::tobe::Chunk::Result ConvertChunk(mcfile::Dimension dim,
+                                               DbInterface &db,
+                                               mcfile::je::Region const &region,
+                                               vector<uint8_t> const &buffer,
+                                               int cx,
+                                               int cz,
+                                               JavaEditionMap mapInfo,
+                                               fs::path const &entitiesDir,
+                                               optional<LevelData::PlayerAttachedEntities> playerAttachedEntities,
+                                               int64_t gameTick) {
   try {
     auto const &chunk = ChunkFromRegionBuffer(buffer, cx, cz);
     Chunk::Result r;
@@ -95,7 +104,17 @@ static je2be::tobe::Chunk::Result ConvertChunk(mcfile::Dimension dim, DbInterfac
         chunk->fEntities.swap(entities);
       }
     }
-    r.fData = je2be::tobe::Chunk::MakeWorldData(chunk, region, dim, db, mapInfo);
+
+    optional<Chunk::PlayerAttachedEntities> cpae;
+    if (playerAttachedEntities && playerAttachedEntities->fDim == dim && playerAttachedEntities->fVehicle && playerAttachedEntities->fVehicle->fChunk == Pos2i(cx, cz)) {
+      Chunk::PlayerAttachedEntities pae;
+      pae.fLocalPlayerUid = playerAttachedEntities->fLocalPlayerUid;
+      pae.fVehicle = playerAttachedEntities->fVehicle->fVehicle;
+      pae.fPassengers.swap(playerAttachedEntities->fVehicle->fPassengers);
+      cpae = pae;
+    }
+
+    r.fData = je2be::tobe::Chunk::MakeWorldData(chunk, region, dim, db, mapInfo, entitiesDir, cpae, gameTick);
     return r;
   } catch (...) {
     Chunk::Result r;
@@ -107,7 +126,13 @@ static je2be::tobe::Chunk::Result ConvertChunk(mcfile::Dimension dim, DbInterfac
 }
 
 //id, worldDir, rx, rz, dim, storage, javaEditionMap.length
-bool ConvertRegion(string id, string worldDirString, int rx, int rz, int dim, intptr_t javaEditionMap, int javaEditionMapSize) {
+bool ConvertRegion(string id,
+                   string worldDirString,
+                   int rx,
+                   int rz,
+                   int dim,
+                   intptr_t javaEditionMap,
+                   int javaEditionMapSize) {
   std::unordered_map<int32_t, int8_t> entries;
   int32_t *ptr = (int32_t *)javaEditionMap;
   for (int i = 0; i + 1 < javaEditionMapSize; i += 2) {
@@ -118,7 +143,6 @@ bool ConvertRegion(string id, string worldDirString, int rx, int rz, int dim, in
   free(ptr);
 
   ::ProxyDb db(id);
-  InputOption io;
   JavaEditionMap jem(entries);
   Dimension d = static_cast<Dimension>(dim);
   fs::path worldDir = fs::path(worldDirString);
@@ -145,9 +169,29 @@ bool ConvertRegion(string id, string worldDirString, int rx, int rz, int dim, in
   }
   fp.close();
 
+  fs::path input("/wfs");
+  je2be::tobe::Options opt;
+  auto data = Level::Read(opt.getLevelDatFilePath(input));
+  if (!data) {
+    return false;
+  }
+  Level level = Level::Import(*data);
+  auto levelData = make_unique<LevelData>(input, opt, level.fCurrentTick);
+  Converter::LocalPlayerData(*data, *levelData);
+
   for (int cx = region->minChunkX(); cx <= region->maxChunkX(); cx++) {
     for (int cz = region->minChunkZ(); cz <= region->maxChunkZ(); cz++) {
-      auto result = ConvertChunk(d, db, *region, buffer, cx, cz, jem);
+      auto entitiesDir = fs::path("/je2be") / id / "entities" / to_string(dim) / ("c." + to_string(cx) + "." + to_string(cz));
+      auto result = ConvertChunk(d,
+                                 db,
+                                 *region,
+                                 buffer,
+                                 cx,
+                                 cz,
+                                 jem,
+                                 entitiesDir,
+                                 levelData->fPlayerAttachedEntities,
+                                 level.fCurrentTick);
       Report(id, 1);
       if (!result.fData) {
         continue;
@@ -166,7 +210,7 @@ bool ConvertRegion(string id, string worldDirString, int rx, int rz, int dim, in
   auto file = fs::path("/je2be") / id / "wd" / to_string(dim) / (basename + ".nbt");
   auto stream = make_shared<mcfile::stream::FileOutputStream>(file);
   mcfile::stream::OutputStreamWriter writer(stream);
-  if (!nbt->write(writer)) {
+  if (!nbt->writeAsRoot(writer)) {
     return false;
   }
 

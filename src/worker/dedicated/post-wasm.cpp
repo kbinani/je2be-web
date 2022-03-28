@@ -64,17 +64,19 @@ static void PutFile(string id, fs::path p) {
 int Post(string id, intptr_t dbPtr) {
   fs::path inputDir = fs::path("/je2be") / id / "in";
   fs::path outputDir = fs::path("/je2be") / id / "out";
-  auto dbPath = outputDir / "db";
 
+  auto dbPath = outputDir / "db";
   error_code ec;
   fs::create_directories(dbPath, ec);
   if (ec) {
     return -1;
   }
 
-  InputOption io;
-  io.fLevelDirectoryStructure = LevelDirectoryStructure::Vanilla;
-  auto data = Level::Read(io.getLevelDatFilePath(inputDir));
+  je2be::tobe::RawDb *db = (je2be::tobe::RawDb *)dbPtr;
+
+  Options opt;
+  opt.fLevelDirectoryStructure = LevelDirectoryStructure::Vanilla;
+  auto data = Level::Read(opt.getLevelDatFilePath(inputDir));
   if (!data) {
     return -2;
   }
@@ -82,7 +84,7 @@ int Post(string id, intptr_t dbPtr) {
 
   bool ok = Datapacks::Import(inputDir, outputDir);
 
-  auto levelData = make_unique<LevelData>(inputDir, io);
+  auto levelData = make_unique<LevelData>(inputDir, opt, level.fCurrentTick);
 
   auto worldDataDir = fs::path("/je2be") / id / "wd";
   for (Dimension dim : {Dimension::Overworld, Dimension::Nether, Dimension::End}) {
@@ -94,8 +96,8 @@ int Post(string id, intptr_t dbPtr) {
       auto file = it.path();
       auto s = make_shared<stream::FileInputStream>(file);
       stream::InputStreamReader reader(s);
-      auto tag = make_shared<nbt::CompoundTag>();
-      if (!tag->read(reader)) {
+      auto tag = nbt::CompoundTag::Read(reader);
+      if (!tag) {
         return -3;
       }
       auto wd = WorldData::FromNbt(*tag);
@@ -104,12 +106,14 @@ int Post(string id, intptr_t dbPtr) {
       }
       wd->drain(*levelData);
     }
+    if (!World::PutWorldEntities(dim, *db, fs::path("/je2be") / id / "entities" / to_string(static_cast<uint8_t>(dim)), 0)) {
+      return -5;
+    }
   }
 
   auto ldbDir = fs::path("/je2be") / id / "ldb";
   ec.clear();
   fs::create_directories(ldbDir, ec);
-  je2be::tobe::RawDb *db = (je2be::tobe::RawDb *)dbPtr;
 
   auto localPlayerData = Converter::LocalPlayerData(*data, *levelData);
   if (localPlayerData) {
@@ -126,7 +130,7 @@ int Post(string id, intptr_t dbPtr) {
   }
 
   if (!db->valid()) {
-    return -5;
+    return -6;
   }
 
   db->fOnFileCreated = [id](fs::path p) {

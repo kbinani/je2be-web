@@ -14,15 +14,15 @@ using namespace je2be::tobe;
 namespace fs = std::filesystem;
 
 int Pre(std::string id, std::string input, std::string output, int levelStructure, intptr_t javaEditionMap) {
-  InputOption io;
-  io.fLevelDirectoryStructure = LevelDirectoryStructure::Vanilla;
+  Options opt;
+  opt.fLevelDirectoryStructure = LevelDirectoryStructure::Vanilla;
   switch (levelStructure) {
   case 1:
-    io.fLevelDirectoryStructure = LevelDirectoryStructure::Paper;
+    opt.fLevelDirectoryStructure = LevelDirectoryStructure::Paper;
     break;
   case 0:
   default:
-    io.fLevelDirectoryStructure = LevelDirectoryStructure::Vanilla;
+    opt.fLevelDirectoryStructure = LevelDirectoryStructure::Vanilla;
     break;
   }
   fs::path inputPath(input);
@@ -37,7 +37,7 @@ int Pre(std::string id, std::string input, std::string output, int levelStructur
     return -1;
   }
 
-  JavaEditionMap jem(input, io);
+  JavaEditionMap jem(input, opt);
 
   size_t length = jem.fScaleLookupTable.size() * 2;
   int32_t *ptr = (int32_t *)malloc(4 * length);

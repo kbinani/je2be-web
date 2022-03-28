@@ -4,7 +4,7 @@ import {
   isConvertRegionMessage,
 } from "../../share/messages";
 import { writeI32 } from "../../share/heap";
-import { exists, mkdirp, readFile } from "../../share/fs-ext";
+import { exists, iterate, mkdirp, readFile } from "../../share/fs-ext";
 import { KvsClient } from "../../share/kvs";
 import { mountFilesAsWorkerFs } from "../../share/kvs-ext";
 
@@ -66,6 +66,17 @@ async function convertRegion(m: ConvertRegionMessage): Promise<void> {
     throw new Error(`Cannot read file ${path}`);
   }
   await sKvs.put(path, data);
+
+  await iterate(`/je2be/${id}/entities/${dim}`, async ({ path, dir }) => {
+    if (dir) {
+      return;
+    }
+    const data = readFile(path);
+    if (!data) {
+      throw new Error(`Cannot read file ${path}`);
+    }
+    await sKvs.put(path, data);
+  });
 
   Module.RemoveAll(`/je2be`);
   const done: ConvertRegionDoneMessage = { type: "region_done", id };

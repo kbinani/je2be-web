@@ -101,7 +101,9 @@ export async function iterate(
       await callback({ path, dir: false });
     }
   };
-  await visit(FS.lookupPath(directory));
+  if (exists(directory)) {
+    await visit(FS.lookupPath(directory));
+  }
 }
 
 export function writeFile(path: string, data: Uint8Array) {
