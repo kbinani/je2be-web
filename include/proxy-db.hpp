@@ -5,7 +5,7 @@ private:
   std::string const fId;
 
 public:
-  ProxyDb(std::string id) : fId(id) {
+  explicit ProxyDb(std::string const &id) : fId(id) {
 #if defined(EMSCRIPTEN)
     EM_ASM({
       const id = UTF8ToString($0, $1);
