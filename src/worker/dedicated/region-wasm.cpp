@@ -69,13 +69,13 @@ static shared_ptr<je::Chunk> ChunkFromRegionBuffer(vector<uint8_t> const &buffer
   if (!Compression::Decompress(chunkBuffer)) {
     return nullptr;
   }
-  auto root = std::make_shared<mcfile::nbt::CompoundTag>();
   auto bs = std::make_shared<mcfile::stream::ByteStream>(chunkBuffer);
   stream::InputStreamReader reader(bs);
-  if (!root->read(reader)) {
+  auto tag = CompoundTag::Read(reader);
+  if (!tag) {
     return nullptr;
   }
-  return je::Chunk::MakeChunk(cx, cz, root);
+  return je::Chunk::MakeChunk(cx, cz, tag);
 }
 
 static je2be::tobe::Chunk::Result ConvertChunk(mcfile::Dimension dim,
@@ -154,20 +154,13 @@ bool ConvertRegion(string id,
   }
   auto wd = make_shared<WorldData>(d);
   auto regionFile = region->fFilePath;
-  error_code ec;
-  int size = fs::file_size(regionFile, ec);
-  if (ec) {
+  auto fileStream = make_shared<mcfile::stream::FileInputStream>(regionFile);
+  vector<uint8_t> buffer;
+  mcfile::stream::InputStream::ReadUntilEos(*fileStream, buffer);
+  if (buffer.empty()) {
     return false;
   }
-  ScopedFile fp(File::Open(regionFile, File::Mode::Read));
-  if (!fp) {
-    return false;
-  }
-  vector<uint8_t> buffer(size);
-  if (fread(buffer.data(), size, 1, fp) != 1) {
-    return false;
-  }
-  fp.close();
+  fileStream.reset();
 
   fs::path input("/wfs");
   je2be::tobe::Options opt;
