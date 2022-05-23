@@ -2,17 +2,17 @@
 # yarn lockfile v1
 
 
-"@bugsnag/browser@^7.14.1":
-  version "7.14.1"
-  resolved "https://registry.yarnpkg.com/@bugsnag/browser/-/browser-7.14.1.tgz#ba92aae1fb40aeba0983d2af950f70cc82729882"
-  integrity sha512-xenvisYx6xFNuh7GGR/SCLcRs2H6AXn58Ha/u/Yhk+typ1oE5EFAy15+2vdGMDmZp0GsAEgrOTsEZ30uSKdC1w==
+"@bugsnag/browser@^7.16.5":
+  version "7.16.5"
+  resolved "https://registry.yarnpkg.com/@bugsnag/browser/-/browser-7.16.5.tgz#ff0df469c52a2091e96a8fbce4b52e8a435c371e"
+  integrity sha512-EftyLRfUgQL/7leHhlfL756KlcBsG8C7wwMRRoyzGnAIH0Uu/l1RfBi5Tf1Fhk+LOwkDedTxDtQOa70EC8oS8A==
   dependencies:
-    "@bugsnag/core" "^7.14.0"
+    "@bugsnag/core" "^7.16.1"
 
-"@bugsnag/core@^7.14.0":
-  version "7.14.0"
-  resolved "https://registry.yarnpkg.com/@bugsnag/core/-/core-7.14.0.tgz#a946d106f94d4ec5725a1208e84f542e2b56bc4d"
-  integrity sha512-DKN7hNEA6zEOgnucihgNEiMmx4GVaFHD9dJUYQFiouAIL19R/TLgG6B+pGC+QAqHVYsCUt5XDnG8jD+J+3fKOA==
+"@bugsnag/core@^7.16.1":
+  version "7.16.1"
+  resolved "https://registry.yarnpkg.com/@bugsnag/core/-/core-7.16.1.tgz#0376b5c4dd7b44f57eb503775857d974e4b5afc9"
+  integrity sha512-zuBnL7B329VldItRqhXYrp1hjmjZnltJwNXMysi9WtY4t29WKk5LVwgWb1mPM9clJ0FoObZ7kvvQMUTKh3ezFQ==
   dependencies:
     "@bugsnag/cuid" "^3.0.0"
     "@bugsnag/safe-json-stringify" "^6.0.0"
@@ -25,30 +25,30 @@
   resolved "https://registry.yarnpkg.com/@bugsnag/cuid/-/cuid-3.0.0.tgz#2ee7642a30aee6dc86f5e7f824653741e42e5c35"
   integrity sha512-LOt8aaBI+KvOQGneBtpuCz3YqzyEAehd1f3nC5yr9TIYW1+IzYKa2xWS4EiMz5pPOnRPHkyyS5t/wmSmN51Gjg==
 
-"@bugsnag/js@^7.14.1":
-  version "7.14.1"
-  resolved "https://registry.yarnpkg.com/@bugsnag/js/-/js-7.14.1.tgz#b9368751da0883e90e2fa486e5947251cf8766b6"
-  integrity sha512-ygykhixXByzolFpOsUGr72ENgiL1t4TkvKvka2rhoSHOr5kul9TierjvmwBKNpkPdUpDNkgqw3y349jYzzjk+w==
+"@bugsnag/js@^7.16.5":
+  version "7.16.5"
+  resolved "https://registry.yarnpkg.com/@bugsnag/js/-/js-7.16.5.tgz#35f2b7816e44b6a73b3f39d20610a9ec32ea0da9"
+  integrity sha512-IzFkRRhisAdfAG5ihKbd9c2YtBmYWuA3Yw+KnzwVwQ/dDZKpWMPzQOv9uVznA1u8Dqv9347e/uUbRzudlGUJog==
   dependencies:
-    "@bugsnag/browser" "^7.14.1"
-    "@bugsnag/node" "^7.14.1"
+    "@bugsnag/browser" "^7.16.5"
+    "@bugsnag/node" "^7.16.2"
 
-"@bugsnag/node@^7.14.1":
-  version "7.14.1"
-  resolved "https://registry.yarnpkg.com/@bugsnag/node/-/node-7.14.1.tgz#609cbb6b6dddce8d3458dcc0a0caa56c727a9fb5"
-  integrity sha512-QhdFez60rTlEueg5rA0W6x8UrTcEnssv4XVPgfooGe2fYh6O89RFjI7zVVdw8QXUyqdf7w4WzyAsCir3XEhCqQ==
+"@bugsnag/node@^7.16.2":
+  version "7.16.2"
+  resolved "https://registry.yarnpkg.com/@bugsnag/node/-/node-7.16.2.tgz#8ac1b41786306d8917fb9fe222ada74fe0c4c6d5"
+  integrity sha512-V5pND701cIYGzjjTwt0tuvAU1YyPB9h7vo5F/DzrDHRPmCINA/oVbc0Twco87knc2VPe8ntGFqTicTY65iOWzg==
   dependencies:
-    "@bugsnag/core" "^7.14.0"
+    "@bugsnag/core" "^7.16.1"
     byline "^5.0.0"
     error-stack-parser "^2.0.2"
     iserror "^0.0.2"
     pump "^3.0.0"
     stack-generator "^2.0.3"
 
-"@bugsnag/plugin-react@^7.14.0":
-  version "7.14.0"
-  resolved "https://registry.yarnpkg.com/@bugsnag/plugin-react/-/plugin-react-7.14.0.tgz#066e9e28b18db3141daff34e14da81b5f36ef901"
-  integrity sha512-bCrCb+6DeWQjnjHp9mk923b30m9Uz0ritNaFbLC6WqpX1KmWJJ6YebP/McqxsV8DXzX7qf3W4qzCWdatkaOeKA==
+"@bugsnag/plugin-react@^7.16.5":
+  version "7.16.5"
+  resolved "https://registry.yarnpkg.com/@bugsnag/plugin-react/-/plugin-react-7.16.5.tgz#ed0298e5ce5621d436339c977bdf89cbaacde4a2"
+  integrity sha512-GTBT+yV9kOZ3mv8ECcw21udEH/DjTs4LAz6sEfs9RXvE/tFfffjjBzarvvQsWQ9jqlW7q6KggVKmQQhNGgqGCg==
 
 "@bugsnag/safe-json-stringify@^6.0.0":
   version "6.0.0"
@@ -115,10 +115,15 @@ csstype@^3.0.2:
   resolved "https://registry.yarnpkg.com/csstype/-/csstype-3.0.10.tgz#2ad3a7bed70f35b965707c092e5f30b327c290e5"
   integrity sha512-2u44ZG2OcNUO9HDp/Jl8C07x6pU/eTR3ncV91SiK3dhG9TWvRVsCoJw14Ckx5DgWkzGA3waZWO3d7pgqpUI/XA==
 
-dexie@*, dexie@^3.2.0:
+dexie@*:
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/dexie/-/dexie-3.2.0.tgz#a1b0267b111f9422c4126da90d6b121b1deabeab"
   integrity sha512-OpS8ss1CLHYAhxRu6hT+/Gt1uLhKCf0O18xHBdRGlemOWXXRiiOZ0ty1/bACIJzGt1DGmvarzrPwYYt9EkRZfw==
+
+dexie@^3.2.2:
+  version "3.2.2"
+  resolved "https://registry.yarnpkg.com/dexie/-/dexie-3.2.2.tgz#fa6f2a3c0d6ed0766f8d97a03720056f88fe0e01"
+  integrity sha512-q5dC3HPmir2DERlX+toCBbHQXW5MsyrFqPFcovkH9N2S/UW/H3H5AWAB6iEOExeraAu+j+zRDG+zg/D7YhH0qg==
 
 end-of-stream@^1.1.0:
   version "1.4.4"
@@ -273,7 +278,7 @@ iserror@0.0.2, iserror@^0.0.2:
   resolved "https://registry.yarnpkg.com/js-tokens/-/js-tokens-4.0.0.tgz#19203fb59991df98e3a287050d4647cdeaf32499"
   integrity sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==
 
-jszip@*, jszip@^3.7.1:
+jszip@*:
   version "3.7.1"
   resolved "https://registry.yarnpkg.com/jszip/-/jszip-3.7.1.tgz#bd63401221c15625a1228c556ca8a68da6fda3d9"
   integrity sha512-ghL0tz1XG9ZEmRMcEN2vt7xabrDdqHHeykgARpmZ0BiIctWxM47Vt63ZO2dnp4QYt/xJVLLy5Zv1l/xRdh2byg==
@@ -282,6 +287,16 @@ jszip@*, jszip@^3.7.1:
     pako "~1.0.2"
     readable-stream "~2.3.6"
     set-immediate-shim "~1.0.1"
+
+jszip@^3.10.0:
+  version "3.10.0"
+  resolved "https://registry.yarnpkg.com/jszip/-/jszip-3.10.0.tgz#faf3db2b4b8515425e34effcdbb086750a346061"
+  integrity sha512-LDfVtOLtOxb9RXkYOwPyNBTQDL4eUbqahtoY6x07GiDJHwSYvn8sHHIw8wINImV3MqbMNve2gSuM1DDqEKk09Q==
+  dependencies:
+    lie "~3.3.0"
+    pako "~1.0.2"
+    readable-stream "~2.3.6"
+    setimmediate "^1.0.5"
 
 lie@~3.3.0:
   version "3.3.0"
@@ -379,6 +394,11 @@ set-immediate-shim@~1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/set-immediate-shim/-/set-immediate-shim-1.0.1.tgz#4b2b1b27eb808a9f8dcc481a58e5e56f599f3f61"
   integrity sha1-SysbJ+uAip+NzEgaWOXlb1mfP2E=
+
+setimmediate@^1.0.5:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/setimmediate/-/setimmediate-1.0.5.tgz#290cbb232e306942d7d7ea9b83732ab7856f8285"
+  integrity sha1-KQy7Iy4waULX1+qbg3Mqt4VvgoU=
 
 stack-generator@^2.0.3:
   version "2.0.5"
