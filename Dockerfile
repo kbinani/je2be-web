@@ -1,6 +1,6 @@
-ARG EMSCRIPTEN_VERSION=3.1.8
+ARG EMSCRIPTEN_VERSION=3.1.14
 FROM emscripten/emsdk:${EMSCRIPTEN_VERSION}
-ARG CMAKE_VERSION=3.22.3
+ARG CMAKE_VERSION=3.23.2
 RUN apt update \
     && apt remove cmake -y \
     && apt install gpg -y \
