@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
+
 if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
   add_definitions(
     -Wno-deprecated-declarations
@@ -17,6 +19,7 @@ set(je2be_common_em_compile_and_link_options
   -fexceptions
   -flto)
 set(je2be_common_em_compile_options
+  -pthread
   ${je2be_common_em_compile_and_link_options})
 set(je2be_common_em_link_options
   ${je2be_common_em_compile_and_link_options}
