@@ -18,9 +18,9 @@ add_subdirectory(deps/je2be EXCLUDE_FROM_ALL)
 
 set(je2be_common_em_compile_and_link_options
   -fexceptions
-  -flto)
+  -flto
+  -pthread)
 set(je2be_common_em_compile_options
-  -pthread
   ${je2be_common_em_compile_and_link_options})
 set(je2be_common_em_link_options
   ${je2be_common_em_compile_and_link_options}
@@ -32,8 +32,7 @@ set(je2be_common_em_link_options
   -sINLINING_LIMIT=1
   -sENVIRONMENT=worker
   -sINVOKE_RUN=0
-  -O3
-  -pthread)
+  -O3)
 
 list(APPEND pre_wasm_files src/worker/dedicated/pre-wasm.cpp)
 add_executable(pre-wasm ${pre_wasm_files})
