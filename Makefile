@@ -1,30 +1,30 @@
 .PHONY: all
-all: public/script/front.js public/sworker.js public/script/pre.js public/script/pre-wasm.js
+all: public/script/front.js public/sworker.js public/script/pre.js public/script/j2b-wasm.js
 
 .PHONY: clean
 clean:
-	rm -rf .wasm-built build/pre-wasm.js public/script
+	rm -rf .wasm-built build/j2b-wasm.js public/script
 
 .PHONY: build_docker_image
 build_docker_image:
 	docker build -t je2be_build_wasm .
 
 
-.wasm-built: src/worker/dedicated/pre-wasm.cpp include/proxy-db.hpp CMakeLists.txt
+.wasm-built: deps/je2be/example/j2b.cpp include/proxy-db.hpp CMakeLists.txt
 	mkdir -p build
 	docker run --rm -v $$(pwd):/src/je2be-web -u $$(id -u):$$(id -g) -w /src/je2be-web je2be_build_wasm make wasm_target
 	touch .wasm-built
 
 .PHONY: wasm_target
 wasm_target:
-	cd build && emcmake cmake .. && make -j $$(nproc) pre-wasm
+	cd build && emcmake cmake .. && make -j $$(nproc) j2b-wasm
 
 
-build/pre-wasm.js: .wasm-built
+build/j2b-wasm.js: .wasm-built
 
-public/script/pre-wasm.js: build/pre-wasm.js
+public/script/j2b-wasm.js: build/j2b-wasm.js
 	mkdir -p public/script
-	cp build/pre-wasm.js public/script/pre-wasm.js
+	cp build/j2b-wasm.js public/script/j2b-wasm.js
 
 
 public/script/pre.js: src/worker/dedicated/pre.ts src/share/fs-ext.ts src/worker/dedicated/index.d.ts src/share/messages.ts src/share/version.ts

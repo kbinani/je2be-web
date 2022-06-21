@@ -19,7 +19,7 @@ self.addEventListener("message", (ev: MessageEvent) => {
 const sKvs = new KvsClient();
 
 function startConvertRegion(m: ConvertRegionMessage) {
-  convertRegion(m).catch(console.error);
+  //convertRegion(m).catch(console.error);
 }
 
 async function convertRegion(m: ConvertRegionMessage): Promise<void> {

@@ -16,7 +16,7 @@ namespace fs = std::filesystem;
 static void Report(std::string id, double progress, double total) {
 #if defined(EMSCRIPTEN)
   EM_ASM({
-    //ProgressMessage
+    // ProgressMessage
     const m = {};
     m["type"] = "progress";
     m["stage"] = "compaction";

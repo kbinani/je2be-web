@@ -19,7 +19,7 @@ namespace fs = std::filesystem;
 static void Report(std::string id, int delta) {
 #if defined(EMSCRIPTEN)
   EM_ASM({
-    //ConvertProgressDeltaMessage
+    // ConvertProgressDeltaMessage
     const m = {};
     m["type"] = "convert_progress_delta";
     m["id"] = UTF8ToString($0, $1);
@@ -125,7 +125,7 @@ static je2be::tobe::Chunk::Result ConvertChunk(mcfile::Dimension dim,
   }
 }
 
-//id, worldDir, rx, rz, dim, storage, javaEditionMap.length
+// id, worldDir, rx, rz, dim, storage, javaEditionMap.length
 bool ConvertRegion(string id,
                    string worldDirString,
                    int rx,

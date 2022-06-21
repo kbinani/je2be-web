@@ -7,7 +7,7 @@ import {
   StartPreMessage,
   WorkerError,
 } from "../../share/messages";
-import { unmount } from "../../share/fs-ext";
+import {iterate, mkdirp, unmount} from "../../share/fs-ext";
 import JSZip from "jszip";
 import { readI32 } from "../../share/heap";
 import { promiseUnzipFileInZip } from "../../share/zip-ext";
@@ -18,13 +18,19 @@ import { DlStore } from "../../share/dl";
 self.addEventListener("message", (ev: MessageEvent) => {
   if (isStartPreMessage(ev.data)) {
     const { id } = ev.data;
+    console.log(Module);
     start(ev.data).finally(() => {
-      Module.RemoveAll(`/je2be/${id}`);
+      // Module.RemoveAll(`/je2be/${id}`);
     });
   }
 });
 
-self.importScripts("./pre-wasm.js");
+self.importScripts("./j2b-wasm.js");
+
+// console.log(Module);
+// Module.onRuntimeInitialized = () => {
+//   console.log(`onRuntimeInitialized; Module=`, Module);
+// };
 
 const sKvs = new KvsClient();
 
@@ -62,36 +68,52 @@ async function start(m: StartPreMessage): Promise<void> {
     prefix: `/je2be/${id}/in`,
     mountPoint: `/je2be/${id}/in`,
   });
-  const levelStructure = 0; //TODO: 0 = vanilla, 1 = spigot/paper
-  const storage = Module._malloc(4);
-  const javaEditionMapSize = Module.Pre(
-    id,
-    `/je2be/${id}/in`,
-    `/je2be/${id}/out`,
-    levelStructure,
-    storage
-  );
-  unmount(`/je2be/${id}/in`);
-  console.log(`[pre] (${id}) pre done`);
+  await mkdirp(`/je2be/${id}/out`);
+  console.log(`calling Module.run...`);
+  Module.run(
+    `j2b`,
+    "-i", `/je2be/${id}/in`,
+    "-o", `/je2be/${id}/out`);
+  console.log(`run finished`);
 
-  console.log(`[pre] (${id}) queue...`);
-  const javaEditionMap = [];
-  const ptr = readI32(storage);
-  for (let i = 0; i + 1 < javaEditionMapSize; i += 2) {
-    const key = readI32(ptr + i * 4);
-    const value = readI32(ptr + i * 4 + 4);
-    javaEditionMap.push(key);
-    javaEditionMap.push(value);
-  }
-  Module._free(ptr);
-  Module._free(storage);
-  queue(id, regions, javaEditionMap);
-  console.log(`[pre] (${id}) queue done: queue length=${regions.length}`);
-  const last: ConvertQueueingFinishedMessage = {
-    id,
-    type: "queueing_finished",
-  };
-  self.postMessage(last);
+  console.log(`iterate output dir...`);
+  await iterate(`/je2be/${id}/out`, async ({path, dir}) => {
+    console.log(path);
+  });
+  console.log(`done`);
+
+  // const storage = Module._malloc(4);
+  // console.log(`calling Module._main`);
+  // const ret = Module._main(0, 0);
+  // console.log(`Module._main finished; ret=`, ret);
+  // const javaEditionMapSize = Module.Pre(
+  //   id,
+  //   `/je2be/${id}/in`,
+  //   `/je2be/${id}/out`,
+  //   levelStructure,
+  //   storage
+  // );
+  unmount(`/je2be/${id}/in`);
+  // console.log(`[pre] (${id}) pre done`);
+
+  // console.log(`[pre] (${id}) queue...`);
+  // const javaEditionMap = [];
+  // const ptr = readI32(storage);
+  // for (let i = 0; i + 1 < javaEditionMapSize; i += 2) {
+  //   const key = readI32(ptr + i * 4);
+  //   const value = readI32(ptr + i * 4 + 4);
+  //   javaEditionMap.push(key);
+  //   javaEditionMap.push(value);
+  // }
+  // Module._free(ptr);
+  // Module._free(storage);
+  // queue(id, regions, javaEditionMap);
+  // console.log(`[pre] (${id}) queue done: queue length=${regions.length}`);
+  // const last: ConvertQueueingFinishedMessage = {
+  //   id,
+  //   type: "queueing_finished",
+  // };
+  // self.postMessage(last);
 }
 
 async function extract(file: File, id: string): Promise<Region[]> {

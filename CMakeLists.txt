@@ -19,26 +19,29 @@ add_subdirectory(deps/je2be EXCLUDE_FROM_ALL)
 set(je2be_common_em_compile_and_link_options
   -fexceptions
   -flto
-  -pthread)
+  -pthread
+  -g)
 set(je2be_common_em_compile_options
   ${je2be_common_em_compile_and_link_options})
 set(je2be_common_em_link_options
   ${je2be_common_em_compile_and_link_options}
-  -g2
-  --bind
+  # -g2
+  # --bind
   -lworkerfs.js
   -sSINGLE_FILE=1
-  -sALLOW_MEMORY_GROWTH=1
+  # -sALLOW_MEMORY_GROWTH=1
   -sINLINING_LIMIT=1
   -sENVIRONMENT=worker
   -sINVOKE_RUN=0
-  -O3)
+  -sPROXY_TO_PTHREAD
+  # -O3
+  -sPTHREAD_POOL_SIZE=10)
 
-list(APPEND pre_wasm_files src/worker/dedicated/pre-wasm.cpp)
-add_executable(pre-wasm ${pre_wasm_files})
-target_link_libraries(pre-wasm je2be)
-target_compile_options(pre-wasm PRIVATE ${je2be_common_em_compile_options})
-target_link_options(pre-wasm PRIVATE ${je2be_common_em_link_options})
+list(APPEND j2b_wasm_files src/worker/dedicated/pre-wasm.cpp) # deps/je2be/example/j2b.cpp
+add_executable(j2b-wasm ${j2b_wasm_files})
+target_link_libraries(j2b-wasm je2be)
+target_compile_options(j2b-wasm PRIVATE ${je2be_common_em_compile_options})
+target_link_options(j2b-wasm PRIVATE ${je2be_common_em_link_options})
 
-list(APPEND all_files ${pre_wasm_files})
+list(APPEND all_files ${j2b_wasm_files})
 source_group(TREE ${CMAKE_CURRENT_LIST_DIR} FILES ${all_files})
