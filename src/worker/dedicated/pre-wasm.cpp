@@ -13,7 +13,8 @@ using namespace std;
 // using namespace je2be::tobe;
 namespace fs = std::filesystem;
 
-EMSCRIPTEN_KEEPALIVE int work(char *input, char *output) {
+EMSCRIPTEN_KEEPALIVE
+extern "C" int work(char *input, char *output) {
   return 2;
 }
 
