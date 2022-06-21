@@ -28,11 +28,11 @@ set(je2be_common_em_link_options
   # -g2
   # --bind
   -lworkerfs.js
-  -sSINGLE_FILE=1
+  # -sSINGLE_FILE=1
   # -sALLOW_MEMORY_GROWTH=1
   -sINLINING_LIMIT=1
   -sENVIRONMENT=worker
-  # -sINVOKE_RUN=0
+  -sINVOKE_RUN=0
   -sPROXY_TO_PTHREAD
   # -O3
   -sPTHREAD_POOL_SIZE=10)
