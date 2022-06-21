@@ -13,6 +13,10 @@ using namespace std;
 // using namespace je2be::tobe;
 namespace fs = std::filesystem;
 
+EMSCRIPTEN_KEEPALIVE int work(char *input, char *output) {
+  return 2;
+}
+
 int main(int argc, char *argv[]) {
   std::cout << "argc=" << argc << std::endl;
   for (int i = 0; i < argc; i++) {

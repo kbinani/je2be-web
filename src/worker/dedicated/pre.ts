@@ -40,6 +40,11 @@ type Region = {
   rz: number;
 };
 
+function StringToUTF8(s: string) : any {
+  //@ts-ignore
+  return allocateUTF8(s);
+}
+
 async function start(m: StartPreMessage): Promise<void> {
   console.log(`[pre] (${m.id}) start`);
   const { id, file } = m;
@@ -73,12 +78,16 @@ async function start(m: StartPreMessage): Promise<void> {
 
   console.log(Module.cwrap);
   console.log(Module.ccall);
+  const input = StringToUTF8(`/je2be/${id}/in`);
+  const output = StringToUTF8(`/je2be/${id}/out`);
+  // const main = Module.cwrap()
   // Module.run(
   //   `j2b`,
   //   "-i", `/je2be/${id}/in`,
   //   "-o", `/je2be/${id}/out`);
-  Module._main(0, 0);
-  console.log(`run finished`);
+  // Module._main(0, 0);
+  const ret = Module._work(input, output);
+  console.log(`run finished; ret=`, ret);
 
   console.log(`iterate output dir...`);
   await iterate(`/je2be/${id}/out`, async ({path, dir}) => {
