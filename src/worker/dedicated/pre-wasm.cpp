@@ -13,7 +13,7 @@ using namespace std;
 // using namespace je2be::tobe;
 namespace fs = std::filesystem;
 
-int main(int argc, char *argv[]) {
+extern "C" int main(int argc, char *argv[]) {
   std::cout << "argc=" << argc << std::endl;
   for (int i = 0; i < argc; i++) {
     std::cout << "#" << i << "; " << argv[i] << std::endl;
