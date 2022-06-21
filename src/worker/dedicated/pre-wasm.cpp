@@ -5,7 +5,7 @@
 
 #include <iostream>
 
-// #include <je2be.hpp>
+#include <je2be.hpp>
 
 using namespace std;
 // using namespace mcfile;
@@ -15,9 +15,12 @@ namespace fs = std::filesystem;
 
 EMSCRIPTEN_KEEPALIVE
 extern "C" int work(char *input, char *output) {
-  cout << "input=" << input << endl;
-  cout << "output=" << output << endl;
-  return 2;
+  je2be::LevelDirectoryStructure structure = je2be::LevelDirectoryStructure::Vanilla;
+  int concurrency = std::thread::hardware_concurrency();
+  je2be::tobe::Options options;
+  options.fLevelDirectoryStructure = structure;
+  je2be::tobe::Converter converter(std::filesystem::path(input), std::filesystem::path(output), options);
+  return converter.run(concurrency) ? 0 : -1;
 }
 
 int main(int argc, char *argv[]) {
