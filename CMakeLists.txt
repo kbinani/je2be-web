@@ -35,7 +35,8 @@ set(je2be_common_em_link_options
   -sINVOKE_RUN=0
   # -sPROXY_TO_PTHREAD
   # -O3
-  -sPTHREAD_POOL_SIZE=10)
+  -sPTHREAD_POOL_SIZE=10
+  -sEXPORTED_RUNTIME_METHODS=ccall,cwrap)
 
 list(APPEND j2b_wasm_files src/worker/dedicated/pre-wasm.cpp) # deps/je2be/example/j2b.cpp
 add_executable(j2b-wasm ${j2b_wasm_files})

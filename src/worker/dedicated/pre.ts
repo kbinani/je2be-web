@@ -70,6 +70,9 @@ async function start(m: StartPreMessage): Promise<void> {
   });
   await mkdirp(`/je2be/${id}/out`);
   console.log(`calling Module.run...`);
+
+  console.log(Module.cwrap);
+  console.log(Module.ccall);
   // Module.run(
   //   `j2b`,
   //   "-i", `/je2be/${id}/in`,
