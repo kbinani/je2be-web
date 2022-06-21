@@ -20,7 +20,16 @@ extern "C" int work(char *input, char *output) {
   je2be::tobe::Options options;
   options.fLevelDirectoryStructure = structure;
   je2be::tobe::Converter converter(std::filesystem::path(input), std::filesystem::path(output), options);
-  return converter.run(concurrency) ? 0 : -1;
+
+  struct Reporter : public je2be::tobe::Progress {
+    bool report(Phase phase, double progress, double total) override {
+      std::cout << (int)phase << " " << progress << "/" << total << std::endl;
+      return true;
+    }
+  };
+  Reporter reporter;
+
+  return converter.run(concurrency, &reporter) ? 0 : -1;
 }
 
 int main(int argc, char *argv[]) {
