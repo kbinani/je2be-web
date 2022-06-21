@@ -15,6 +15,6 @@ RUN apt update \
     && sh ./cmake-${CMAKE_VERSION}-linux-x86_64.sh --skip-license --prefix=/usr/local --exclude-subdir \
     && rm -f /src/cmake-${CMAKE_VERSION}-linux-x86_64.sh
 RUN cd /emsdk/upstream/emscripten \
-    && ./embuilder.py build --lto libembind-rtti libGL libal libhtml5 libstubs libc libcompiler_rt libc++ libc++abi libdlmalloc libsockets libnoexit \
+    && ./embuilder.py build --lto libembind-rtti libGL libGL-mt libal libhtml5 libstubs libc libc-mt libcompiler_rt libcompiler_rt-mt libc++ libc++-mt libc++abi libc++abi-mt libdlmalloc libdlmalloc-mt libsockets libsockets-mt libnoexit \
     && chown emscripten:emscripten -R /emsdk/upstream/emscripten/cache/sysroot/lib/wasm32-emscripten/lto \
     && chmod og+w /emsdk/upstream/emscripten/cache/sysroot/lib/wasm32-emscripten/lto
