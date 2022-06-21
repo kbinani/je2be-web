@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 
 if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
   add_definitions(
@@ -31,7 +32,8 @@ set(je2be_common_em_link_options
   -sINLINING_LIMIT=1
   -sENVIRONMENT=worker
   -sINVOKE_RUN=0
-  -O3)
+  -O3
+  -pthread)
 
 list(APPEND pre_wasm_files src/worker/dedicated/pre-wasm.cpp)
 add_executable(pre-wasm ${pre_wasm_files})
