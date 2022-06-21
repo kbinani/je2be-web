@@ -15,6 +15,8 @@ namespace fs = std::filesystem;
 
 EMSCRIPTEN_KEEPALIVE
 extern "C" int work(char *input, char *output) {
+  cout << "input=" << input << endl;
+  cout << "output=" << output << endl;
   return 2;
 }
 

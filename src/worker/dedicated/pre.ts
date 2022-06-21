@@ -88,6 +88,8 @@ async function start(m: StartPreMessage): Promise<void> {
   // Module._main(0, 0);
   const ret = Module._work(input, output);
   console.log(`run finished; ret=`, ret);
+  Module._free(input);
+  Module._free(output);
 
   console.log(`iterate output dir...`);
   await iterate(`/je2be/${id}/out`, async ({path, dir}) => {
