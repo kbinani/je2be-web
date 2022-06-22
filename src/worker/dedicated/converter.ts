@@ -63,7 +63,7 @@ async function start(m: StartPreMessage): Promise<void> {
   const inputPtr = StringToUTF8(`/je2be/${id}/in`);
   const outputPtr = StringToUTF8(`/je2be/${id}/out`);
   const idPtr = StringToUTF8(id);
-  const ok = Module._work(inputPtr, outputPtr, idPtr);
+  const ok = Module._j2b(inputPtr, outputPtr, idPtr);
   Module._free(inputPtr);
   Module._free(outputPtr);
   Module._free(idPtr);

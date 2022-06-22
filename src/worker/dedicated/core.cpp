@@ -9,7 +9,7 @@
 namespace fs = std::filesystem;
 
 EMSCRIPTEN_KEEPALIVE
-extern "C" int work(char *input, char *output, char *id) {
+extern "C" int j2b(char *input, char *output, char *id) {
   je2be::LevelDirectoryStructure structure = je2be::LevelDirectoryStructure::Vanilla;
   int concurrency = (int)std::thread::hardware_concurrency() - 1;
   je2be::tobe::Options options;
@@ -63,12 +63,4 @@ extern "C" int work(char *input, char *output, char *id) {
   Reporter reporter(idStr);
 
   return converter.run(concurrency, &reporter).ok() ? 0 : -1;
-}
-
-int main(int argc, char *argv[]) {
-  std::cout << "argc=" << argc << std::endl;
-  for (int i = 0; i < argc; i++) {
-    std::cout << "#" << i << "; " << argv[i] << std::endl;
-  }
-  return 0;
 }
