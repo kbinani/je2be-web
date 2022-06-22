@@ -1,9 +1,9 @@
 .PHONY: all
-all: public/script/front.js public/sworker.js public/script/converter.js public/script/core.js public/script/core.worker.js public/script/core.wasm
+all: public/script/front.js public/sworker.js public/script/converter.js public/script/core.js public/script/core.worker.js
 
 .PHONY: clean
 clean:
-	rm -rf .wasm-built build/core.js build/core.worker.js build/core.wasm public/script public/sworker.js
+	rm -rf .wasm-built build/core.js build/core.worker.js public/script public/sworker.js
 
 .PHONY: build_docker_image
 build_docker_image:
@@ -24,19 +24,12 @@ build/core.js: .wasm-built
 
 public/script/core.js: build/core.js
 	mkdir -p public/script
-	echo $@
-	echo $<
-	echo $^
-	cp build/core.js public/script/core.js
+	cp $^ $@
 
 
 public/script/core.worker.js: build/core.worker.js
 	mkdir -p public/script
-	cp build/core.worker.js public/script/core.worker.js
-
-public/script/core.wasm: build/core.wasm
-	mkdir -p public/script
-	cp build/core.wasm public/script/core.wasm
+	cp $^ $@
 
 public/script/converter.js: src/worker/dedicated/converter.ts src/share/fs-ext.ts src/worker/dedicated/index.d.ts src/share/messages.ts src/share/version.ts
 	yarn converter --minify
