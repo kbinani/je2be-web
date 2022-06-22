@@ -29,7 +29,7 @@ extern "C" int work(char *input, char *output) {
   };
   Reporter reporter;
 
-  return converter.run(concurrency, &reporter) ? 0 : -1;
+  return converter.run(concurrency, &reporter).ok() ? 0 : -1;
 }
 
 int main(int argc, char *argv[]) {
