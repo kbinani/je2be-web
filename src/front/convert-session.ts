@@ -37,7 +37,7 @@ export class ConvertSession {
         }, true);
       } else if (isPostDoneMessage(ev.data) && id === ev.data.id) {
         console.log(`[front] (${this.id}) post done`);
-        // this.post.terminate();
+        this.converter.terminate();
 
         const dot = this.filename.lastIndexOf(".");
         let filename = "world.mcworld";
