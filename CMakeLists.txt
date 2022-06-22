@@ -33,14 +33,13 @@ set(je2be_common_em_link_options
   -sINLINING_LIMIT=1
   -sENVIRONMENT=worker
   -sINVOKE_RUN=0
-  # -sPROXY_TO_PTHREAD
   # -O3
   -sPTHREAD_POOL_SIZE=navigator.hardwareConcurrency
   -sEXPORTED_RUNTIME_METHODS=ccall,cwrap
-  -sEXPORTED_FUNCTIONS=_work,_something
+  -sEXPORTED_FUNCTIONS=_work
   -sASSERTIONS)
 
-list(APPEND j2b_wasm_files src/worker/dedicated/pre-wasm.cpp) # deps/je2be/example/j2b.cpp
+list(APPEND j2b_wasm_files src/worker/dedicated/pre-wasm.cpp)
 add_executable(j2b-wasm ${j2b_wasm_files})
 target_link_libraries(j2b-wasm je2be)
 target_compile_options(j2b-wasm PRIVATE ${je2be_common_em_compile_options})

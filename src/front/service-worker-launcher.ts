@@ -10,7 +10,6 @@ export class ServiceWorkerLauncher {
   }
 
   async launch(): Promise<ServiceWorkerRegistration> {
-    console.log(`scope=${this.scope}`);
     const registration = await navigator.serviceWorker.register(this.url, {
       scope: this.scope,
     });
