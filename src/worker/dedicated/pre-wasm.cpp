@@ -14,7 +14,10 @@ using namespace std;
 namespace fs = std::filesystem;
 
 EMSCRIPTEN_KEEPALIVE
-extern "C" int work(char *input, char *output) {
+extern "C" int something() { return 0; }
+
+EMSCRIPTEN_KEEPALIVE
+extern "C" int work(char *input, char *output, char *id) {
   je2be::LevelDirectoryStructure structure = je2be::LevelDirectoryStructure::Vanilla;
   int concurrency = (int)std::thread::hardware_concurrency() - 1;
   je2be::tobe::Options options;
@@ -28,12 +31,44 @@ extern "C" int work(char *input, char *output) {
   je2be::tobe::Converter converter(std::filesystem::path(input), std::filesystem::path(output), options);
 
   struct Reporter : public je2be::tobe::Progress {
+    std::string fId;
+
+    explicit Reporter(std::string const &id) : fId(id) {}
+
     bool report(Phase phase, double progress, double total) override {
-      std::cout << (int)phase << " " << progress << "/" << total << std::endl;
+      switch (phase) {
+      case Phase::Convert:
+        EM_ASM({
+          // ProgressMessage
+          const m = {};
+          m["type"] = "progress";
+          m["id"] = UTF8ToString($0, $1);
+          m["stage"] = "convert";
+          m["progress"] = $2;
+          m["total"] = $3;
+          self.postMessage(m);
+        },
+               fId.c_str(), fId.size(), progress, total);
+        break;
+      case Phase::LevelDbCompaction:
+        EM_ASM({
+          // ProgressMessage
+          const m = {};
+          m["type"] = "progress";
+          m["id"] = UTF8ToString($0, $1);
+          m["stage"] = "compaction";
+          m["progress"] = $2;
+          m["total"] = $3;
+          self.postMessage(m);
+        },
+               fId.c_str(), fId.size(), progress, total);
+        break;
+      }
       return true;
     }
   };
-  Reporter reporter;
+  std::string idStr(id);
+  Reporter reporter(idStr);
 
   return converter.run(concurrency, &reporter).ok() ? 0 : -1;
 }

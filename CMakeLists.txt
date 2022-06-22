@@ -37,7 +37,7 @@ set(je2be_common_em_link_options
   # -O3
   -sPTHREAD_POOL_SIZE=navigator.hardwareConcurrency
   -sEXPORTED_RUNTIME_METHODS=ccall,cwrap
-  -sEXPORTED_FUNCTIONS=_work
+  -sEXPORTED_FUNCTIONS=_work,_something
   -sASSERTIONS)
 
 list(APPEND j2b_wasm_files src/worker/dedicated/pre-wasm.cpp) # deps/je2be/example/j2b.cpp

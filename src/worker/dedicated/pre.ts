@@ -2,18 +2,20 @@ import {
   ConvertQueueingFinishedMessage,
   ConvertRegionMessage,
   ExportDoneMessage,
+  isProgressMessage,
   isStartPreMessage,
+  PostDoneMessage,
   ProgressMessage,
   StartPreMessage,
   WorkerError,
 } from "../../share/messages";
-import {iterate, mkdirp, unmount} from "../../share/fs-ext";
+import { iterate, mkdirp, readFile, unlink, unmount } from "../../share/fs-ext";
 import JSZip from "jszip";
 import { readI32 } from "../../share/heap";
 import { promiseUnzipFileInZip } from "../../share/zip-ext";
 import { KvsClient } from "../../share/kvs";
 import { mountFilesAsWorkerFs } from "../../share/kvs-ext";
-import { DlStore } from "../../share/dl";
+import { DlStore, FileMeta } from "../../share/dl";
 
 self.addEventListener("message", (ev: MessageEvent) => {
   if (isStartPreMessage(ev.data)) {
@@ -22,6 +24,11 @@ self.addEventListener("message", (ev: MessageEvent) => {
     start(ev.data).finally(() => {
       // Module.RemoveAll(`/je2be/${id}`);
     });
+  } else if (isProgressMessage(ev.data)) {
+    console.log(`[pre] progressMessage`, ev.data);
+    self.postMessage(ev.data);
+  } else {
+    // console.log(`[pre] unknown message,`, ev);
   }
 });
 
@@ -40,7 +47,7 @@ type Region = {
   rz: number;
 };
 
-function StringToUTF8(s: string) : any {
+function StringToUTF8(s: string): any {
   //@ts-ignore
   return allocateUTF8(s);
 }
@@ -74,25 +81,37 @@ async function start(m: StartPreMessage): Promise<void> {
     mountPoint: `/je2be/${id}/in`,
   });
   await mkdirp(`/je2be/${id}/out`);
-  console.log(`calling Module.run...`);
 
-  console.log(Module.cwrap);
-  console.log(Module.ccall);
-  const input = StringToUTF8(`/je2be/${id}/in`);
-  const output = StringToUTF8(`/je2be/${id}/out`);
-  // const main = Module.cwrap()
-  // Module.run(
-  //   `j2b`,
-  //   "-i", `/je2be/${id}/in`,
-  //   "-o", `/je2be/${id}/out`);
-  // Module._main(0, 0);
-  const ret = Module._work(input, output);
-  console.log(`run finished; ret=`, ret);
-  Module._free(input);
-  Module._free(output);
+  Module._something();
+
+  const inputPtr = StringToUTF8(`/je2be/${id}/in`);
+  const outputPtr = StringToUTF8(`/je2be/${id}/out`);
+  const idPtr = StringToUTF8(id);
+  const ok = Module._work(inputPtr, outputPtr, idPtr);
+  Module._free(inputPtr);
+  Module._free(outputPtr);
+  Module._free(idPtr);
+
+  // const convertDone: ProgressMessage = {
+  //   id,
+  //   type: "progress",
+  //   stage: "convert",
+  //   progress: 1,
+  //   total: 1,
+  // };
+  // self.postMessage(convertDone);
+  //
+  // const compactionDone: ProgressMessage = {
+  //   id,
+  //   type: "progress",
+  //   stage: "compaction",
+  //   progress:1,
+  //   total: 1
+  // };
+  // self.postMessage(compactionDone);
 
   console.log(`iterate output dir...`);
-  await iterate(`/je2be/${id}/out`, async ({path, dir}) => {
+  await iterate(`/je2be/${id}/out`, async ({ path, dir }) => {
     console.log(path);
   });
   console.log(`done`);
@@ -110,6 +129,11 @@ async function start(m: StartPreMessage): Promise<void> {
   // );
   unmount(`/je2be/${id}/in`);
   // console.log(`[pre] (${id}) pre done`);
+
+  await collectOutputFiles(id);
+
+  const done: PostDoneMessage = { type: "post_done", id };
+  self.postMessage(done);
 
   // console.log(`[pre] (${id}) queue...`);
   // const javaEditionMap = [];
@@ -256,4 +280,28 @@ function queue(id: string, regions: Region[], javaEditionMap: number[]) {
     };
     self.postMessage(m);
   }
+}
+
+async function collectOutputFiles(id: string): Promise<void> {
+  const directory = `/je2be/${id}/out`;
+  await iterate(directory, async ({ path, dir }) => {
+    if (dir) {
+      return;
+    }
+    const data = readFile(path);
+    if (!data) {
+      throw new Error(`Cannot read file: ${path}`);
+    }
+    const subpath = path.substring(`${directory}/`.length);
+    console.log(`[post] (${id}) ${subpath} ${data.length} bytes`);
+    await sKvs.put(path, data);
+    unlink(path);
+  });
+  const response = await sKvs.files({ withPrefix: `${directory}/` });
+  const files: FileMeta[] = response.map((f) => ({
+    name: f.file.name,
+    url: f.url,
+  }));
+  const db = new DlStore();
+  await db.dlFiles.put({ id, files: files });
 }

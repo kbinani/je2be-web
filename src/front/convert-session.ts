@@ -21,15 +21,15 @@ export class ConvertSession {
   private readonly pre: Worker;
   // private readonly workers: Worker[];
   // private readonly post: Worker;
-  private count = 0;
-  private finalCount = 0;
-  private done_ = 0;
-  private queued = 0;
-  private readonly active: boolean[] = [];
-  private buffer: ConvertRegionMessage[] = [];
-  private _numTotalChunks = -1;
-  numDoneChunks = 0;
-  lastProgressUpdate: number = 0;
+  // private count = 0;
+  // private finalCount = 0;
+  // private done_ = 0;
+  // private queued = 0;
+  // private readonly active: boolean[] = [];
+  // private buffer: ConvertRegionMessage[] = [];
+  // private _numTotalChunks = -1;
+  // numDoneChunks = 0;
+  // lastProgressUpdate: number = 0;
   private startTime: number = 0;
   private readonly kvs = new KvsServer();
   private readonly filename: string;
@@ -49,43 +49,69 @@ export class ConvertSession {
     const pre = new Worker("./script/pre.js", { name: "pre" });
     pre.onmessage = (ev: MessageEvent) => {
       const id = this.id;
-      if (isConvertRegionMessage(ev.data) && ev.data.id === id) {
+      // console.log(`[front] onmessage: `, ev.data);
+      /*if (isConvertRegionMessage(ev.data) && ev.data.id === id) {
         this.queue(ev.data);
       } else if (
         isConvertQueueingFinishedMessage(ev.data) &&
         ev.data.id === id
       ) {
         this.markQueueingFinished();
-      } else if (isProgressMessage(ev.data) && ev.data.id === id) {
+      } else
+      */ if (isProgressMessage(ev.data) && ev.data.id === id) {
+        console.log(`[front] progressMessage`, ev.data);
         this.reduce((state: MainComponentState) => {
           return updateProgress(state, ev.data);
         }, true);
       } else if (isExportDoneMessage(ev.data) && ev.data.id === id) {
-        this.setNumTotalChunks(ev.data.numTotalChunks);
+        // this.setNumTotalChunks(ev.data.numTotalChunks);
+      } else if (isPostDoneMessage(ev.data) && id === ev.data.id) {
+        console.log(`[front] (${this.id}) post done`);
+        // this.post.terminate();
+
+        const dot = this.filename.lastIndexOf(".");
+        let filename = "world.mcworld";
+        if (dot > 0) {
+          filename = this.filename.substring(0, dot) + ".mcworld";
+        }
+
+        const elapsed = Date.now() - this.startTime;
+        console.log(`[front] (${id}) finished in ${elapsed / 1000.0} sec`);
+
+        const sw = new ServiceWorkerLauncher();
+        sw.launch().then(() => {
+          this.reduce((state) => {
+            return {
+              ...state,
+              dl: { id, filename },
+              id: undefined,
+            };
+          }, true);
+        });
       } else {
         this.kvs.onMessage(ev);
       }
     };
     this.pre = pre;
 
-    const hardwareConcurrency =
-      typeof navigator.hardwareConcurrency === "number"
-        ? navigator.hardwareConcurrency
-        : 8;
-    let maxConcurrency = Math.max(2, hardwareConcurrency);
-    //@ts-ignore
-    const heapLimit = performance["memory"]?.["jsHeapSizeLimit"];
-    if (typeof heapLimit === "number") {
-      const minimumFileSize = this.filesize * 2;
-      const approxRuntimeSize = 300 * 1024 * 1024;
-      const availableMemory = heapLimit - minimumFileSize;
-      const candidate = Math.floor(availableMemory / approxRuntimeSize);
-      maxConcurrency = clamp(candidate, 2, navigator.hardwareConcurrency);
-    }
-
-    const num = maxConcurrency - 1; // pre + num * workers + post
-    console.log(`[front] launch ${num} workers`);
-    const workers: Worker[] = [];
+    // const hardwareConcurrency =
+    //   typeof navigator.hardwareConcurrency === "number"
+    //     ? navigator.hardwareConcurrency
+    //     : 8;
+    // let maxConcurrency = Math.max(2, hardwareConcurrency);
+    // //@ts-ignore
+    // const heapLimit = performance["memory"]?.["jsHeapSizeLimit"];
+    // if (typeof heapLimit === "number") {
+    //   const minimumFileSize = this.filesize * 2;
+    //   const approxRuntimeSize = 300 * 1024 * 1024;
+    //   const availableMemory = heapLimit - minimumFileSize;
+    //   const candidate = Math.floor(availableMemory / approxRuntimeSize);
+    //   maxConcurrency = clamp(candidate, 2, navigator.hardwareConcurrency);
+    // }
+    //
+    // const num = maxConcurrency - 1; // pre + num * workers + post
+    // console.log(`[front] launch ${num} workers`);
+    // const workers: Worker[] = [];
     // for (let i = 0; i < num; i++) {
     //   const w = new Worker("./script/region.js", { name: `region#${i}` });
     //   w.onmessage = (ev: MessageEvent) => {
@@ -171,13 +197,13 @@ export class ConvertSession {
     this.kvs.close();
   }
 
-  get numTotalChunks(): number {
-    return this._numTotalChunks;
-  }
-
-  setNumTotalChunks(n: number) {
-    this._numTotalChunks = n;
-  }
+  // get numTotalChunks(): number {
+  //   return this._numTotalChunks;
+  // }
+  //
+  // setNumTotalChunks(n: number) {
+  //   this._numTotalChunks = n;
+  // }
 
   start(file: File) {
     console.log(`[front] (${this.id}) start`);
@@ -186,40 +212,40 @@ export class ConvertSession {
     this.startTime = Date.now();
   }
 
-  queue(m: ConvertRegionMessage) {
-    this.buffer.push(m);
-    this.enqueue();
-    this.count++;
-  }
+  // queue(m: ConvertRegionMessage) {
+  //   this.buffer.push(m);
+  //   this.enqueue();
+  //   this.count++;
+  // }
 
-  private enqueue() {
-    // if (this.buffer.length === 0) {
-    //   return;
-    // }
-    // const length = this.workers.length;
-    // const index = this.queued % length;
-    // let queue = -1;
-    // for (let i = 0; i < length; i++) {
-    //   const idx = (i + index) % length;
-    //   if (!this.active[idx]) {
-    //     queue = idx;
-    //     break;
-    //   }
-    // }
-    // if (queue < 0) {
-    //   return;
-    // }
-    // const m = this.buffer.shift();
-    // this.workers[queue].postMessage(m);
-    // this.active[queue] = true;
-    // this.queued++;
-  }
+  // private enqueue() {
+  // if (this.buffer.length === 0) {
+  //   return;
+  // }
+  // const length = this.workers.length;
+  // const index = this.queued % length;
+  // let queue = -1;
+  // for (let i = 0; i < length; i++) {
+  //   const idx = (i + index) % length;
+  //   if (!this.active[idx]) {
+  //     queue = idx;
+  //     break;
+  //   }
+  // }
+  // if (queue < 0) {
+  //   return;
+  // }
+  // const m = this.buffer.shift();
+  // this.workers[queue].postMessage(m);
+  // this.active[queue] = true;
+  // this.queued++;
+  // }
 
-  markQueueingFinished() {
-    console.log(`[front] (${this.id}) all queueing finished`);
-    this.pre.terminate();
-    this.finalCount = this.count;
-  }
+  // markQueueingFinished() {
+  //   console.log(`[front] (${this.id}) all queueing finished`);
+  //   this.pre.terminate();
+  //   this.finalCount = this.count;
+  // }
 
   done(worker: Worker) {
     // this.done_++;
