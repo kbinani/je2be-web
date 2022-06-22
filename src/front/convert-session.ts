@@ -9,7 +9,7 @@ import { KvsServer } from "../share/kvs";
 import { ServiceWorkerLauncher } from "./service-worker-launcher";
 
 export class ConvertSession {
-  private readonly pre: Worker;
+  private readonly converter: Worker;
   private startTime: number = 0;
   private readonly kvs = new KvsServer();
   private readonly filename: string;
@@ -26,8 +26,10 @@ export class ConvertSession {
     this.filename = file.name;
     this.filesize = file.size;
 
-    const pre = new Worker("./script/pre.js", { name: "pre" });
-    pre.onmessage = (ev: MessageEvent) => {
+    const converter = new Worker("./script/converter.js", {
+      name: "converter",
+    });
+    converter.onmessage = (ev: MessageEvent) => {
       const id = this.id;
       if (isProgressMessage(ev.data) && ev.data.id === id) {
         this.reduce((state: MainComponentState) => {
@@ -60,7 +62,7 @@ export class ConvertSession {
         this.kvs.onMessage(ev);
       }
     };
-    this.pre = pre;
+    this.converter = converter;
   }
 
   close() {
@@ -70,7 +72,7 @@ export class ConvertSession {
   start(file: File) {
     console.log(`[front] (${this.id}) start`);
     const start: StartPreMessage = { type: "pre", id: this.id, file };
-    this.pre.postMessage(start);
+    this.converter.postMessage(start);
     this.startTime = Date.now();
   }
 }

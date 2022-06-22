@@ -1,5 +1,4 @@
 import {
-  ExportDoneMessage,
   isProgressMessage,
   isStartPreMessage,
   PostDoneMessage,
@@ -22,7 +21,7 @@ self.addEventListener("message", (ev: MessageEvent) => {
   }
 });
 
-self.importScripts("./j2b-wasm.js");
+self.importScripts("./core.js");
 
 const sKvs = new KvsClient();
 
@@ -38,28 +37,22 @@ function StringToUTF8(s: string): any {
 }
 
 async function start(m: StartPreMessage): Promise<void> {
-  console.log(`[pre] (${m.id}) start`);
+  console.log(`[converter] (${m.id}) start`);
   const { id, file } = m;
 
   const req = indexedDB.deleteDatabase("je2be-dl");
   req.onerror = (e) => console.error(e);
-  req.onsuccess = () => console.log(`[pre] deleted legacy "je2be-dl" table`);
+  req.onsuccess = () =>
+    console.log(`[converter] deleted legacy "je2be-dl" table`);
 
   const db = new DlStore();
   await db.dlFiles.clear();
 
-  console.log(`[pre] (${id}) extract...`);
-  const regions = await extract(file, id);
-  const numTotalChunks = regions.length * 32 * 32;
-  const exportDone: ExportDoneMessage = {
-    type: "export_done",
-    id,
-    numTotalChunks,
-  };
-  self.postMessage(exportDone);
-  console.log(`[pre] (${id}) extract done`);
+  console.log(`[converter] (${id}) extract...`);
+  await extract(file, id);
+  console.log(`[converter] (${id}) extract done`);
 
-  console.log(`[pre] (${id}) pre...`);
+  console.log(`[converter] (${id}) convert...`);
   await mountFilesAsWorkerFs({
     kvs: sKvs,
     prefix: `/je2be/${id}/in`,
@@ -74,6 +67,7 @@ async function start(m: StartPreMessage): Promise<void> {
   Module._free(inputPtr);
   Module._free(outputPtr);
   Module._free(idPtr);
+  console.log(`[converter] (${id}) convert done`);
 
   unmount(`/je2be/${id}/in`);
 
@@ -206,7 +200,7 @@ async function collectOutputFiles(id: string): Promise<void> {
       throw new Error(`Cannot read file: ${path}`);
     }
     const subpath = path.substring(`${directory}/`.length);
-    console.log(`[post] (${id}) ${subpath} ${data.length} bytes`);
+    console.log(`[converter] (${id}) ${subpath} ${data.length} bytes`);
     await sKvs.put(path, data);
     unlink(path);
   });
