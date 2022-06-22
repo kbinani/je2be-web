@@ -10,22 +10,21 @@ namespace fs = std::filesystem;
 
 EMSCRIPTEN_KEEPALIVE
 extern "C" int j2b(char *input, char *output, char *id) {
-  je2be::LevelDirectoryStructure structure = je2be::LevelDirectoryStructure::Vanilla;
-  int concurrency = (int)std::thread::hardware_concurrency() - 1;
-  je2be::tobe::Options options;
+  using namespace std;
+  using namespace je2be;
+  using namespace je2be::tobe;
+
+  LevelDirectoryStructure structure = LevelDirectoryStructure::Vanilla;
+  int concurrency = (int)thread::hardware_concurrency() - 1;
+  Options options;
   options.fLevelDirectoryStructure = structure;
-  int const r = 2;
-  for (int x = -r; x <= r; x++) {
-    for (int z = -r; z <= r; z++) {
-      options.fChunkFilter.insert(je2be::Pos2i(x, z));
-    }
-  }
-  je2be::tobe::Converter converter(fs::path(input), fs::path(output), options);
+  Converter converter(fs::path(input), fs::path(output), options);
 
-  struct Reporter : public je2be::tobe::Progress {
-    std::string fId;
+  string idStr(id);
+  struct Reporter : public Progress {
+    string fId;
 
-    explicit Reporter(std::string const &id) : fId(id) {}
+    explicit Reporter(string const &id) : fId(id) {}
 
     bool report(Phase phase, double progress, double total) override {
       switch (phase) {
@@ -43,7 +42,7 @@ extern "C" int j2b(char *input, char *output, char *id) {
                fId.c_str(), fId.size(), progress, total);
         break;
       case Phase::LevelDbCompaction:
-        EM_ASM({
+        MAIN_THREAD_ASYNC_EM_ASM({
           // ProgressMessage
           const m = {};
           m["type"] = "progress";
@@ -53,14 +52,12 @@ extern "C" int j2b(char *input, char *output, char *id) {
           m["total"] = $3;
           self.postMessage(m);
         },
-               fId.c_str(), fId.size(), progress, total);
+                                 fId.c_str(), fId.size(), progress, total);
         break;
       }
       return true;
     }
-  };
-  std::string idStr(id);
-  Reporter reporter(idStr);
+  } reporter(idStr);
 
   return converter.run(concurrency, &reporter).ok() ? 0 : -1;
 }
