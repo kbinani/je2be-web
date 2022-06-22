@@ -36,7 +36,7 @@ target_link_options(core PRIVATE
   -sINLINING_LIMIT=1
   -sENVIRONMENT=worker
   -sINVOKE_RUN=0
-  # -O3
+  -O3
   -sPTHREAD_POOL_SIZE=navigator.hardwareConcurrency
   -sEXPORTED_RUNTIME_METHODS=ccall,cwrap
   -sEXPORTED_FUNCTIONS=_j2b
