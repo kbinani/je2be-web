@@ -60,6 +60,8 @@ async function start(m: StartPreMessage): Promise<void> {
   });
   await mkdirp(`/je2be/${id}/out`);
 
+  Module._initialize();
+
   const inputPtr = StringToUTF8(`/je2be/${id}/in`);
   const outputPtr = StringToUTF8(`/je2be/${id}/out`);
   const idPtr = StringToUTF8(id);

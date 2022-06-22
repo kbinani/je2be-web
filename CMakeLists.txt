@@ -37,7 +37,7 @@ target_link_options(core PRIVATE
   -O3
   -sPTHREAD_POOL_SIZE=navigator.hardwareConcurrency
   -sEXPORTED_RUNTIME_METHODS=ccall,cwrap
-  -sEXPORTED_FUNCTIONS=_j2b
+  -sEXPORTED_FUNCTIONS=_initialize,_j2b
   -sASSERTIONS)
 
 list(APPEND all_files ${j2b_wasm_files})
