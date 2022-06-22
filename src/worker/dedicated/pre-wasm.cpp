@@ -19,6 +19,12 @@ extern "C" int work(char *input, char *output) {
   int concurrency = (int)std::thread::hardware_concurrency() - 1;
   je2be::tobe::Options options;
   options.fLevelDirectoryStructure = structure;
+  int const r = 2;
+  for (int x = -r; x <= r; x++) {
+    for (int z = -r; z <= r; z++) {
+      options.fChunkFilter.insert(je2be::Pos2i(x, z));
+    }
+  }
   je2be::tobe::Converter converter(std::filesystem::path(input), std::filesystem::path(output), options);
 
   struct Reporter : public je2be::tobe::Progress {
