@@ -35,7 +35,7 @@ set(je2be_common_em_link_options
   -sINVOKE_RUN=0
   # -sPROXY_TO_PTHREAD
   # -O3
-  -sPTHREAD_POOL_SIZE=10
+  -sPTHREAD_POOL_SIZE=navigator.hardwareConcurrency
   -sEXPORTED_RUNTIME_METHODS=ccall,cwrap
   -sEXPORTED_FUNCTIONS=_work
   -sASSERTIONS)
