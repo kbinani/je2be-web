@@ -16,7 +16,7 @@ namespace fs = std::filesystem;
 EMSCRIPTEN_KEEPALIVE
 extern "C" int work(char *input, char *output) {
   je2be::LevelDirectoryStructure structure = je2be::LevelDirectoryStructure::Vanilla;
-  int concurrency = std::thread::hardware_concurrency();
+  int concurrency = (int)std::thread::hardware_concurrency() - 1;
   je2be::tobe::Options options;
   options.fLevelDirectoryStructure = structure;
   je2be::tobe::Converter converter(std::filesystem::path(input), std::filesystem::path(output), options);
