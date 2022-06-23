@@ -5,6 +5,8 @@ import { ConvertSession } from "./convert-session";
 import { gettext } from "./i18n";
 import { useForceUpdate } from "./main";
 import { ProgressReducer } from "./state";
+import { WorkerError } from "../share/messages";
+import { ErrorMessage } from "./error-message";
 
 type State = {
   id?: string;
@@ -12,6 +14,7 @@ type State = {
   convert?: { num: number; den: number };
   compaction?: number;
   dl?: { id: string; filename: string };
+  error?: WorkerError;
 };
 
 export const J2B: React.FC<{ onFinish: () => void; onStart: () => void }> = ({
@@ -29,6 +32,10 @@ export const J2B: React.FC<{ onFinish: () => void; onStart: () => void }> = ({
     const { unzip, convert, compaction } = state.current;
     setState({ ...reducer({ unzip, convert, compaction }) });
   };
+  const onError = (error: WorkerError) => {
+    setState({ error });
+    onFinish();
+  };
   const onChange = (ev: ChangeEvent<HTMLInputElement>) => {
     const files = ev.target.files;
     if (!files || files.length !== 1) {
@@ -37,7 +44,13 @@ export const J2B: React.FC<{ onFinish: () => void; onStart: () => void }> = ({
     }
     const id = uuidv4();
     const file = files.item(0)!;
-    const s = new ConvertSession(id, file, updateProgress, onFinish);
+    const s = new ConvertSession({
+      id,
+      file,
+      updateProgress,
+      onFinish,
+      onError,
+    });
     session.current?.close();
     session.current = s;
     s.start(file);
@@ -84,8 +97,8 @@ export const J2B: React.FC<{ onFinish: () => void; onStart: () => void }> = ({
           total={1}
           label={"LevelDB Compaction"}
         />
-        <div className="message">
-          {state.current.dl && (
+        {state.current.dl && (
+          <div className="message">
             <div className="downloadMessage">
               {`Completed: download `}
               <a
@@ -94,13 +107,9 @@ export const J2B: React.FC<{ onFinish: () => void; onStart: () => void }> = ({
                 {state.current.dl.filename}
               </a>
             </div>
-          )}
-          {/*{state.current.error && (*/}
-          {/*  <div className="errorMessage">*/}
-          {/*    Failed: ErrorType={state.current.error.type}*/}
-          {/*  </div>*/}
-          {/*)}*/}
-        </div>
+          </div>
+        )}
+        {state.current.error && <ErrorMessage error={state.current.error} />}
       </div>
     </>
   );

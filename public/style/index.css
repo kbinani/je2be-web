@@ -195,6 +195,10 @@ a {
   flex-direction: column;
 }
 
+.hFlex {
+  display: flex;
+}
+
 .roundButton {
   border: solid 1px gray;
   border-radius: 8px;

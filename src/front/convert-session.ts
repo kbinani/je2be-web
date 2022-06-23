@@ -1,8 +1,10 @@
 import {
+  isFailedMessage,
   isJ2BDoneMessage,
   isProgressMessage,
   ProgressMessage,
   StartJ2BMessage,
+  WorkerError,
 } from "../share/messages";
 import { KvsServer } from "../share/kvs";
 import { ServiceWorkerLauncher } from "./service-worker-launcher";
@@ -14,13 +16,28 @@ export class ConvertSession {
   private readonly kvs = new KvsServer();
   private readonly filename: string;
   private readonly filesize: number;
+  private readonly id: string;
+  private readonly updateProgress: (reducer: ProgressReducer) => void;
+  private readonly onError: (error: WorkerError) => void;
+  private readonly onFinish: () => void;
 
-  constructor(
-    readonly id: string,
-    file: File,
-    readonly updateProgress: (reducer: ProgressReducer) => void,
-    readonly onFinish: () => void
-  ) {
+  constructor({
+    id,
+    file,
+    updateProgress,
+    onError,
+    onFinish,
+  }: {
+    id: string;
+    file: File;
+    updateProgress: (reducer: ProgressReducer) => void;
+    onError: (error: WorkerError) => void;
+    onFinish: () => void;
+  }) {
+    this.id = id;
+    this.updateProgress = updateProgress;
+    this.onError = onError;
+    this.onFinish = onFinish;
     this.filename = file.name;
     this.filesize = file.size;
 
@@ -57,6 +74,8 @@ export class ConvertSession {
           });
           this.onFinish();
         });
+      } else if (isFailedMessage(ev.data) && id === ev.data.id) {
+        this.onError(ev.data.error);
       } else {
         this.kvs.onMessage(ev);
       }

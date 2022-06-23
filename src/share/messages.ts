@@ -31,8 +31,32 @@ type WorkerErrorType =
 
 export type WorkerError = {
   type: WorkerErrorType;
-  native?: Error;
+  native: { name?: string; message?: string; stack?: string };
 };
+
+export function isWorkerError(x: any): x is WorkerError {
+  if (!x) {
+    return false;
+  }
+  return typeof x["type"] === "string" && typeof x["native"] !== "undefined";
+}
+
+export type FailedMessage = {
+  type: "failed";
+  id: string;
+  error: WorkerError;
+};
+
+export function isFailedMessage(x: any): x is FailedMessage {
+  if (!x) {
+    return false;
+  }
+  return (
+    x["type"] === "failed" &&
+    typeof x["id"] === "string" &&
+    isWorkerError(x["error"])
+  );
+}
 
 export type StartJ2BMessage = {
   type: "j2b";

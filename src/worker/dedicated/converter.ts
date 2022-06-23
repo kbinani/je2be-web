@@ -1,6 +1,8 @@
 import {
+  FailedMessage,
   isProgressMessage,
   isStartJ2BMessage,
+  isWorkerError,
   J2BDoneMessage,
   ProgressMessage,
   StartJ2BMessage,
@@ -13,9 +15,37 @@ import { KvsClient } from "../../share/kvs";
 import { mountFilesAsWorkerFs } from "../../share/kvs-ext";
 import { DlStore, FileMeta } from "../../share/dl";
 
+function errorCatcher(id: string): (e: any) => void {
+  return (e: any) => {
+    if (isWorkerError(e)) {
+      const m: FailedMessage = {
+        type: "failed",
+        id,
+        error: e,
+      };
+      self.postMessage(m);
+    } else {
+      const m: FailedMessage = {
+        type: "failed",
+        id,
+        error: {
+          type: "Other",
+          native: {
+            name: e?.name,
+            message: e?.message,
+            stack: e?.stack,
+          },
+        },
+      };
+      self.postMessage(m);
+    }
+  };
+}
+
 self.addEventListener("message", (ev: MessageEvent) => {
   if (isStartJ2BMessage(ev.data)) {
-    j2b(ev.data);
+    const id = ev.data.id;
+    j2b(ev.data).catch(errorCatcher(id));
   } else if (isProgressMessage(ev.data)) {
     self.postMessage(ev.data);
   }
@@ -83,8 +113,15 @@ async function extract(file: File, id: string): Promise<Region[]> {
   let zip: any;
   try {
     zip = await JSZip.loadAsync(file);
-  } catch (e) {
-    const error: WorkerError = { type: "Unzip" };
+  } catch (native: any) {
+    const error: WorkerError = {
+      type: "Unzip",
+      native: {
+        name: native?.name,
+        message: native?.message,
+        stack: native?.stack,
+      },
+    };
     throw error;
   }
   const foundLevelDat: string[] = [];
@@ -95,10 +132,16 @@ async function extract(file: File, id: string): Promise<Region[]> {
     foundLevelDat.push(p);
   });
   if (foundLevelDat.length === 0) {
-    const error: WorkerError = { type: "NoLevelDatFound" };
+    const error: WorkerError = {
+      type: "NoLevelDatFound",
+      native: {},
+    };
     throw error;
   } else if (foundLevelDat.length !== 1) {
-    const error: WorkerError = { type: "2OrMoreLevelDatFound" };
+    const error: WorkerError = {
+      type: "2OrMoreLevelDatFound",
+      native: {},
+    };
     throw error;
   }
   const levelDatPath = foundLevelDat[0];
