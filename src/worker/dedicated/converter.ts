@@ -55,12 +55,6 @@ self.importScripts("./core.js");
 
 const sKvs = new KvsClient();
 
-type Region = {
-  dim: number;
-  rx: number;
-  rz: number;
-};
-
 function StringToUTF8(s: string): any {
   //@ts-ignore
   return allocateUTF8(s);
@@ -109,7 +103,7 @@ async function j2b(m: StartJ2BMessage): Promise<void> {
   self.postMessage(done);
 }
 
-async function extract(file: File, id: string): Promise<Region[]> {
+async function extract(file: File, id: string): Promise<void> {
   let zip: any;
   try {
     zip = await JSZip.loadAsync(file);
@@ -198,27 +192,10 @@ async function extract(file: File, id: string): Promise<Region[]> {
   });
   await Promise.all(unzipOthers);
 
-  const regions: Region[] = [];
   const unzipRegions = mca.map(async (path) => {
     const rel = path.substring(prefix.length);
     const target = `/je2be/${id}/in/${rel}`;
     const buffer = await promiseUnzipFileInZip({ zip, path });
-    let dim = 0;
-    if (rel.startsWith("region/")) {
-      dim = 0;
-    } else if (rel.startsWith("DIM1/region/")) {
-      dim = 2;
-    } else if (rel.startsWith("DIM-1/region/")) {
-      dim = 1;
-    } else {
-      return;
-    }
-    const s = path.split("/").pop()!;
-    const token = s.split(".");
-    const rx = parseInt(token[1], 10);
-    const rz = parseInt(token[2], 10);
-    const region: Region = { rx, rz, dim };
-    regions.push(region);
     await sKvs.put(target, buffer);
     progress++;
     const m: ProgressMessage = {
@@ -231,7 +208,6 @@ async function extract(file: File, id: string): Promise<Region[]> {
     self.postMessage(m);
   });
   await Promise.all(unzipRegions);
-  return regions;
 }
 
 async function collectOutputFiles(id: string): Promise<void> {
