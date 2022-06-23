@@ -2,7 +2,9 @@ name: build
 on:
   push:
     branches:
-      - shared-array-buffer
+      - main
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
 env:
   JE2BE_DOCKER_CACHE_PATH: je2be_build_wasm.docker
 jobs:
@@ -21,7 +23,7 @@ jobs:
         id: cache-build-directory
         with:
           path: build
-          key: ${{ hashFiles('src/core/core.cpp', 'CMakeLists.txt', 'deps/**/*', 'Dockerfile')}}
+          key: ${{ hashFiles('src/**/*.cpp', 'CMakeLists.txt', 'deps/**/*', 'Dockerfile')}}
       - name: Touch restored build files
         if: steps.cache-build-directory.outputs.cache-hit == 'true'
         run: find build -type f | xargs touch
@@ -45,6 +47,7 @@ jobs:
           yarn install
           make all
       - name: Deploy
+        if: github.ref_type == 'tag'
         uses: burnett01/rsync-deployments@5.2
         with:
           switches: -avc --delete
