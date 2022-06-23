@@ -1,8 +1,8 @@
 import {
-  isPostDoneMessage,
+  isJ2BDoneMessage,
   isProgressMessage,
   ProgressMessage,
-  StartPreMessage,
+  StartJ2BMessage,
 } from "../share/messages";
 import { KvsServer } from "../share/kvs";
 import { ServiceWorkerLauncher } from "./service-worker-launcher";
@@ -33,7 +33,7 @@ export class ConvertSession {
         this.updateProgress((progress: Progress) => {
           return nextProgress(progress, ev.data);
         });
-      } else if (isPostDoneMessage(ev.data) && id === ev.data.id) {
+      } else if (isJ2BDoneMessage(ev.data) && id === ev.data.id) {
         console.log(`[front] (${this.id}) post done`);
         this.converter.terminate();
 
@@ -70,7 +70,7 @@ export class ConvertSession {
 
   start(file: File) {
     console.log(`[front] (${this.id}) start`);
-    const start: StartPreMessage = { type: "pre", id: this.id, file };
+    const start: StartJ2BMessage = { type: "j2b", id: this.id, file };
     this.converter.postMessage(start);
     this.startTime = Date.now();
   }

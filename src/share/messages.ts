@@ -34,31 +34,31 @@ export type WorkerError = {
   native?: Error;
 };
 
-export type StartPreMessage = {
-  type: "pre";
+export type StartJ2BMessage = {
+  type: "j2b";
   id: string;
   file: File;
 };
 
-export function isStartPreMessage(x: any): x is StartPreMessage {
+export function isStartJ2BMessage(x: any): x is StartJ2BMessage {
   if (!x) {
     return false;
   }
   return (
-    x["type"] === "pre" &&
+    x["type"] === "j2b" &&
     typeof x["id"] === "string" &&
     x["file"] instanceof File
   );
 }
 
-export type PostDoneMessage = {
-  type: "post_done";
+export type J2BDoneMessage = {
+  type: "j2b_done";
   id: string;
 };
 
-export function isPostDoneMessage(x: any): x is PostDoneMessage {
+export function isJ2BDoneMessage(x: any): x is J2BDoneMessage {
   if (!x) {
     return false;
   }
-  return x["type"] === "post_done" && typeof x["id"] === "string";
+  return x["type"] === "j2b_done" && typeof x["id"] === "string";
 }

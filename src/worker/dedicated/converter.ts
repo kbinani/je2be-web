@@ -1,9 +1,9 @@
 import {
   isProgressMessage,
-  isStartPreMessage,
-  PostDoneMessage,
+  isStartJ2BMessage,
+  J2BDoneMessage,
   ProgressMessage,
-  StartPreMessage,
+  StartJ2BMessage,
   WorkerError,
 } from "../../share/messages";
 import { iterate, mkdirp, readFile, unlink, unmount } from "../../share/fs-ext";
@@ -14,8 +14,8 @@ import { mountFilesAsWorkerFs } from "../../share/kvs-ext";
 import { DlStore, FileMeta } from "../../share/dl";
 
 self.addEventListener("message", (ev: MessageEvent) => {
-  if (isStartPreMessage(ev.data)) {
-    start(ev.data);
+  if (isStartJ2BMessage(ev.data)) {
+    j2b(ev.data);
   } else if (isProgressMessage(ev.data)) {
     self.postMessage(ev.data);
   }
@@ -36,7 +36,7 @@ function StringToUTF8(s: string): any {
   return allocateUTF8(s);
 }
 
-async function start(m: StartPreMessage): Promise<void> {
+async function j2b(m: StartJ2BMessage): Promise<void> {
   console.log(`[converter] (${m.id}) start`);
   const { id, file } = m;
 
@@ -75,7 +75,7 @@ async function start(m: StartPreMessage): Promise<void> {
 
   await collectOutputFiles(id);
 
-  const done: PostDoneMessage = { type: "post_done", id };
+  const done: J2BDoneMessage = { type: "j2b_done", id };
   self.postMessage(done);
 }
 
