@@ -1,19 +1,9 @@
-export type Progress = {
+export interface Progress {
   unzip?: number;
-  convert?: number;
+  convert?: { num: number; den: number };
   compaction?: number;
-};
+}
 
-export type Component =
-  | "mode-select"
-  | "j2b-input"
-  | "b2j-input"
-  | "x2b-input"
-  | "x2j-input";
+export type ProgressReducer = (progress: Progress) => Progress;
 
-export type State = {
-  progress?: Progress;
-  stack: Component[];
-};
-
-export const kInitialState: State = { stack: ["mode-select"] };
+export type Mode = "select" | "j2b" | "b2j" | "x2b" | "x2j";

@@ -1,10 +1,10 @@
 import React from "react";
 import { gettext } from "./i18n";
-import { Component } from "./state";
+import { Mode } from "./state";
 
 export const ModeSelect: React.FC<{
-  componentSelected: (component: Component) => void;
-}> = ({ componentSelected }) => {
+  onSelect: (mode: Mode) => void;
+}> = ({ onSelect }) => {
   return (
     <div className="vFlex" style={{ alignItems: "center" }}>
       <div style={{ marginBottom: 20 }}>
@@ -12,25 +12,25 @@ export const ModeSelect: React.FC<{
       </div>
       <div
         className="roundButton modeSelectButton"
-        onClick={() => componentSelected("j2b-input")}
+        onClick={() => onSelect("j2b")}
       >
         {gettext("Java to Bedrock")}
       </div>
       <div
         className="roundButton modeSelectButton"
-        onClick={() => componentSelected("b2j-input")}
+        onClick={() => onSelect("b2j")}
       >
         {gettext("Bedrock to Java")}
       </div>
       <div
         className="roundButton modeSelectButton"
-        onClick={() => componentSelected("x2b-input")}
+        onClick={() => onSelect("x2b")}
       >
         {gettext("Xbox360 to Bedrock")}
       </div>
       <div
         className="roundButton modeSelectButton"
-        onClick={() => componentSelected("x2j-input")}
+        onClick={() => onSelect("x2j")}
       >
         {gettext("Xbox360 to Java")}
       </div>

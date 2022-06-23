@@ -4,9 +4,9 @@ import {
   ProgressMessage,
   StartPreMessage,
 } from "../share/messages";
-import { MainComponentState, MainComponentStateReducer } from "./main";
 import { KvsServer } from "../share/kvs";
 import { ServiceWorkerLauncher } from "./service-worker-launcher";
+import { Progress, ProgressReducer } from "./state";
 
 export class ConvertSession {
   private readonly converter: Worker;
@@ -18,10 +18,8 @@ export class ConvertSession {
   constructor(
     readonly id: string,
     file: File,
-    readonly reduce: (
-      reducer: MainComponentStateReducer,
-      forceUpdate: boolean
-    ) => void
+    readonly updateProgress: (reducer: ProgressReducer) => void,
+    readonly onFinish: () => void
   ) {
     this.filename = file.name;
     this.filesize = file.size;
@@ -32,9 +30,9 @@ export class ConvertSession {
     converter.onmessage = (ev: MessageEvent) => {
       const id = this.id;
       if (isProgressMessage(ev.data) && ev.data.id === id) {
-        this.reduce((state: MainComponentState) => {
-          return updateProgress(state, ev.data);
-        }, true);
+        this.updateProgress((progress: Progress) => {
+          return nextProgress(progress, ev.data);
+        });
       } else if (isPostDoneMessage(ev.data) && id === ev.data.id) {
         console.log(`[front] (${this.id}) post done`);
         this.converter.terminate();
@@ -50,13 +48,14 @@ export class ConvertSession {
 
         const sw = new ServiceWorkerLauncher();
         sw.launch().then(() => {
-          this.reduce((state) => {
+          this.updateProgress((state) => {
             return {
               ...state,
               dl: { id, filename },
               id: undefined,
             };
-          }, true);
+          });
+          this.onFinish();
         });
       } else {
         this.kvs.onMessage(ev);
@@ -77,23 +76,20 @@ export class ConvertSession {
   }
 }
 
-function updateProgress(
-  state: MainComponentState,
-  m: ProgressMessage
-): MainComponentState {
+function nextProgress(progress: Progress, m: ProgressMessage): Progress {
   const p = m.progress / m.total;
+  const { unzip, convert, compaction } = progress;
   switch (m.stage) {
     case "unzip":
-      return { ...state, unzip: p, convert: p >= 1 ? -1 : state.convert };
+      return { unzip: p, convert: undefined, compaction: undefined };
     case "convert":
       return {
-        ...state,
-        convert: m.progress,
-        convertTotal: m.total,
-        compaction: m.progress === m.total ? -1 : state.compaction,
+        unzip: 1,
+        convert: { num: m.progress, den: m.total },
+        compaction: m.progress === m.total ? -1 : progress.compaction,
       };
     case "compaction":
-      return { ...state, compaction: p };
+      return { unzip: 1, convert, compaction: p };
   }
-  return { ...state };
+  return { unzip, convert, compaction };
 }
