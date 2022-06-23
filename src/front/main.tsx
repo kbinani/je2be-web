@@ -2,10 +2,10 @@ import * as React from "react";
 import {
   ChangeEvent,
   FC,
-  useContext,
   useEffect,
   useReducer,
   useRef,
+  useState,
 } from "react";
 import { WorkerError } from "../share/messages";
 import { v4 as uuidv4 } from "uuid";
@@ -14,7 +14,8 @@ import { Footer } from "./footer";
 import { Progress } from "./progress";
 import { ConvertSession } from "./convert-session";
 import { ServiceWorkerLauncher } from "./service-worker-launcher";
-import { Context } from "./state";
+import { Component, kInitialState, State } from "./state";
+import { ModeSelect } from "./mode-select";
 
 export type MainComponentState = {
   unzip: number;
@@ -158,11 +159,23 @@ export const MainComponent: FC = () => {
 };
 
 export const Main: React.FC = () => {
-  const state = useContext(Context);
+  const [state, setState] = useState<State>(kInitialState);
+  if (state.stack.length === 0) {
+    return null;
+  }
+  const component = state.stack[state.stack.length - 1];
+  const componentSelected = (component: Component) => {
+    const stack = state.stack;
+    setState({ ...state, stack: [...stack, component] });
+  };
   return (
     <div className="main">
       <Header disableLink={state.progress !== undefined} />
-      <div className="container"></div>
+      <div className="container">
+        {component === "mode-select" && (
+          <ModeSelect componentSelected={componentSelected} />
+        )}
+      </div>
       <Footer />
     </div>
   );

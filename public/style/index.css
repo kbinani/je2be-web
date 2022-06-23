@@ -1,13 +1,16 @@
 :root {
   font-family: "Roboto", sans-serif;
   user-select: none;
+  color: white;
+  font-size: 14px;
 
-  --background-bright: rgb(50, 62, 68);
-  --background: rgb(38, 50, 56);
+  --background-bright: #273338;
+  --background: #323e44;
   --progress-stripe: rgb(60, 79, 87);
   --text-bright: #7399a8;
 
   --header-background: var(--background-bright);
+  --container-width: 648px;
 }
 
 body {
@@ -64,7 +67,7 @@ a {
 }
 
 .container {
-  width: 600px;
+  width: 648px;
   background-color: var(--background-dark);
   margin: 90px auto auto auto;
   border-radius: 7px;
@@ -183,4 +186,34 @@ a {
 
 .footerRow {
   text-align: center;
+}
+
+.vFlex {
+  display: flex;
+  flex-direction: column;
+}
+
+.roundButton {
+  border: solid 1px gray;
+  border-radius: 8px;
+  height: 38px;
+  line-height: 38px;
+  cursor: pointer;
+  padding: 0 20px 0 20px;
+  text-align: center;
+  background-color: #273338;
+}
+
+.roundButton:hover {
+  background-color: #323e41;
+}
+
+.roundButton:active {
+  background-color: #4d5a60;
+  /*background-color: red;*/
+}
+
+.modeSelectButton {
+  width: calc(var(--container-width) / 2);
+  margin: 10px;
 }

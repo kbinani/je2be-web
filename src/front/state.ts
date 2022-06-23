@@ -1,12 +1,15 @@
-import React from "react";
-
 export type Progress = {
   unzip?: number;
   convert?: number;
   compaction?: number;
 };
 
-export type Component = "mode-select";
+export type Component =
+  | "mode-select"
+  | "j2b-input"
+  | "b2j-input"
+  | "x2b-input"
+  | "x2j-input";
 
 export type State = {
   progress?: Progress;
@@ -14,5 +17,3 @@ export type State = {
 };
 
 export const kInitialState: State = { stack: ["mode-select"] };
-
-export const Context = React.createContext<State>(kInitialState);
