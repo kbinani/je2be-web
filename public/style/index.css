@@ -2,12 +2,12 @@
   font-family: "Roboto", sans-serif;
   user-select: none;
 
-  --background: rgb(50, 62, 68);
-  --background-dark: rgb(38, 50, 56);
+  --background-bright: rgb(50, 62, 68);
+  --background: rgb(38, 50, 56);
   --progress-stripe: rgb(60, 79, 87);
   --text-bright: #7399a8;
 
-  --header-background: var(--background-dark);
+  --header-background: var(--background-bright);
 }
 
 a {
@@ -167,7 +167,7 @@ a {
   bottom: 0;
   width: 100%;
   height: 120px;
-  background-color: var(--background-dark);
+  background-color: var(--background-bright);
 }
 
 .footerContent {

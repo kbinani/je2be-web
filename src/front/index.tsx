@@ -1,9 +1,9 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import Bugsnag from "@bugsnag/js";
-import { MainComponent } from "./main";
 import BugsnagPluginReact from "@bugsnag/plugin-react";
 import { kAppVersion } from "../share/version";
+import { App } from "./app";
 
 document.addEventListener("DOMContentLoaded", () => {
   const appVersion = kAppVersion === "" ? "0.0.0" : kAppVersion;
@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const ErrorBoundary = Bugsnag.getPlugin("react")!.createErrorBoundary(React);
   ReactDOM.render(
     <ErrorBoundary>
-      <MainComponent />
+      <App />
     </ErrorBoundary>,
     document.getElementById("app")
   );
