@@ -81,10 +81,21 @@ a {
   color: white;
   font-weight: bold;
   margin-right: 10px;
+  cursor: pointer;
+}
+
+.inputLabel {
+  width: 294px;
+  margin-right: 10px;
+}
+
+.inputLabel:last-child {
+  margin-left: 10px;
+  margin-right: 0;
 }
 
 .progressContainer {
-  width: 560px;
+  width: 608px;
   margin-top: 10px;
   margin-left: 20px;
 }

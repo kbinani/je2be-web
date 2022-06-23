@@ -58,27 +58,44 @@ export const J2B: React.FC<{ onFinish: () => void; onStart: () => void }> = ({
     setState({ id });
     onStart();
   };
+  const inputDirectory = useRef<HTMLInputElement>(null);
+  const inputFile = useRef<HTMLInputElement>(null);
   useEffect(() => {
+    inputDirectory.current!.setAttribute("webkitdirectory", "");
     return () => {
       session.current?.close();
       session.current = null;
     };
   }, []);
-  const input = useRef<HTMLInputElement>(null);
   return (
     <>
       <div className="inputZip">
-        <label className="inputZipLabel" htmlFor={"input_zip"}>
-          {gettext("Choose a zip archive of Java Edition world data")}
-        </label>
-        <input
-          name={"input_zip"}
-          type={"file"}
-          onChange={onChange}
-          accept={".zip"}
-          ref={input}
-          disabled={state.current.id !== undefined}
-        />
+        <div>{gettext("Select a world to convert")}</div>
+        <div className="hFlex" style={{ marginTop: 20 }}>
+          <label className="roundButton inputLabel" htmlFor="input_directory">
+            {gettext("Select directory")}
+            <input
+              id={"input_directory"}
+              type={"file"}
+              onChange={onChange}
+              ref={inputDirectory}
+              disabled={state.current.id !== undefined}
+              style={{ display: "none" }}
+            />
+          </label>
+          <label className="roundButton inputLabel" htmlFor="input_zip">
+            {gettext("Select zip file")}
+            <input
+              id={"input_zip"}
+              type={"file"}
+              onChange={onChange}
+              accept={".zip"}
+              ref={inputFile}
+              disabled={state.current.id !== undefined}
+              style={{ display: "none" }}
+            />
+          </label>
+        </div>
       </div>
       <div className="progressContainer">
         <Progress
