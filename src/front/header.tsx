@@ -1,12 +1,9 @@
 import * as React from "react";
 import { FC } from "react";
 
-export const Header: FC<{ disableLink: boolean; onClick: () => void }> = ({
-  disableLink,
-  onClick,
-}) => {
+export const Header: FC<{ disableLink: boolean }> = ({ disableLink }) => {
   return (
-    <div className="header" onClick={onClick}>
+    <div className="header">
       <Link url={"./"} disable={disableLink}>
         <div className="appLabel">je2be-web</div>
       </Link>

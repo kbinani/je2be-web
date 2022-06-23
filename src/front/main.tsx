@@ -93,46 +93,10 @@ export const MainComponent: FC = () => {
     state.current = { ...kInitComponentState, id };
     forceUpdate();
   };
-  const je2be = useRef<HTMLDivElement>(null);
-  const be2je = useRef<HTMLDivElement>(null);
-  const mode = useRef<"je2be" | "be2je">("je2be");
-  const onClickHeader = () => {
-    if (mode.current === "je2be") {
-      setMode("be2je");
-    } else {
-      setMode("je2be");
-    }
-  };
-  const setMode = (next: "je2be" | "be2je") => {
-    if (next === mode.current) {
-      return;
-    }
-    const j2b = je2be.current;
-    const b2j = be2je.current;
-    switch (next) {
-      case "je2be": {
-        j2b?.classList.remove("transitionHide");
-        j2b?.classList.add("transitionAppear");
-
-        b2j?.classList.remove("transitionAppear");
-        b2j?.classList.add("transitionHide");
-        break;
-      }
-      case "be2je": {
-        j2b?.classList.remove("transitionAppear");
-        j2b?.classList.add("transitionHide");
-
-        b2j?.classList.remove("transitionHide");
-        b2j?.classList.add("transitionAppear");
-        break;
-      }
-    }
-    mode.current = next;
-  };
   return (
     <>
-      <div className="je2be" ref={je2be}>
-        <Header disableLink={disableLink} onClick={onClickHeader} />
+      <div className="main">
+        <Header disableLink={disableLink} />
         <div className="container">
           <div className="inputZip">
             <label className="inputZipLabel" htmlFor={"input_zip"}>
@@ -178,23 +142,6 @@ export const MainComponent: FC = () => {
               )}
             </div>
           </div>
-        </div>
-        <Footer />
-      </div>
-      <div className="be2je" ref={be2je}>
-        <Header disableLink={disableLink} onClick={onClickHeader} />
-        <div
-          style={{
-            width: "100%",
-            height: "100%",
-            fontSize: 30,
-            fontWeight: 900,
-            marginTop: 90,
-            color: "var(--background-dark)",
-            textAlign: "center",
-          }}
-        >
-          Bedrock to Java conversion functionality is in-dev!
         </div>
         <Footer />
       </div>
