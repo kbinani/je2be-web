@@ -10,6 +10,11 @@
   --header-background: var(--background-bright);
 }
 
+body {
+  margin: 0;
+  background-color: var(--background-bright);
+}
+
 a {
   color: var(--text-bright);
   text-decoration: none;

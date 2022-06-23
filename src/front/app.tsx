@@ -1,8 +1,11 @@
 import React from "react";
-import { kInitialState, State } from "./state";
-
-const AppContext = React.createContext<State>(kInitialState);
+import { Context, kInitialState } from "./state";
+import { Main } from "./main";
 
 export const App: React.FC = () => {
-  return <AppContext.Provider value={kInitialState}></AppContext.Provider>;
+  return (
+    <Context.Provider value={kInitialState}>
+      <Main />
+    </Context.Provider>
+  );
 };

@@ -1,5 +1,12 @@
 import * as React from "react";
-import { ChangeEvent, FC, useEffect, useReducer, useRef } from "react";
+import {
+  ChangeEvent,
+  FC,
+  useContext,
+  useEffect,
+  useReducer,
+  useRef,
+} from "react";
 import { WorkerError } from "../share/messages";
 import { v4 as uuidv4 } from "uuid";
 import { Header } from "./header";
@@ -7,6 +14,7 @@ import { Footer } from "./footer";
 import { Progress } from "./progress";
 import { ConvertSession } from "./convert-session";
 import { ServiceWorkerLauncher } from "./service-worker-launcher";
+import { Context } from "./state";
 
 export type MainComponentState = {
   unzip: number;
@@ -146,5 +154,16 @@ export const MainComponent: FC = () => {
         <Footer />
       </div>
     </>
+  );
+};
+
+export const Main: React.FC = () => {
+  const state = useContext(Context);
+  return (
+    <div className="main">
+      <Header disableLink={state.progress !== undefined} />
+      <div className="container"></div>
+      <Footer />
+    </div>
   );
 };
