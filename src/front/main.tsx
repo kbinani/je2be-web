@@ -60,6 +60,7 @@ export const MainComponent: FC = () => {
       .catch(console.error);
     window.addEventListener("beforeunload", onBeforeUnload);
     window.addEventListener("unload", onUnload);
+    //TODO: assert window.crossOriginIsolated === true
     return () => {
       window.removeEventListener("beforeunload", onBeforeUnload);
     };

@@ -1,30 +1,27 @@
 import {
-  ConvertQueueingFinishedMessage,
-  ConvertRegionMessage,
-  ExportDoneMessage,
+  isProgressMessage,
   isStartPreMessage,
+  PostDoneMessage,
   ProgressMessage,
   StartPreMessage,
   WorkerError,
 } from "../../share/messages";
-import { unmount } from "../../share/fs-ext";
+import { iterate, mkdirp, readFile, unlink, unmount } from "../../share/fs-ext";
 import JSZip from "jszip";
-import { readI32 } from "../../share/heap";
 import { promiseUnzipFileInZip } from "../../share/zip-ext";
 import { KvsClient } from "../../share/kvs";
 import { mountFilesAsWorkerFs } from "../../share/kvs-ext";
-import { DlStore } from "../../share/dl";
+import { DlStore, FileMeta } from "../../share/dl";
 
 self.addEventListener("message", (ev: MessageEvent) => {
   if (isStartPreMessage(ev.data)) {
-    const { id } = ev.data;
-    start(ev.data).finally(() => {
-      Module.RemoveAll(`/je2be/${id}`);
-    });
+    start(ev.data);
+  } else if (isProgressMessage(ev.data)) {
+    self.postMessage(ev.data);
   }
 });
 
-self.importScripts("./pre-wasm.js");
+self.importScripts("./core.js");
 
 const sKvs = new KvsClient();
 
@@ -34,64 +31,52 @@ type Region = {
   rz: number;
 };
 
+function StringToUTF8(s: string): any {
+  //@ts-ignore
+  return allocateUTF8(s);
+}
+
 async function start(m: StartPreMessage): Promise<void> {
-  console.log(`[pre] (${m.id}) start`);
+  console.log(`[converter] (${m.id}) start`);
   const { id, file } = m;
 
   const req = indexedDB.deleteDatabase("je2be-dl");
   req.onerror = (e) => console.error(e);
-  req.onsuccess = () => console.log(`[pre] deleted legacy "je2be-dl" table`);
+  req.onsuccess = () =>
+    console.log(`[converter] deleted legacy "je2be-dl" table`);
 
   const db = new DlStore();
   await db.dlFiles.clear();
 
-  console.log(`[pre] (${id}) extract...`);
-  const regions = await extract(file, id);
-  const numTotalChunks = regions.length * 32 * 32;
-  const exportDone: ExportDoneMessage = {
-    type: "export_done",
-    id,
-    numTotalChunks,
-  };
-  self.postMessage(exportDone);
-  console.log(`[pre] (${id}) extract done`);
+  console.log(`[converter] (${id}) extract...`);
+  await extract(file, id);
+  console.log(`[converter] (${id}) extract done`);
 
-  console.log(`[pre] (${id}) pre...`);
+  console.log(`[converter] (${id}) convert...`);
   await mountFilesAsWorkerFs({
     kvs: sKvs,
     prefix: `/je2be/${id}/in`,
     mountPoint: `/je2be/${id}/in`,
   });
-  const levelStructure = 0; //TODO: 0 = vanilla, 1 = spigot/paper
-  const storage = Module._malloc(4);
-  const javaEditionMapSize = Module.Pre(
-    id,
-    `/je2be/${id}/in`,
-    `/je2be/${id}/out`,
-    levelStructure,
-    storage
-  );
-  unmount(`/je2be/${id}/in`);
-  console.log(`[pre] (${id}) pre done`);
+  await mkdirp(`/je2be/${id}/out`);
 
-  console.log(`[pre] (${id}) queue...`);
-  const javaEditionMap = [];
-  const ptr = readI32(storage);
-  for (let i = 0; i + 1 < javaEditionMapSize; i += 2) {
-    const key = readI32(ptr + i * 4);
-    const value = readI32(ptr + i * 4 + 4);
-    javaEditionMap.push(key);
-    javaEditionMap.push(value);
-  }
-  Module._free(ptr);
-  Module._free(storage);
-  queue(id, regions, javaEditionMap);
-  console.log(`[pre] (${id}) queue done: queue length=${regions.length}`);
-  const last: ConvertQueueingFinishedMessage = {
-    id,
-    type: "queueing_finished",
-  };
-  self.postMessage(last);
+  Module._initialize();
+
+  const inputPtr = StringToUTF8(`/je2be/${id}/in`);
+  const outputPtr = StringToUTF8(`/je2be/${id}/out`);
+  const idPtr = StringToUTF8(id);
+  const ok = Module._j2b(inputPtr, outputPtr, idPtr);
+  Module._free(inputPtr);
+  Module._free(outputPtr);
+  Module._free(idPtr);
+  console.log(`[converter] (${id}) convert done`);
+
+  unmount(`/je2be/${id}/in`);
+
+  await collectOutputFiles(id);
+
+  const done: PostDoneMessage = { type: "post_done", id };
+  self.postMessage(done);
 }
 
 async function extract(file: File, id: string): Promise<Region[]> {
@@ -206,17 +191,26 @@ async function extract(file: File, id: string): Promise<Region[]> {
   return regions;
 }
 
-function queue(id: string, regions: Region[], javaEditionMap: number[]) {
-  for (const r of regions) {
-    const { rx, rz, dim } = r;
-    const m: ConvertRegionMessage = {
-      type: "region",
-      id,
-      rx,
-      rz,
-      dim,
-      javaEditionMap,
-    };
-    self.postMessage(m);
-  }
+async function collectOutputFiles(id: string): Promise<void> {
+  const directory = `/je2be/${id}/out`;
+  await iterate(directory, async ({ path, dir }) => {
+    if (dir) {
+      return;
+    }
+    const data = readFile(path);
+    if (!data) {
+      throw new Error(`Cannot read file: ${path}`);
+    }
+    const subpath = path.substring(`${directory}/`.length);
+    console.log(`[converter] (${id}) ${subpath} ${data.length} bytes`);
+    await sKvs.put(path, data);
+    unlink(path);
+  });
+  const response = await sKvs.files({ withPrefix: `${directory}/` });
+  const files: FileMeta[] = response.map((f) => ({
+    name: f.file.name,
+    url: f.url,
+  }));
+  const db = new DlStore();
+  await db.dlFiles.put({ id, files: files });
 }

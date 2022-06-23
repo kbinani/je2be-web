@@ -23,7 +23,7 @@ jobs:
         id: cache-build-directory
         with:
           path: build
-          key: ${{ hashFiles('src/core/core.cpp', 'CMakeLists.txt', 'deps/**/*', 'Dockerfile')}}
+          key: ${{ hashFiles('src/**/*.cpp', 'CMakeLists.txt', 'deps/**/*', 'Dockerfile')}}
       - name: Touch restored build files
         if: steps.cache-build-directory.outputs.cache-hit == 'true'
         run: find build -type f | xargs touch
@@ -48,7 +48,12 @@ jobs:
           make all
       - name: Deploy
         if: github.ref_type == 'tag'
-        uses: peaceiris/actions-gh-pages@v3
+        uses: burnett01/rsync-deployments@5.2
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
+          switches: -avc --delete
+          path: public/
+          remote_path: ${{ secrets.DEPLOY_DIR }}
+          remote_host: ${{ secrets.DEPLOY_HOST }}
+          remote_user: ${{ secrets.DEPLOY_USERNAME }}
+          remote_key: ${{ secrets.DEPLOY_KEY }}
+          remote_port: ${{ secrets.DEPLOY_PORT }}
