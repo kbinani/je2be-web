@@ -110,7 +110,10 @@ async function j2b(m: StartJ2BMessage): Promise<void> {
       },
     };
     self.postMessage(m);
+
+    unmount(`/je2be/${id}/in`);
     Module._free(errorJsonPtr);
+    return;
   }
   Module._free(inputPtr);
   Module._free(outputPtr);
