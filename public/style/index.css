@@ -83,8 +83,9 @@ a {
 }
 
 .inputLabel {
-  width: 294px;
   margin-right: 10px;
+  min-width: 50%;
+  width: 100%;
 }
 
 .inputLabel input {

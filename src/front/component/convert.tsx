@@ -13,6 +13,7 @@ import {
   Progress,
   ProgressReducer,
 } from "../../share/progress";
+import { ConvertMode, convertModeSupportsDirectoryInput } from "../mode";
 
 type State = Progress & {
   id?: string;
@@ -22,10 +23,11 @@ type State = Progress & {
   endTime?: number;
 };
 
-export const J2B: React.FC<{ onFinish: () => void; onStart: () => void }> = ({
-  onFinish,
-  onStart,
-}) => {
+export const Convert: React.FC<{
+  mode: ConvertMode;
+  onFinish: () => void;
+  onStart: () => void;
+}> = ({ onFinish, onStart, mode }) => {
   const session = useRef<ConvertSession | null>(null);
   const forceUpdate = useForceUpdate();
   const state = useRef<State>({});
@@ -130,7 +132,7 @@ export const J2B: React.FC<{ onFinish: () => void; onStart: () => void }> = ({
   const inputDirectory = useRef<HTMLInputElement>(null);
   const inputFile = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    inputDirectory.current!.setAttribute("webkitdirectory", "");
+    inputDirectory.current?.setAttribute("webkitdirectory", "");
     return () => {
       session.current?.close();
       session.current = null;
@@ -143,19 +145,21 @@ export const J2B: React.FC<{ onFinish: () => void; onStart: () => void }> = ({
           <>
             <div>{gettext("Select a world to convert")}</div>
             <div className="hFlex" style={{ marginTop: 20 }}>
-              <label
-                className="roundButton inputLabel"
-                htmlFor="input_directory"
-              >
-                {gettext("Select directory")}
-                <input
-                  id={"input_directory"}
-                  type={"file"}
-                  onChange={changeHandler({ file: false })}
-                  ref={inputDirectory}
-                  disabled={state.current.id !== undefined}
-                />
-              </label>
+              {convertModeSupportsDirectoryInput(mode) && (
+                <label
+                  className="roundButton inputLabel"
+                  htmlFor="input_directory"
+                >
+                  {gettext("Select directory")}
+                  <input
+                    id={"input_directory"}
+                    type={"file"}
+                    onChange={changeHandler({ file: false })}
+                    ref={inputDirectory}
+                    disabled={state.current.id !== undefined}
+                  />
+                </label>
+              )}
               <label className="roundButton inputLabel" htmlFor="input_zip">
                 {gettext("Select zip file")}
                 <input

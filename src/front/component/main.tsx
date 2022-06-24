@@ -4,9 +4,9 @@ import { Header } from "./header";
 import { Footer } from "./footer";
 import { ServiceWorkerLauncher } from "../service-worker-launcher";
 import { ModeSelect } from "./mode-select";
-import { J2B } from "./j2b";
 import { gettext } from "../i18n";
 import { Mode } from "../mode";
+import { Convert } from "./convert";
 
 export const useForceUpdate = () => {
   const [counter, setCounter] = useReducer(
@@ -60,7 +60,9 @@ export const Main: React.FC = () => {
       <Header disableLink={state.converting} />
       <div className="container">
         {state.mode === "select" && <ModeSelect onSelect={onModeSelect} />}
-        {state.mode === "j2b" && <J2B onFinish={onFinish} onStart={onStart} />}
+        {state.mode !== "select" && (
+          <Convert mode={state.mode} onFinish={onFinish} onStart={onStart} />
+        )}
       </div>
       <Footer />
     </div>
