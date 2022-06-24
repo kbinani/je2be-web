@@ -211,7 +211,7 @@ export const J2B: React.FC<{ onFinish: () => void; onStart: () => void }> = ({
             total={1}
             label={"LevelDB Compaction"}
           />
-          {state.current.dl && (
+          {state.current.dl && state.current.error === undefined && (
             <div className="hFlex" style={{ marginTop: 20 }}>
               <div style={{ height: "38px", lineHeight: "38px" }}>
                 {gettext("Completed")}
