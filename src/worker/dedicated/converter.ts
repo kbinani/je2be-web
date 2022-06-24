@@ -62,7 +62,7 @@ function StringToUTF8(s: string): any {
 
 async function j2b(m: StartJ2BMessage): Promise<void> {
   console.log(`[converter] (${m.id}) start`);
-  const { id, file } = m;
+  const { id, fileList } = m;
 
   const req = indexedDB.deleteDatabase("je2be-dl");
   req.onerror = (e) => console.error(e);
@@ -73,7 +73,7 @@ async function j2b(m: StartJ2BMessage): Promise<void> {
   await db.dlFiles.clear();
 
   console.log(`[converter] (${id}) extract...`);
-  await extract(file, id);
+  await extract(fileList, id);
   console.log(`[converter] (${id}) extract done`);
 
   console.log(`[converter] (${id}) convert...`);
@@ -103,7 +103,15 @@ async function j2b(m: StartJ2BMessage): Promise<void> {
   self.postMessage(done);
 }
 
-async function extract(file: File, id: string): Promise<void> {
+async function extract(fileList: FileList, id: string): Promise<void> {
+  if (fileList.length === 1) {
+    const file = fileList.item(0)!;
+    await extractZip(file, id);
+  } else {
+  }
+}
+
+async function extractZip(file: File, id: string): Promise<void> {
   let zip: any;
   try {
     zip = await JSZip.loadAsync(file);

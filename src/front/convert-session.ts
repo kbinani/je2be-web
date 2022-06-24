@@ -14,8 +14,7 @@ export class ConvertSession {
   private readonly converter: Worker;
   private startTime: number = 0;
   private readonly kvs = new KvsServer();
-  private readonly filename: string;
-  private readonly filesize: number;
+  readonly filename: string;
   private readonly id: string;
   private readonly updateProgress: (reducer: ProgressReducer) => void;
   private readonly onError: (error: WorkerError) => void;
@@ -23,13 +22,13 @@ export class ConvertSession {
 
   constructor({
     id,
-    file,
+    fileList,
     updateProgress,
     onError,
     onFinish,
   }: {
     id: string;
-    file: File;
+    fileList: FileList;
     updateProgress: (reducer: ProgressReducer) => void;
     onError: (error: WorkerError) => void;
     onFinish: () => void;
@@ -38,8 +37,7 @@ export class ConvertSession {
     this.updateProgress = updateProgress;
     this.onError = onError;
     this.onFinish = onFinish;
-    this.filename = file.name;
-    this.filesize = file.size;
+    this.filename = fileList.item(0)!.name;
 
     const converter = new Worker("./script/converter.js", {
       name: "converter",
@@ -54,11 +52,12 @@ export class ConvertSession {
         console.log(`[front] (${this.id}) post done`);
         this.converter.terminate();
 
-        const dot = this.filename.lastIndexOf(".");
+        //TODO:
+        // const dot = this.filename.lastIndexOf(".");
         let filename = "world.mcworld";
-        if (dot > 0) {
-          filename = this.filename.substring(0, dot) + ".mcworld";
-        }
+        // if (dot > 0) {
+        //   filename = this.filename.substring(0, dot) + ".mcworld";
+        // }
 
         const elapsed = Date.now() - this.startTime;
         console.log(`[front] (${id}) finished in ${elapsed / 1000.0} sec`);
@@ -87,9 +86,9 @@ export class ConvertSession {
     this.kvs.close();
   }
 
-  start(file: File) {
+  start(fileList: FileList) {
     console.log(`[front] (${this.id}) start`);
-    const start: StartJ2BMessage = { type: "j2b", id: this.id, file };
+    const start: StartJ2BMessage = { type: "j2b", id: this.id, fileList };
     this.converter.postMessage(start);
     this.startTime = Date.now();
   }

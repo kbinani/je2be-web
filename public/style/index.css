@@ -19,8 +19,8 @@ body {
 }
 
 a {
-  color: var(--text-bright);
   text-decoration: none;
+  color: white;
 }
 
 .button {
@@ -67,10 +67,8 @@ a {
 }
 
 .container {
-  width: 648px;
-  background-color: var(--background-dark);
+  width: 608px;
   margin: 90px auto auto auto;
-  border-radius: 7px;
 }
 
 .inputZip {
@@ -89,15 +87,17 @@ a {
   margin-right: 10px;
 }
 
+.inputLabel input {
+  display: none;
+}
+
 .inputLabel:last-child {
   margin-left: 10px;
   margin-right: 0;
 }
 
 .progressContainer {
-  width: 608px;
-  margin-top: 10px;
-  margin-left: 20px;
+  width: 100%;
 }
 
 .progress {
@@ -214,6 +214,7 @@ a {
   border: solid 1px gray;
   border-radius: 8px;
   height: 38px;
+  min-height: 38px;
   line-height: 38px;
   cursor: pointer;
   padding: 0 20px 0 20px;
