@@ -26,7 +26,7 @@
     "uuid": "^8.3.2"
   },
   "scripts": {
-    "front": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/front/index.tsx --bundle --outfile=public/script/front.js",
+    "front": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/front/component/index.tsx --bundle --outfile=public/script/front.js",
     "sworker": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/worker/service/sworker.ts --bundle --outfile=public/sworker.js",
     "converter": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/worker/dedicated/converter.ts --bundle --outfile=public/script/converter.js",
     "fmt": "prettier --write '*.ts' 'src/**/*.ts' 'src/**/*.tsx' 'public/style/*.css'",

@@ -1,6 +1,6 @@
 import React from "react";
-import { gettext } from "./i18n";
-import { Mode } from "./state";
+import { gettext } from "../i18n";
+import { Mode } from "../mode";
 
 export const ModeSelect: React.FC<{
   onSelect: (mode: Mode) => void;

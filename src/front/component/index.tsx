@@ -2,7 +2,7 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import Bugsnag from "@bugsnag/js";
 import BugsnagPluginReact from "@bugsnag/plugin-react";
-import { kAppVersion } from "../share/version";
+import { kAppVersion } from "../../share/version";
 import { App } from "./app";
 
 document.addEventListener("DOMContentLoaded", () => {

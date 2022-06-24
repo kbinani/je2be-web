@@ -2,12 +2,11 @@ import * as React from "react";
 import { useEffect, useReducer, useState } from "react";
 import { Header } from "./header";
 import { Footer } from "./footer";
-import { ServiceWorkerLauncher } from "./service-worker-launcher";
+import { ServiceWorkerLauncher } from "../service-worker-launcher";
 import { ModeSelect } from "./mode-select";
 import { J2B } from "./j2b";
-import { gettext } from "./i18n";
-
-type Mode = "select" | "j2b" | "b2j" | "x2b" | "x2j";
+import { gettext } from "../i18n";
+import { Mode } from "../mode";
 
 export const useForceUpdate = () => {
   const [counter, setCounter] = useReducer(

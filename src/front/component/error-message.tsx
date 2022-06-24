@@ -1,5 +1,5 @@
 import React from "react";
-import { WorkerError } from "../share/messages";
+import { WorkerError } from "../../share/messages";
 
 export const ErrorMessage: React.FC<{ error: WorkerError }> = ({ error }) => {
   return (

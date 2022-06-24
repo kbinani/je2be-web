@@ -1,6 +1,6 @@
 import * as React from "react";
 import { FC } from "react";
-import { kAppVersion } from "../share/version";
+import { kAppVersion } from "../../share/version";
 
 export const Footer: FC = () => {
   return (
@@ -9,7 +9,7 @@ export const Footer: FC = () => {
         <div className={"footerRow"}>
           <a
             href={"https://github.com/kbinani/je2be-web"}
-            target={"kbinani.github.io/je2be-web/github-link"}
+            target={"je2be.app/github-link"}
           >
             <img
               width={20}

@@ -1,14 +1,14 @@
 import * as React from "react";
 import { FC } from "react";
-import { clamp } from "../share/number";
+import { clamp } from "../../share/number";
 import {
   ConverterMetadata,
   Rational,
   Step,
   stepDescription,
-} from "../share/progress";
+} from "../../share/progress";
 
-export const ProgressComponent: FC<{
+export const Progress: FC<{
   progress: Rational;
   step: Step;
   meta: ConverterMetadata;

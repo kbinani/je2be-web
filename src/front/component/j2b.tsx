@@ -1,18 +1,18 @@
 import React, { ChangeEvent, useEffect, useRef } from "react";
-import { ProgressComponent } from "./progress-component";
+import { Progress as ProgressComponent } from "./progress";
 import { v4 as uuidv4 } from "uuid";
-import { ConvertSession } from "./convert-session";
-import { gettext } from "./i18n";
+import { ConvertSession } from "../convert-session";
+import { gettext } from "../i18n";
 import { useForceUpdate } from "./main";
-import { WorkerError } from "../share/messages";
+import { WorkerError } from "../../share/messages";
 import { ErrorMessage } from "./error-message";
-import { directoryNameFromFileList } from "../share/file-list-ext";
+import { directoryNameFromFileList } from "../../share/file-list-ext";
 import {
   initialProgress,
   J2BConverterMetadata,
   Progress,
   ProgressReducer,
-} from "../share/progress";
+} from "../../share/progress";
 
 type State = Progress & {
   id?: string;
