@@ -1,11 +1,11 @@
 import {
+  DoneMessage,
   FailedMessage,
   isProgressMessage,
-  isStartJ2BMessage,
+  isStartMessage,
   isWorkerError,
-  J2BDoneMessage,
   ProgressMessage,
-  StartJ2BMessage,
+  StartMessage,
   WorkerError,
 } from "../../share/messages";
 import { iterate, mkdirp, readFile, unlink, unmount } from "../../share/fs-ext";
@@ -44,9 +44,9 @@ function errorCatcher(id: string): (e: any) => void {
 }
 
 self.addEventListener("message", (ev: MessageEvent) => {
-  if (isStartJ2BMessage(ev.data)) {
-    const id = ev.data.id;
-    j2b(ev.data).catch(errorCatcher(id));
+  if (isStartMessage(ev.data)) {
+    const { id } = ev.data;
+    start(ev.data).catch(errorCatcher(id));
   } else if (isProgressMessage(ev.data)) {
     self.postMessage(ev.data);
   }
@@ -61,21 +61,50 @@ function StringToUTF8(s: string): any {
   return allocateUTF8(s);
 }
 
-async function j2b(m: StartJ2BMessage): Promise<void> {
+async function readFileAsUint8Array(file: File): Promise<Uint8Array> {
+  return new Promise<Uint8Array>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (data) => {
+      if (data.target?.result instanceof ArrayBuffer) {
+        resolve(new Uint8Array(data.target.result));
+      } else {
+        reject("cannot read file: " + (file.webkitRelativePath ?? file.name));
+      }
+    };
+    reader.onerror = (e) => {
+      reject("cannot read file: " + (file.webkitRelativePath ?? file.name));
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+async function start(m: StartMessage): Promise<void> {
   console.log(`[converter] (${m.id}) start`);
-  const { id, file } = m;
+  const { id, file, mode } = m;
 
   const req = indexedDB.deleteDatabase("je2be-dl");
   req.onerror = (e) => console.error(e);
-  req.onsuccess = () =>
+  req.onsuccess = () => {
     console.log(`[converter] deleted legacy "je2be-dl" table`);
+  };
 
   const db = new DlStore();
   await db.dlFiles.clear();
 
-  console.log(`[converter] (${id}) extract...`);
-  await extract(file, id);
-  console.log(`[converter] (${id}) extract done`);
+  let inputPath: string;
+  if (mode === "j2b" || mode === "b2j") {
+    console.log(`[converter] (${id}) extract...`);
+    await extract(file, id);
+    console.log(`[converter] (${id}) extract done`);
+    inputPath = `/je2be/${id}/in`;
+  } else {
+    if (!(file instanceof File)) {
+      throw "invalid input: file should be an File object";
+    }
+    const buffer = await readFileAsUint8Array(file);
+    inputPath = `/je2be/${id}/in/input.bin`;
+    await sKvs.put(inputPath, buffer);
+  }
 
   console.log(`[converter] (${id}) convert...`);
   await mountFilesAsWorkerFs({
@@ -87,10 +116,17 @@ async function j2b(m: StartJ2BMessage): Promise<void> {
 
   Module._initialize();
 
-  const inputPtr = StringToUTF8(`/je2be/${id}/in`);
+  const inputPtr = StringToUTF8(inputPath);
   const outputPtr = StringToUTF8(`/je2be/${id}/out`);
   const idPtr = StringToUTF8(id);
-  const errorJsonPtr = Module._j2b(inputPtr, outputPtr, idPtr);
+  let errorJsonPtr: number = 0;
+  switch (mode) {
+    case "j2b":
+      errorJsonPtr = Module._j2b(inputPtr, outputPtr, idPtr);
+      break;
+    default:
+      throw "unsupported conversion mode";
+  }
   if (errorJsonPtr != 0) {
     const errorJsonString = UTF8ToString(errorJsonPtr);
     const error = JSON.parse(errorJsonString);
@@ -124,7 +160,7 @@ async function j2b(m: StartJ2BMessage): Promise<void> {
 
   await collectOutputFiles(id);
 
-  const done: J2BDoneMessage = { type: "j2b_done", id };
+  const done: DoneMessage = { type: "done", id };
   self.postMessage(done);
 }
 
@@ -165,23 +201,9 @@ async function copyDirectory(file: FileList, id: string): Promise<void> {
     }
     const rel = item.webkitRelativePath.substring(prefix.length);
     const target = `/je2be/${id}/in/${rel}`;
-    const promise = new Promise<ArrayBuffer>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (data) => {
-        if (data.target?.result instanceof ArrayBuffer) {
-          resolve(data.target.result);
-        } else {
-          reject("cannot read file: " + item.webkitRelativePath);
-        }
-      };
-      reader.onerror = (e) => {
-        reject("cannot read file: " + item.webkitRelativePath);
-      };
-      reader.readAsArrayBuffer(item);
-    })
+    const promise = readFileAsUint8Array(item)
       .then((buffer) => {
-        const u8buffer = new Uint8Array(buffer);
-        return sKvs.put(target, u8buffer);
+        return sKvs.put(target, buffer);
       })
       .then(() => {
         progress++;

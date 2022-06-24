@@ -1,4 +1,5 @@
 import { Step } from "./progress";
+import { ConvertMode } from "../front/mode";
 
 export type ProgressMessage = {
   type: "progress";
@@ -62,31 +63,33 @@ export function isFailedMessage(x: any): x is FailedMessage {
   );
 }
 
-export type StartJ2BMessage = {
-  type: "j2b";
+export type StartMessage = {
+  type: "start";
   id: string;
   file: File | FileList;
+  mode: ConvertMode;
 };
 
-export function isStartJ2BMessage(x: any): x is StartJ2BMessage {
+export function isStartMessage(x: any): x is StartMessage {
   if (!x) {
     return false;
   }
   return (
-    x["type"] === "j2b" &&
+    x["type"] === "start" &&
     typeof x["id"] === "string" &&
-    (x["file"] instanceof FileList || x["file"] instanceof File)
+    (x["file"] instanceof FileList || x["file"] instanceof File) &&
+    typeof x["mode"] === "string"
   );
 }
 
-export type J2BDoneMessage = {
-  type: "j2b_done";
+export type DoneMessage = {
+  type: "done";
   id: string;
 };
 
-export function isJ2BDoneMessage(x: any): x is J2BDoneMessage {
+export function isDoneMessage(x: any): x is DoneMessage {
   if (!x) {
     return false;
   }
-  return x["type"] === "j2b_done" && typeof x["id"] === "string";
+  return x["type"] === "done" && typeof x["id"] === "string";
 }

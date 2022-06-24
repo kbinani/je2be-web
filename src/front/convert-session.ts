@@ -1,8 +1,8 @@
 import {
+  isDoneMessage,
   isFailedMessage,
-  isJ2BDoneMessage,
   isProgressMessage,
-  StartJ2BMessage,
+  StartMessage,
   WorkerError,
 } from "../share/messages";
 import { KvsServer } from "../share/kvs";
@@ -13,6 +13,7 @@ import {
   Progress,
   ProgressReducer,
 } from "../share/progress";
+import { ConvertMode } from "./mode";
 
 export class ConvertSession {
   private readonly converter: Worker;
@@ -25,10 +26,12 @@ export class ConvertSession {
   private readonly onError: (error: WorkerError) => void;
   private readonly onFinish: () => void;
   readonly meta: ConverterMetadata;
+  readonly mode: ConvertMode;
 
   constructor({
     id,
     meta,
+    mode,
     file,
     filename,
     updateProgress,
@@ -37,6 +40,7 @@ export class ConvertSession {
   }: {
     id: string;
     meta: ConverterMetadata;
+    mode: ConvertMode;
     file: File | FileList;
     filename: string;
     updateProgress: (reducer: ProgressReducer) => void;
@@ -50,6 +54,7 @@ export class ConvertSession {
     this.file = file;
     this.filename = filename;
     this.meta = meta;
+    this.mode = mode;
 
     const converter = new Worker("./script/converter.js", {
       name: "converter",
@@ -60,16 +65,26 @@ export class ConvertSession {
         this.updateProgress((progress: Progress) => {
           return nextProgress(progress, ev.data, this.meta);
         });
-      } else if (isJ2BDoneMessage(ev.data) && id === ev.data.id) {
+      } else if (isDoneMessage(ev.data) && id === ev.data.id) {
         console.log(`[front] (${this.id}) post done`);
         this.converter.terminate();
 
         const dot = this.filename.lastIndexOf(".");
-        let filename = "world.mcworld";
+        let extension: string;
+        switch (this.mode) {
+          case "j2b":
+          case "x2b":
+            extension = ".mcworld";
+            break;
+          default:
+            extension = ".zip";
+            break;
+        }
+        let filename = "world" + extension;
         if (dot > 0) {
-          filename = this.filename.substring(0, dot) + ".mcworld";
+          filename = this.filename.substring(0, dot) + extension;
         } else {
-          filename = this.filename + ".mcworld";
+          filename = this.filename + extension;
         }
 
         const elapsed = Date.now() - this.startTime;
@@ -101,10 +116,11 @@ export class ConvertSession {
 
   start() {
     console.log(`[front] (${this.id}) start`);
-    const start: StartJ2BMessage = {
-      type: "j2b",
+    const start: StartMessage = {
+      type: "start",
       id: this.id,
       file: this.file,
+      mode: this.mode,
     };
     this.converter?.postMessage(start);
     this.startTime = Date.now();

@@ -108,6 +108,7 @@ export const Convert: React.FC<{
       const meta = new J2BConverterMetadata(file);
       const s = new ConvertSession({
         id,
+        mode,
         meta,
         file: source,
         filename,
