@@ -93,6 +93,22 @@ async function j2b(m: StartJ2BMessage): Promise<void> {
   if (errorJsonPtr != 0) {
     const errorJsonString = UTF8ToString(errorJsonPtr);
     const error = JSON.parse(errorJsonString);
+    const where = error["where"];
+    let stack: string | undefined;
+    if (where) {
+      const file = where["file"];
+      const line = where["line"];
+      stack = `file: ${file}; line: ${line}`;
+    }
+    const m: FailedMessage = {
+      id,
+      type: "failed",
+      error: {
+        type: "ConverterFailed",
+        native: { message: error["what"], stack },
+      },
+    };
+    self.postMessage(m);
     Module._free(errorJsonPtr);
   }
   Module._free(inputPtr);
