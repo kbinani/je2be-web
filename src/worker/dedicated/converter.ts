@@ -89,7 +89,12 @@ async function j2b(m: StartJ2BMessage): Promise<void> {
   const inputPtr = StringToUTF8(`/je2be/${id}/in`);
   const outputPtr = StringToUTF8(`/je2be/${id}/out`);
   const idPtr = StringToUTF8(id);
-  const ok = Module._j2b(inputPtr, outputPtr, idPtr);
+  const errorJsonPtr = Module._j2b(inputPtr, outputPtr, idPtr);
+  if (errorJsonPtr != 0) {
+    const errorJsonString = UTF8ToString(errorJsonPtr);
+    const error = JSON.parse(errorJsonString);
+    Module._free(errorJsonPtr);
+  }
   Module._free(inputPtr);
   Module._free(outputPtr);
   Module._free(idPtr);

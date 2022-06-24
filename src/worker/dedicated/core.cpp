@@ -3,6 +3,7 @@
 #endif
 
 #include <iostream>
+#include <sstream>
 
 #include <je2be.hpp>
 
@@ -13,6 +14,7 @@ namespace {
 pthread_t sMainThreadId = 0;
 
 void PostProgressMessage(std::string const &id, std::string const &stage, double progress, double total) {
+#if defined(EMSCRIPTEN)
   if (pthread_self() == sMainThreadId) {
     // clang-format off
     EM_ASM({
@@ -48,25 +50,25 @@ void PostProgressMessage(std::string const &id, std::string const &stage, double
     }, idPtr, id.size(), stagePtr, stage.size(), progress, total);
     // clang-format on
   }
+#endif
 }
 
 } // namespace
 
-EMSCRIPTEN_KEEPALIVE
 extern "C" void initialize() {
   sMainThreadId = pthread_self();
 }
 
-EMSCRIPTEN_KEEPALIVE
-extern "C" int j2b(char *input, char *output, char *id) {
+extern "C" char *j2b(char *input, char *output, char *id) {
   using namespace std;
   using namespace je2be;
   using namespace je2be::tobe;
 
-  LevelDirectoryStructure structure = LevelDirectoryStructure::Vanilla;
   int concurrency = (int)thread::hardware_concurrency() - 1;
+
   Options options;
-  options.fLevelDirectoryStructure = structure;
+  options.fLevelDirectoryStructure = LevelDirectoryStructure::Vanilla;
+
   Converter converter(fs::path(input), fs::path(output), options);
 
   string idStr(id);
@@ -88,5 +90,19 @@ extern "C" int j2b(char *input, char *output, char *id) {
     }
   } reporter(idStr);
 
-  return converter.run(concurrency, &reporter).ok() ? 0 : -1;
+  auto st = converter.run(concurrency, &reporter);
+  if (auto error = st.error(); error) {
+    nlohmann::json json;
+    json["what"] = error->fWhat;
+    nlohmann::json where;
+    where["file"] = error->fWhere.fFile;
+    where["line"] = error->fWhere.fLine;
+    json["where"] = where;
+    string jsonStr = nlohmann::to_string(json);
+    char *jsonPtr = (char *)calloc(jsonStr.size() + 1, sizeof(char));
+    memcpy(jsonPtr, jsonStr.c_str(), jsonStr.size() * sizeof(char));
+    return jsonPtr;
+  } else {
+    return nullptr;
+  }
 }
