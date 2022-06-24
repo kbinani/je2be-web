@@ -31,11 +31,11 @@ public/script/core.worker.js: build/core.worker.js
 	mkdir -p public/script
 	cp $^ $@
 
-public/script/converter.js: src/worker/dedicated/converter.ts src/share/fs-ext.ts src/worker/dedicated/index.d.ts src/share/messages.ts src/share/version.ts
+public/script/converter.js:
 	yarn converter --minify
 
-public/script/front.js: src/front/index.tsx src/front/main.tsx src/front/footer.tsx src/front/header.tsx src/front/progress.tsx src/share/messages.ts src/share/version.ts
+public/script/front.js:
 	yarn front --minify
 
-public/sworker.js: src/worker/service/sworker.ts src/share/messages.ts src/share/version.ts
+public/sworker.js:
 	yarn sworker --minify

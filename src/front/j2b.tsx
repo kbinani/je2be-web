@@ -1,19 +1,21 @@
 import React, { ChangeEvent, useEffect, useRef } from "react";
-import { Progress } from "./progress";
+import { ProgressComponent } from "./progress-component";
 import { v4 as uuidv4 } from "uuid";
 import { ConvertSession } from "./convert-session";
 import { gettext } from "./i18n";
 import { useForceUpdate } from "./main";
-import { ProgressReducer } from "./state";
 import { WorkerError } from "../share/messages";
 import { ErrorMessage } from "./error-message";
 import { directoryNameFromFileList } from "../share/file-list-ext";
+import {
+  initialProgress,
+  J2BConverterMetadata,
+  Progress,
+  ProgressReducer,
+} from "../share/progress";
 
-type State = {
+type State = Progress & {
   id?: string;
-  unzip?: number;
-  convert?: { num: number; den: number };
-  compaction?: number;
   dl?: { id: string; filename: string };
   error?: WorkerError;
   startTime?: number;
@@ -32,8 +34,7 @@ export const J2B: React.FC<{ onFinish: () => void; onStart: () => void }> = ({
     forceUpdate();
   };
   const updateProgress = (reducer: ProgressReducer) => {
-    const { unzip, convert, compaction } = state.current;
-    setState({ ...reducer({ unzip, convert, compaction }) });
+    setState({ ...reducer(state.current) });
   };
   const onError = (error: WorkerError) => {
     setState({ error });
@@ -46,41 +47,26 @@ export const J2B: React.FC<{ onFinish: () => void; onStart: () => void }> = ({
   const changeHandler = ({ file }: { file: boolean }) => {
     return (ev: ChangeEvent<HTMLInputElement>) => {
       const files = ev.target.files;
+      const noFileSelectedError: WorkerError = {
+        type: "Other",
+        native: {
+          message: "no file selected, or one or more files selected",
+        },
+      };
       if (!files) {
-        setState({
-          error: {
-            type: "Other",
-            native: {
-              message: "no file selected, or one or more files selected",
-            },
-          },
-        });
+        setState({ error: noFileSelectedError });
         return;
       }
       let source: File | FileList;
       let filename: string;
       if (file) {
         if (!files || files.length !== 1) {
-          setState({
-            error: {
-              type: "Other",
-              native: {
-                message: "no file selected, or one or more files selected",
-              },
-            },
-          });
+          setState({ error: noFileSelectedError });
           return;
         }
         const f = files.item(0);
         if (!f) {
-          setState({
-            error: {
-              type: "Other",
-              native: {
-                message: "no file selected, or one or more files selected",
-              },
-            },
-          });
+          setState({ error: noFileSelectedError });
           return;
         }
         source = f;
@@ -117,8 +103,10 @@ export const J2B: React.FC<{ onFinish: () => void; onStart: () => void }> = ({
         filename = dirname;
       }
       const id = uuidv4();
+      const meta = new J2BConverterMetadata(file);
       const s = new ConvertSession({
         id,
+        meta,
         file: source,
         filename,
         updateProgress,
@@ -129,12 +117,10 @@ export const J2B: React.FC<{ onFinish: () => void; onStart: () => void }> = ({
       session.current = s;
       s.start();
 
+      const progress = initialProgress(meta);
       setState({
         id,
-        unzip: undefined,
-        convert: undefined,
-        compaction: undefined,
-        error: undefined,
+        ...progress,
         startTime: Date.now(),
         endTime: undefined,
       });
@@ -203,22 +189,46 @@ export const J2B: React.FC<{ onFinish: () => void; onStart: () => void }> = ({
       )}
       {session.current && (
         <div className="progressContainer">
-          <Progress
-            progress={state.current.unzip ?? 0}
-            total={1}
-            label={"Unzip"}
-          />
-          <Progress
-            progress={Math.floor(state.current.convert?.num ?? 0)}
-            total={state.current.convert?.den ?? 1}
-            unit={"chunks"}
-            label={"Conversion"}
-          />
-          <Progress
-            progress={state.current.compaction ?? 0}
-            total={1}
-            label={"LevelDB Compaction"}
-          />
+          {session.current.meta.steps.includes("unzip") &&
+            state.current.unzip && (
+              <ProgressComponent
+                progress={state.current.unzip}
+                step={"unzip"}
+                meta={session.current.meta}
+              />
+            )}
+          {session.current.meta.steps.includes("copy") &&
+            state.current.copy && (
+              <ProgressComponent
+                progress={state.current.copy}
+                step={"copy"}
+                meta={session.current.meta}
+              />
+            )}
+          {session.current.meta.steps.includes("convert") &&
+            state.current.convert && (
+              <ProgressComponent
+                progress={state.current.convert}
+                step={"convert"}
+                meta={session.current.meta}
+              />
+            )}
+          {session.current.meta.steps.includes("compaction") &&
+            state.current.compaction && (
+              <ProgressComponent
+                progress={state.current.compaction}
+                step={"compaction"}
+                meta={session.current.meta}
+              />
+            )}
+          {session.current.meta.steps.includes("extract") &&
+            state.current.extract && (
+              <ProgressComponent
+                progress={state.current.extract}
+                step={"extract"}
+                meta={session.current.meta}
+              />
+            )}
           {state.current.dl && state.current.error === undefined && (
             <div className="hFlex" style={{ marginTop: 20 }}>
               <div style={{ height: "38px", lineHeight: "38px" }}>

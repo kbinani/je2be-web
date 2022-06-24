@@ -22,7 +22,7 @@ void PostProgressMessage(std::string const &id, std::string const &stage, double
       const m = {};
       m["type"] = "progress";
       m["id"] = UTF8ToString($0, $1);
-      m["stage"] = UTF8ToString($2, $3);
+      m["step"] = UTF8ToString($2, $3);
       m["progress"] = $4;
       m["total"] = $5;
       self.postMessage(m);
@@ -41,7 +41,7 @@ void PostProgressMessage(std::string const &id, std::string const &stage, double
       const m = {};
       m["type"] = "progress";
       m["id"] = UTF8ToString($0, $1);
-      m["stage"] = UTF8ToString($2, $3);
+      m["step"] = UTF8ToString($2, $3);
       m["progress"] = $4;
       m["total"] = $5;
       self.postMessage(m);
@@ -67,6 +67,7 @@ extern "C" char *j2b(char *input, char *output, char *id) {
   int concurrency = (int)thread::hardware_concurrency() - 1;
 
   Options options;
+  options.fChunkFilter.insert(Pos2i(0, 0));
   options.fLevelDirectoryStructure = LevelDirectoryStructure::Vanilla;
 
   Converter converter(fs::path(input), fs::path(output), options);

@@ -1,7 +1,9 @@
+import { Step } from "./progress";
+
 export type ProgressMessage = {
   type: "progress";
   id: string;
-  stage: "unzip" | "convert" | "compaction";
+  step: Step;
   progress: number;
   total: number;
 };
@@ -13,9 +15,11 @@ export function isProgressMessage(x: any): x is ProgressMessage {
   return (
     x["type"] === "progress" &&
     typeof x["id"] === "string" &&
-    (x["stage"] === "unzip" ||
-      x["stage"] === "convert" ||
-      x["stage"] === "compaction") &&
+    (x["step"] === "unzip" ||
+      x["step"] === "convert" ||
+      x["step"] === "compaction" ||
+      x["step"] === "copy" ||
+      x["step"] === "extract") &&
     typeof x["progress"] === "number" &&
     typeof x["total"] === "number"
   );

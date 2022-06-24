@@ -156,7 +156,7 @@ async function copyDirectory(file: FileList, id: string): Promise<void> {
       const m: ProgressMessage = {
         id,
         type: "progress",
-        stage: "unzip",
+        step: "copy",
         progress,
         total,
       };
@@ -188,7 +188,7 @@ async function copyDirectory(file: FileList, id: string): Promise<void> {
         const m: ProgressMessage = {
           id,
           type: "progress",
-          stage: "unzip",
+          step: "copy",
           progress,
           total,
         };
@@ -263,7 +263,7 @@ async function extractZip(file: File, id: string): Promise<void> {
   const m: ProgressMessage = {
     type: "progress",
     id,
-    stage: "unzip",
+    step: "unzip",
     progress: -1,
     total,
   };
@@ -280,7 +280,7 @@ async function extractZip(file: File, id: string): Promise<void> {
     const m: ProgressMessage = {
       type: "progress",
       id,
-      stage: "unzip",
+      step: "unzip",
       progress,
       total,
     };
@@ -297,7 +297,7 @@ async function extractZip(file: File, id: string): Promise<void> {
     const m: ProgressMessage = {
       type: "progress",
       id,
-      stage: "unzip",
+      step: "unzip",
       progress,
       total,
     };

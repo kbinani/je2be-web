@@ -2,13 +2,17 @@ import {
   isFailedMessage,
   isJ2BDoneMessage,
   isProgressMessage,
-  ProgressMessage,
   StartJ2BMessage,
   WorkerError,
 } from "../share/messages";
 import { KvsServer } from "../share/kvs";
 import { ServiceWorkerLauncher } from "./service-worker-launcher";
-import { Progress, ProgressReducer } from "./state";
+import {
+  ConverterMetadata,
+  nextProgress,
+  Progress,
+  ProgressReducer,
+} from "../share/progress";
 
 export class ConvertSession {
   private readonly converter: Worker;
@@ -20,9 +24,11 @@ export class ConvertSession {
   private readonly updateProgress: (reducer: ProgressReducer) => void;
   private readonly onError: (error: WorkerError) => void;
   private readonly onFinish: () => void;
+  readonly meta: ConverterMetadata;
 
   constructor({
     id,
+    meta,
     file,
     filename,
     updateProgress,
@@ -30,6 +36,7 @@ export class ConvertSession {
     onFinish,
   }: {
     id: string;
+    meta: ConverterMetadata;
     file: File | FileList;
     filename: string;
     updateProgress: (reducer: ProgressReducer) => void;
@@ -42,6 +49,7 @@ export class ConvertSession {
     this.onFinish = onFinish;
     this.file = file;
     this.filename = filename;
+    this.meta = meta;
 
     const converter = new Worker("./script/converter.js", {
       name: "converter",
@@ -50,7 +58,7 @@ export class ConvertSession {
       const id = this.id;
       if (isProgressMessage(ev.data) && ev.data.id === id) {
         this.updateProgress((progress: Progress) => {
-          return nextProgress(progress, ev.data);
+          return nextProgress(progress, ev.data, this.meta);
         });
       } else if (isJ2BDoneMessage(ev.data) && id === ev.data.id) {
         console.log(`[front] (${this.id}) post done`);
@@ -101,22 +109,4 @@ export class ConvertSession {
     this.converter?.postMessage(start);
     this.startTime = Date.now();
   }
-}
-
-function nextProgress(progress: Progress, m: ProgressMessage): Progress {
-  const p = m.progress / m.total;
-  const { unzip, convert, compaction } = progress;
-  switch (m.stage) {
-    case "unzip":
-      return { unzip: p, convert: undefined, compaction: undefined };
-    case "convert":
-      return {
-        unzip: 1,
-        convert: { num: m.progress, den: m.total },
-        compaction: m.progress === m.total ? -1 : progress.compaction,
-      };
-    case "compaction":
-      return { unzip: 1, convert, compaction: p };
-  }
-  return { unzip, convert, compaction };
 }

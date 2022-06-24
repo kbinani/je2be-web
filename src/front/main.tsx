@@ -6,7 +6,8 @@ import { ServiceWorkerLauncher } from "./service-worker-launcher";
 import { ModeSelect } from "./mode-select";
 import { J2B } from "./j2b";
 import { gettext } from "./i18n";
-import { Mode } from "./state";
+
+type Mode = "select" | "j2b" | "b2j" | "x2b" | "x2j";
 
 export const useForceUpdate = () => {
   const [counter, setCounter] = useReducer(
