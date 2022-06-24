@@ -144,9 +144,20 @@ async function copyDirectory(file: FileList, id: string): Promise<void> {
   }
   prefix += "/";
   const promises: Promise<void>[] = [];
+  let progress = 0;
+  const total = file.length;
   for (let i = 0; i < file.length; i++) {
     const item = file.item(i);
     if (!item) {
+      progress++;
+      const m: ProgressMessage = {
+        id,
+        type: "progress",
+        stage: "unzip",
+        progress,
+        total,
+      };
+      self.postMessage(m);
       continue;
     }
     const rel = item.webkitRelativePath.substring(prefix.length);
@@ -164,10 +175,22 @@ async function copyDirectory(file: FileList, id: string): Promise<void> {
         reject("cannot read file: " + item.webkitRelativePath);
       };
       reader.readAsArrayBuffer(item);
-    }).then((buffer) => {
-      const u8buffer = new Uint8Array(buffer);
-      return sKvs.put(target, u8buffer);
-    });
+    })
+      .then((buffer) => {
+        const u8buffer = new Uint8Array(buffer);
+        return sKvs.put(target, u8buffer);
+      })
+      .then(() => {
+        progress++;
+        const m: ProgressMessage = {
+          id,
+          type: "progress",
+          stage: "unzip",
+          progress,
+          total,
+        };
+        self.postMessage(m);
+      });
     promises.push(promise);
   }
   await Promise.all(promises);
