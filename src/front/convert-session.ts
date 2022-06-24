@@ -56,12 +56,13 @@ export class ConvertSession {
         console.log(`[front] (${this.id}) post done`);
         this.converter.terminate();
 
-        //TODO:
-        // const dot = this.filename.lastIndexOf(".");
+        const dot = this.filename.lastIndexOf(".");
         let filename = "world.mcworld";
-        // if (dot > 0) {
-        //   filename = this.filename.substring(0, dot) + ".mcworld";
-        // }
+        if (dot > 0) {
+          filename = this.filename.substring(0, dot) + ".mcworld";
+        } else {
+          filename = this.filename + ".mcworld";
+        }
 
         const elapsed = Date.now() - this.startTime;
         console.log(`[front] (${id}) finished in ${elapsed / 1000.0} sec`);

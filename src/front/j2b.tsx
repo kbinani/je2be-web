@@ -129,7 +129,15 @@ export const J2B: React.FC<{ onFinish: () => void; onStart: () => void }> = ({
       session.current = s;
       s.start();
 
-      setState({ id, startTime: Date.now() });
+      setState({
+        id,
+        unzip: undefined,
+        convert: undefined,
+        compaction: undefined,
+        error: undefined,
+        startTime: Date.now(),
+        endTime: undefined,
+      });
       onStart();
     };
   };
