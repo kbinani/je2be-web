@@ -14,6 +14,7 @@ import { promiseUnzipFileInZip } from "../../share/zip-ext";
 import { KvsClient } from "../../share/kvs";
 import { mountFilesAsWorkerFs } from "../../share/kvs-ext";
 import { DlStore, FileMeta } from "../../share/dl";
+import { directoryNameFromFileList } from "../../share/file-list-ext";
 
 function errorCatcher(id: string): (e: any) => void {
   return (e: any) => {
@@ -62,7 +63,7 @@ function StringToUTF8(s: string): any {
 
 async function j2b(m: StartJ2BMessage): Promise<void> {
   console.log(`[converter] (${m.id}) start`);
-  const { id, fileList } = m;
+  const { id, file } = m;
 
   const req = indexedDB.deleteDatabase("je2be-dl");
   req.onerror = (e) => console.error(e);
@@ -73,7 +74,7 @@ async function j2b(m: StartJ2BMessage): Promise<void> {
   await db.dlFiles.clear();
 
   console.log(`[converter] (${id}) extract...`);
-  await extract(fileList, id);
+  await extract(file, id);
   console.log(`[converter] (${id}) extract done`);
 
   console.log(`[converter] (${id}) convert...`);
@@ -124,12 +125,52 @@ async function j2b(m: StartJ2BMessage): Promise<void> {
   self.postMessage(done);
 }
 
-async function extract(fileList: FileList, id: string): Promise<void> {
-  if (fileList.length === 1) {
-    const file = fileList.item(0)!;
+async function extract(file: File | FileList, id: string): Promise<void> {
+  if (file instanceof File) {
     await extractZip(file, id);
   } else {
+    await copyDirectory(file, id);
   }
+}
+
+async function copyDirectory(file: FileList, id: string): Promise<void> {
+  let prefix = directoryNameFromFileList(file);
+  if (prefix === undefined) {
+    const e: WorkerError = {
+      type: "Other",
+      native: { message: "can't get directory name from FileList" },
+    };
+    throw e;
+  }
+  prefix += "/";
+  const promises: Promise<void>[] = [];
+  for (let i = 0; i < file.length; i++) {
+    const item = file.item(i);
+    if (!item) {
+      continue;
+    }
+    const rel = item.webkitRelativePath.substring(prefix.length);
+    const target = `/je2be/${id}/in/${rel}`;
+    const promise = new Promise<ArrayBuffer>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (data) => {
+        if (data.target?.result instanceof ArrayBuffer) {
+          resolve(data.target.result);
+        } else {
+          reject("cannot read file: " + item.webkitRelativePath);
+        }
+      };
+      reader.onerror = (e) => {
+        reject("cannot read file: " + item.webkitRelativePath);
+      };
+      reader.readAsArrayBuffer(item);
+    }).then((buffer) => {
+      const u8buffer = new Uint8Array(buffer);
+      return sKvs.put(target, u8buffer);
+    });
+    promises.push(promise);
+  }
+  await Promise.all(promises);
 }
 
 async function extractZip(file: File, id: string): Promise<void> {

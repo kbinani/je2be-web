@@ -7,6 +7,7 @@ import { useForceUpdate } from "./main";
 import { ProgressReducer } from "./state";
 import { WorkerError } from "../share/messages";
 import { ErrorMessage } from "./error-message";
+import { directoryNameFromFileList } from "../share/file-list-ext";
 
 type State = {
   id?: string;
@@ -46,24 +47,87 @@ export const J2B: React.FC<{ onFinish: () => void; onStart: () => void }> = ({
     return (ev: ChangeEvent<HTMLInputElement>) => {
       const files = ev.target.files;
       if (!files) {
-        console.error("no file selected, or one or more files selected");
+        setState({
+          error: {
+            type: "Other",
+            native: {
+              message: "no file selected, or one or more files selected",
+            },
+          },
+        });
         return;
       }
-      if (!files || files.length !== 1) {
-        console.error("no file selected, or one or more files selected");
-        return;
+      let source: File | FileList;
+      let filename: string;
+      if (file) {
+        if (!files || files.length !== 1) {
+          setState({
+            error: {
+              type: "Other",
+              native: {
+                message: "no file selected, or one or more files selected",
+              },
+            },
+          });
+          return;
+        }
+        const f = files.item(0);
+        if (!f) {
+          setState({
+            error: {
+              type: "Other",
+              native: {
+                message: "no file selected, or one or more files selected",
+              },
+            },
+          });
+          return;
+        }
+        source = f;
+        filename = f.name;
+      } else {
+        let numLevelDatFiles = 0;
+        const dirname = directoryNameFromFileList(files);
+        if (dirname === undefined) {
+          setState({
+            error: {
+              type: "Other",
+              native: { message: "can't read directory" },
+            },
+          });
+          return;
+        }
+        for (let i = 0; i < files.length; i++) {
+          const item = files.item(i);
+          if (!item) {
+            continue;
+          }
+          if (item.name === "level.dat") {
+            numLevelDatFiles++;
+          }
+        }
+        if (numLevelDatFiles === 0) {
+          setState({ error: { type: "NoLevelDatFound", native: {} } });
+          return;
+        } else if (numLevelDatFiles > 1) {
+          setState({ error: { type: "2OrMoreLevelDatFound", native: {} } });
+          return;
+        }
+        source = files;
+        filename = dirname;
       }
       const id = uuidv4();
       const s = new ConvertSession({
         id,
-        fileList: files,
+        file: source,
+        filename,
         updateProgress,
         onFinish: onFinishCalled,
         onError,
       });
       session.current?.close();
       session.current = s;
-      s.start(files);
+      s.start();
 
       setState({ id, startTime: Date.now() });
       onStart();

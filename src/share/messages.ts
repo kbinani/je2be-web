@@ -61,7 +61,7 @@ export function isFailedMessage(x: any): x is FailedMessage {
 export type StartJ2BMessage = {
   type: "j2b";
   id: string;
-  fileList: FileList;
+  file: File | FileList;
 };
 
 export function isStartJ2BMessage(x: any): x is StartJ2BMessage {
@@ -71,7 +71,7 @@ export function isStartJ2BMessage(x: any): x is StartJ2BMessage {
   return (
     x["type"] === "j2b" &&
     typeof x["id"] === "string" &&
-    x["fileList"] instanceof FileList
+    (x["file"] instanceof FileList || x["file"] instanceof File)
   );
 }
 

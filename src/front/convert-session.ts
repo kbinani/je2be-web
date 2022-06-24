@@ -14,6 +14,7 @@ export class ConvertSession {
   private readonly converter: Worker;
   private startTime: number = 0;
   private readonly kvs = new KvsServer();
+  private readonly file: File | FileList;
   readonly filename: string;
   private readonly id: string;
   private readonly updateProgress: (reducer: ProgressReducer) => void;
@@ -22,13 +23,15 @@ export class ConvertSession {
 
   constructor({
     id,
-    fileList,
+    file,
+    filename,
     updateProgress,
     onError,
     onFinish,
   }: {
     id: string;
-    fileList: FileList;
+    file: File | FileList;
+    filename: string;
     updateProgress: (reducer: ProgressReducer) => void;
     onError: (error: WorkerError) => void;
     onFinish: () => void;
@@ -37,7 +40,8 @@ export class ConvertSession {
     this.updateProgress = updateProgress;
     this.onError = onError;
     this.onFinish = onFinish;
-    this.filename = fileList.item(0)!.name;
+    this.file = file;
+    this.filename = filename;
 
     const converter = new Worker("./script/converter.js", {
       name: "converter",
@@ -86,10 +90,14 @@ export class ConvertSession {
     this.kvs.close();
   }
 
-  start(fileList: FileList) {
+  start() {
     console.log(`[front] (${this.id}) start`);
-    const start: StartJ2BMessage = { type: "j2b", id: this.id, fileList };
-    this.converter.postMessage(start);
+    const start: StartJ2BMessage = {
+      type: "j2b",
+      id: this.id,
+      file: this.file,
+    };
+    this.converter?.postMessage(start);
     this.startTime = Date.now();
   }
 }
