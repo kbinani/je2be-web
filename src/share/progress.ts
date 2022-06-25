@@ -123,7 +123,7 @@ export function nextProgress(
     const step = steps[i];
     ret[step] = progress[step];
   }
-  ret[m.step] = { num: m.progress, den: m.total };
+  ret[m.step] = { num: m.progress === 0 ? -1 : m.progress, den: m.total };
   for (let i = index + 1; i < steps.length; i++) {
     const step = steps[i];
     if (i === index + 1 && m.progress === m.total) {
@@ -137,8 +137,14 @@ export function nextProgress(
 
 export function initialProgress(meta: ConverterMetadata): Progress {
   const ret: Progress = {};
-  for (const step of meta.steps) {
-    ret[step] = { num: 0, den: 1 };
+  const steps = meta.steps;
+  for (let i = 0; i < steps.length; i++) {
+    const step = steps[i];
+    if (i === 0) {
+      ret[step] = { num: -1, den: 1 };
+    } else {
+      ret[step] = { num: 0, den: 1 };
+    }
   }
   return ret;
 }
