@@ -21,6 +21,16 @@ type MainState = {
   converting: boolean;
 };
 
+function isSupportedBrowser() {
+  if (typeof navigator.hardwareConcurrency === "undefined") {
+    return false;
+  }
+  if (typeof Worker === "undefined") {
+    return false;
+  }
+  return true;
+}
+
 export const Main: React.FC = () => {
   const [state, setState] = useState<MainState>({
     mode: "select",
@@ -58,6 +68,7 @@ export const Main: React.FC = () => {
       window.removeEventListener("beforeunload", onBeforeUnload);
     };
   }, []);
+  const supported = isSupportedBrowser();
   return (
     <div className="main">
       <Header disableLink={state.converting} />
@@ -73,6 +84,43 @@ export const Main: React.FC = () => {
         )}
       </div>
       <Footer />
+      {!supported && (
+        <div className="unsupportedMessageContainer">
+          <div className="unsupportedMessage vFlex">
+            <div>{gettext("Unsupported browser because:")}</div>
+            <ul>
+              {typeof navigator.hardwareConcurrency === "undefined" && (
+                <li>
+                  {gettext(
+                    "This browser doesn't have navigator.hardwareConcurrency property"
+                  ) + ": "}
+                  <a
+                    target={"_blank"}
+                    href={
+                      "https://developer.mozilla.org/en-US/docs/Web/API/Navigator/hardwareConcurrency"
+                    }
+                  >
+                    https://developer.mozilla.org/en-US/docs/Web/API/Navigator/hardwareConcurrency
+                  </a>
+                </li>
+              )}
+              {typeof Worker === "undefined" && (
+                <li>
+                  {gettext("This browser doesn't have Worker class") + ": "}
+                  <a
+                    target={"_blank"}
+                    href={
+                      "https://developer.mozilla.org/en-US/docs/Web/API/Worker/Worker"
+                    }
+                  >
+                    https://developer.mozilla.org/en-US/docs/Web/API/Worker/Worker
+                  </a>
+                </li>
+              )}
+            </ul>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

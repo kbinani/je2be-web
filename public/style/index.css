@@ -18,7 +18,7 @@ body {
   background-color: var(--background-bright);
 }
 
-a {
+a .button {
   text-decoration: none;
   color: white;
 }
@@ -67,10 +67,16 @@ a {
 }
 
 .container {
+  position: relative;
+  top: 90px;
+  bottom: 120px;
   width: 608px;
-  margin: 90px auto auto auto;
+  height: calc(100% - 210px);
+  margin-left: auto;
+  margin-right: auto;
   display: flex;
   flex-direction: column;
+  overflow-y: scroll;
 }
 
 .inputZip {
@@ -93,13 +99,11 @@ a {
 }
 
 .progressContainer {
-  /*width: 100%;*/
   margin: 20px;
 }
 
 .progress {
   background-color: #263238;
-  /*width: 100%;*/
   height: 38px;
   margin-top: 10px;
   position: relative;
@@ -246,4 +250,24 @@ a {
 .modeSelectButton {
   width: calc(var(--container-width) / 2);
   margin: 10px;
+}
+
+.unsupportedMessageContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #273338c0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.unsupportedMessage {
+  width: 50%;
+  height: 50%;
+  border-radius: 10px;
+  background-color: #4d5a60;
+  padding: 20px;
 }

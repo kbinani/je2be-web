@@ -3,7 +3,7 @@ import { WorkerError } from "../../share/messages";
 
 export const ErrorMessage: React.FC<{ error: WorkerError }> = ({ error }) => {
   return (
-    <div className="vFlex" style={{ marginTop: 10 }}>
+    <div className="vFlex" style={{ margin: 20 }}>
       <div className="errorMessage">Failed</div>
       <div className="hFlex">
         <div>type: </div>

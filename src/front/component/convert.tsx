@@ -162,44 +162,42 @@ export const Convert: React.FC<{
   }, []);
   return (
     <>
-      <div className="inputZip">
-        {!session.current && (
-          <>
-            <div style={{ textAlign: "center" }}>
-              {gettext("Select a world to convert")}
-            </div>
-            <div className="hFlex" style={{ marginTop: 20 }}>
-              {convertModeSupportsDirectoryInput(mode) && (
-                <label
-                  className="roundButton inputLabel"
-                  htmlFor="input_directory"
-                  style={{ marginRight: "20px" }}
-                >
-                  {gettext("Select directory")}
-                  <input
-                    id={"input_directory"}
-                    type={"file"}
-                    onChange={changeHandler({ file: false })}
-                    ref={inputDirectory}
-                    disabled={state.current.id !== undefined}
-                  />
-                </label>
-              )}
-              <label className="roundButton inputLabel" htmlFor="input_zip">
-                {gettext("Select archive")}
+      {!session.current && (
+        <div className="inputZip">
+          <div style={{ textAlign: "center" }}>
+            {gettext("Select a world to convert")}
+          </div>
+          <div className="hFlex" style={{ marginTop: 20 }}>
+            {convertModeSupportsDirectoryInput(mode) && (
+              <label
+                className="roundButton inputLabel"
+                htmlFor="input_directory"
+                style={{ marginRight: "20px" }}
+              >
+                {gettext("Select directory")}
                 <input
-                  id={"input_zip"}
+                  id={"input_directory"}
                   type={"file"}
-                  onChange={changeHandler({ file: true })}
-                  accept={convertModeInputFileExtension(mode)}
-                  ref={inputFile}
+                  onChange={changeHandler({ file: false })}
+                  ref={inputDirectory}
                   disabled={state.current.id !== undefined}
                 />
               </label>
-            </div>
-          </>
-        )}
-      </div>
+            )}
+            <label className="roundButton inputLabel" htmlFor="input_zip">
+              {gettext("Select archive")}
+              <input
+                id={"input_zip"}
+                type={"file"}
+                onChange={changeHandler({ file: true })}
+                accept={convertModeInputFileExtension(mode)}
+                ref={inputFile}
+                disabled={state.current.id !== undefined}
+              />
+            </label>
+          </div>
+        </div>
+      )}
       {session.current && (
         <div className="vFlex" style={{ margin: 20 }}>
           <div>{gettext("Selected file: ") + session.current.filename}</div>
