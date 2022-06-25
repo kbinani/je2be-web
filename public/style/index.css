@@ -181,6 +181,7 @@ a {
 
 .errorMessage {
   color: rgb(202, 53, 105);
+  user-select: text;
 }
 
 .footer {
