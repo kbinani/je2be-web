@@ -166,7 +166,7 @@ export const Convert: React.FC<{
                 </label>
               )}
               <label className="roundButton inputLabel" htmlFor="input_zip">
-                {gettext("Select zip file")}
+                {gettext("Select archive")}
                 <input
                   id={"input_zip"}
                   type={"file"}
