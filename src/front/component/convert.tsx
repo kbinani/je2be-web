@@ -52,11 +52,14 @@ export const Convert: React.FC<{
     setState({ endTime: Date.now() });
     onFinish();
   };
-  const onCancelOrBack = () => {
-    if (
+  const isConverting = () => {
+    return (
       state.current.startTime !== undefined &&
       state.current.endTime === undefined
-    ) {
+    );
+  };
+  const onCancelOrBack = () => {
+    if (isConverting()) {
       if (!confirm(gettext("Do you really want to cancel?"))) {
         return;
       }
@@ -162,7 +165,9 @@ export const Convert: React.FC<{
       <div className="inputZip">
         {!session.current && (
           <>
-            <div>{gettext("Select a world to convert")}</div>
+            <div style={{ textAlign: "center" }}>
+              {gettext("Select a world to convert")}
+            </div>
             <div className="hFlex" style={{ marginTop: 20 }}>
               {convertModeSupportsDirectoryInput(mode) && (
                 <label
@@ -303,14 +308,10 @@ export const Convert: React.FC<{
       <div className="vFlex" style={{ margin: "20px" }}>
         <div
           className="roundButton"
-          data-destructive={"true"}
-          style={{ marginTop: 20 }}
+          data-destructive={isConverting()}
           onClick={onCancelOrBack}
         >
-          {state.current.startTime !== undefined &&
-          state.current.endTime === undefined
-            ? gettext("Cancel")
-            : gettext("Back")}
+          {isConverting() ? gettext("Cancel") : gettext("Back")}{" "}
         </div>
       </div>
       {state.current.error && <ErrorMessage error={state.current.error} />}

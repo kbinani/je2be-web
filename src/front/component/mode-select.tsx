@@ -6,7 +6,7 @@ export const ModeSelect: React.FC<{
   onSelect: (mode: Mode) => void;
 }> = ({ onSelect }) => {
   return (
-    <div className="vFlex" style={{ alignItems: "center" }}>
+    <div className="vFlex" style={{ alignItems: "center", marginTop: 20 }}>
       <div style={{ marginBottom: 20 }}>
         {gettext("Select conversion mode:")}
       </div>
