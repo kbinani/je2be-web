@@ -14,7 +14,6 @@ import {
   mkdirp,
   readFile,
   unlink,
-  unmount,
   writeFile,
 } from "../../share/fs-ext";
 import JSZip from "jszip";
@@ -120,7 +119,8 @@ async function start(m: StartMessage): Promise<void> {
     }
     const buffer = await readFileAsUint8Array(file);
     inputPath = `/je2be/${id}/in/input.bin`;
-    await sKvs.put(inputPath, buffer);
+    mkdirp(dirname(inputPath));
+    await writeFile(inputPath, buffer);
   }
 
   console.log(`[converter] (${id}) convert...`);
