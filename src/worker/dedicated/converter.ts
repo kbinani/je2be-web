@@ -46,7 +46,9 @@ function errorCatcher(id: string): (e: any) => void {
 self.addEventListener("message", (ev: MessageEvent) => {
   if (isStartMessage(ev.data)) {
     const { id } = ev.data;
-    start(ev.data).catch(errorCatcher(id));
+    start(ev.data)
+      .catch(errorCatcher(id))
+      .finally(() => Module._Deinit());
   } else if (isProgressMessage(ev.data)) {
     self.postMessage(ev.data);
   }
@@ -114,7 +116,7 @@ async function start(m: StartMessage): Promise<void> {
   });
   await mkdirp(`/je2be/${id}/out`);
 
-  Module._initialize();
+  Module._Init();
 
   const inputPtr = StringToUTF8(inputPath);
   const outputPtr = StringToUTF8(`/je2be/${id}/out`);
@@ -122,10 +124,17 @@ async function start(m: StartMessage): Promise<void> {
   let errorJsonPtr: number = 0;
   switch (mode) {
     case "j2b":
-      errorJsonPtr = Module._j2b(inputPtr, outputPtr, idPtr);
+      errorJsonPtr = Module._JavaToBedrock(inputPtr, outputPtr, idPtr);
       break;
-    default:
-      throw "unsupported conversion mode";
+    case "b2j":
+      errorJsonPtr = Module._BedrockToJava(inputPtr, outputPtr, idPtr);
+      break;
+    case "x2j":
+      errorJsonPtr = Module._Xbox360ToJava(inputPtr, outputPtr, idPtr);
+      break;
+    case "x2b":
+      errorJsonPtr = Module._Xbox360ToBedrock(inputPtr, outputPtr, idPtr);
+      break;
   }
   if (errorJsonPtr != 0) {
     const errorJsonString = UTF8ToString(errorJsonPtr);

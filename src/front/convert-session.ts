@@ -13,7 +13,7 @@ import {
   Progress,
   ProgressReducer,
 } from "../share/progress";
-import { ConvertMode } from "./mode";
+import { ConvertMode, convertModeOutputFileExtension } from "./mode";
 
 export class ConvertSession {
   private readonly converter: Worker;
@@ -70,16 +70,7 @@ export class ConvertSession {
         this.converter.terminate();
 
         const dot = this.filename.lastIndexOf(".");
-        let extension: string;
-        switch (this.mode) {
-          case "j2b":
-          case "x2b":
-            extension = ".mcworld";
-            break;
-          default:
-            extension = ".zip";
-            break;
-        }
+        const extension = convertModeOutputFileExtension(this.mode);
         let filename = "world" + extension;
         if (dot > 0) {
           filename = this.filename.substring(0, dot) + extension;

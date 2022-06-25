@@ -13,7 +13,11 @@ import {
   Progress,
   ProgressReducer,
 } from "../../share/progress";
-import { ConvertMode, convertModeSupportsDirectoryInput } from "../mode";
+import {
+  ConvertMode,
+  convertModeInputFileExtension,
+  convertModeSupportsDirectoryInput,
+} from "../mode";
 
 type State = Progress & {
   id?: string;
@@ -167,7 +171,7 @@ export const Convert: React.FC<{
                   id={"input_zip"}
                   type={"file"}
                   onChange={changeHandler({ file: true })}
-                  accept={".zip"}
+                  accept={convertModeInputFileExtension(mode)}
                   ref={inputFile}
                   disabled={state.current.id !== undefined}
                 />
