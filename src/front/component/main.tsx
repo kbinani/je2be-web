@@ -21,6 +21,16 @@ type MainState = {
   converting: boolean;
 };
 
+function isSharedArrayBufferSupported() {
+  if (typeof crossOriginIsolated !== "boolean") {
+    return false;
+  }
+  if (typeof SharedArrayBuffer === "undefined") {
+    return false;
+  }
+  return crossOriginIsolated === true;
+}
+
 function isSupportedBrowser() {
   if (typeof navigator.hardwareConcurrency === "undefined") {
     return false;
@@ -28,7 +38,7 @@ function isSupportedBrowser() {
   if (typeof Worker === "undefined") {
     return false;
   }
-  return true;
+  return isSharedArrayBufferSupported();
 }
 
 export const Main: React.FC = () => {
@@ -63,7 +73,6 @@ export const Main: React.FC = () => {
       .then(() => console.log(`[front] sw launched`))
       .catch(console.error);
     window.addEventListener("beforeunload", onBeforeUnload);
-    //TODO: assert window.crossOriginIsolated === true
     return () => {
       window.removeEventListener("beforeunload", onBeforeUnload);
     };
@@ -114,6 +123,20 @@ export const Main: React.FC = () => {
                     }
                   >
                     https://developer.mozilla.org/en-US/docs/Web/API/Worker/Worker
+                  </a>
+                </li>
+              )}
+              {!isSharedArrayBufferSupported() && (
+                <li>
+                  {gettext("This browser doesn't support SharedArrayBuffer") +
+                    ": "}
+                  <a
+                    target={"_blank"}
+                    href={
+                      "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer"
+                    }
+                  >
+                    https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer
                   </a>
                 </li>
               )}
