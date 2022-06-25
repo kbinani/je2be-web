@@ -79,6 +79,10 @@ a .button {
   overflow-y: scroll;
 }
 
+.container::-webkit-scrollbar {
+  display: none;
+}
+
 .inputZip {
   margin: 20px;
 }
