@@ -66,11 +66,14 @@ export const Main: React.FC = () => {
       );
     }
   };
-  const onBack = () => {
+  const onBackConvert = () => {
     setState({ converting: false, mode: "select", about: false });
   };
   const onClickAbout = () => {
     setState({ ...state, about: true });
+  };
+  const onBackAbout = () => {
+    setState({ ...state, about: false });
   };
   useEffect(() => {
     const launcher = new ServiceWorkerLauncher();
@@ -94,13 +97,13 @@ export const Main: React.FC = () => {
             mode={state.mode}
             onFinish={onFinish}
             onStart={onStart}
-            onBack={onBack}
+            onBack={onBackConvert}
           />
         )}
       </div>
       <Footer onClickAbout={onClickAbout} />
       {!supported && <UnsupportedBrowserMessage />}
-      {state.about && <About onBack={onBack} />}
+      {state.about && <About onBack={onBackAbout} />}
     </div>
   );
 };
