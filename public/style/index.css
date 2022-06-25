@@ -222,6 +222,9 @@ a {
   padding: 0 20px 0 20px;
   text-align: center;
   background-color: #273338;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .roundButton:hover {
@@ -230,7 +233,6 @@ a {
 
 .roundButton:active {
   background-color: #4d5a60;
-  /*background-color: red;*/
 }
 
 .modeSelectButton {
