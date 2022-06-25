@@ -42,10 +42,14 @@ function onFetch(ev: FetchEvent) {
   if (!pathname.startsWith(expected)) {
     return;
   }
+  const name = u.searchParams.get("filename");
+  if (!name) {
+    return;
+  }
   const id = pathname.substring(expected.length);
   const action = u.searchParams.get("action");
   if (action === "download") {
-    const filename = u.searchParams.get("filename") ?? "world.mcworld";
+    const filename = decodeURIComponent(atob(name));
     ev.respondWith(respondDownload(id, filename));
   }
 }
@@ -76,7 +80,9 @@ async function respondDownload(
     headers: {
       "Content-Type": "application/octet-stream",
       "Cache-Control": "no-cache",
-      "Content-Disposition": `attachment; filename=\"${filename}\"`,
+      "Content-Disposition": `attachment; filename=\"${encodeURIComponent(
+        filename
+      )}\"`,
     },
   });
 }

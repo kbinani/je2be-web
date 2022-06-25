@@ -270,7 +270,11 @@ export const Convert: React.FC<{
               <a
                 className="roundButton"
                 style={{ marginLeft: 10, paddingLeft: 20, paddingRight: 20 }}
-                href={`./dl/${state.current.dl.id}?action=download&filename=${state.current.dl.filename}`}
+                href={`./dl/${
+                  state.current.dl.id
+                }?action=download&filename=${btoa(
+                  encodeURIComponent(state.current.dl.filename)
+                )}`}
               >
                 {gettext("Export")} {state.current.dl.filename}
               </a>
