@@ -132,16 +132,9 @@ export function unlink(path: string) {
   }
 }
 
-export function mount(type: "mem" | "worker", path: string, options: any = {}) {
+export function mount(path: string, options: any = {}) {
   try {
-    switch (type) {
-      case "mem":
-        FS.mount(MEMFS, options, path);
-        break;
-      case "worker":
-        FS.mount(WORKERFS, options, path);
-        break;
-    }
+    FS.mount(MEMFS, options, path);
   } catch (e) {
     console.trace(e);
   }

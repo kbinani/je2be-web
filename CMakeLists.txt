@@ -28,7 +28,6 @@ target_link_libraries(core je2be)
 target_compile_options(core PRIVATE ${common_em_compile_and_link_options})
 target_link_options(core PRIVATE
   ${common_em_compile_and_link_options}
-  -lworkerfs.js
   -sSINGLE_FILE=1
   -sALLOW_MEMORY_GROWTH=1
   -sINLINING_LIMIT=1

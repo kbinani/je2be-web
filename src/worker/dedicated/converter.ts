@@ -8,11 +8,18 @@ import {
   StartMessage,
   WorkerError,
 } from "../../share/messages";
-import { iterate, mkdirp, readFile, unlink, unmount } from "../../share/fs-ext";
+import {
+  dirname,
+  iterate,
+  mkdirp,
+  readFile,
+  unlink,
+  unmount,
+  writeFile,
+} from "../../share/fs-ext";
 import JSZip from "jszip";
 import { promiseUnzipFileInZip } from "../../share/zip-ext";
 import { defer, KvsClient } from "../../share/kvs";
-import { mountFilesAsWorkerFs } from "../../share/kvs-ext";
 import { DlStore, FileMeta } from "../../share/dl";
 import { directoryNameFromFileList } from "../../share/file-list-ext";
 
@@ -117,11 +124,6 @@ async function start(m: StartMessage): Promise<void> {
   }
 
   console.log(`[converter] (${id}) convert...`);
-  await mountFilesAsWorkerFs({
-    kvs: sKvs,
-    prefix: `/je2be/${id}/in`,
-    mountPoint: `/je2be/${id}/in`,
-  });
   await mkdirp(`/je2be/${id}/out`);
 
   Module._Init();
@@ -164,7 +166,6 @@ async function start(m: StartMessage): Promise<void> {
     };
     self.postMessage(m);
 
-    unmount(`/je2be/${id}/in`);
     Module._free(errorJsonPtr);
     return;
   }
@@ -172,8 +173,6 @@ async function start(m: StartMessage): Promise<void> {
   Module._free(outputPtr);
   Module._free(idPtr);
   console.log(`[converter] (${id}) convert done`);
-
-  unmount(`/je2be/${id}/in`);
 
   await collectOutputFiles(id);
 
@@ -220,7 +219,8 @@ async function copyDirectory(file: FileList, id: string): Promise<void> {
     const target = `/je2be/${id}/in/${rel}`;
     const promise = readFileAsUint8Array(item)
       .then((buffer) => {
-        return sKvs.put(target, buffer);
+        mkdirp(dirname(target));
+        return writeFile(target, buffer);
       })
       .then(() => {
         progress++;
@@ -313,7 +313,8 @@ async function extractZip(file: File, id: string): Promise<void> {
     const rel = path.substring(prefix.length);
     const target = `/je2be/${id}/in/${rel}`;
     const buffer = await promiseUnzipFileInZip({ zip, path });
-    await sKvs.put(target, buffer);
+    mkdirp(dirname(target));
+    await writeFile(target, buffer);
 
     progress++;
     const m: ProgressMessage = {
@@ -331,7 +332,8 @@ async function extractZip(file: File, id: string): Promise<void> {
     const rel = path.substring(prefix.length);
     const target = `/je2be/${id}/in/${rel}`;
     const buffer = await promiseUnzipFileInZip({ zip, path });
-    await sKvs.put(target, buffer);
+    mkdirp(dirname(target));
+    await writeFile(target, buffer);
     progress++;
     const m: ProgressMessage = {
       type: "progress",
