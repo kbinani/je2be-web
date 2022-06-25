@@ -10,6 +10,8 @@
 
 #include <je2be.hpp>
 
+#define J2B_DEBUG_CHUNK_FILTER_RADIUS (0)
+
 namespace fs = std::filesystem;
 
 namespace {
@@ -135,7 +137,14 @@ je2be::Status UnsafeJavaToBedrock(char *input, char *output, char *id) {
 
   Options options;
   options.fLevelDirectoryStructure = LevelDirectoryStructure::Vanilla;
-
+#if J2B_DEBUG_CHUNK_FILTER_RADIUS
+  int r = J2B_DEBUG_CHUNK_FILTER_RADIUS;
+  for (int x = -r; x <= r; x++) {
+    for (int z = -r; z <= r; z++) {
+      options.fChunkFilter.insert(je2be::Pos2i(x, z));
+    }
+  }
+#endif
   Converter converter(fs::path(input), fs::path(output), options);
 
   J2BProgress progress(id);
@@ -150,7 +159,14 @@ je2be::Status UnsafeBedrockToJava(char *input, char *output, char *id) {
   using namespace je2be::toje;
 
   Options options;
-
+#if J2B_DEBUG_CHUNK_FILTER_RADIUS
+  int r = J2B_DEBUG_CHUNK_FILTER_RADIUS;
+  for (int x = -r; x <= r; x++) {
+    for (int z = -r; z <= r; z++) {
+      options.fChunkFilter.insert(je2be::Pos2i(x, z));
+    }
+  }
+#endif
   Converter converter(fs::path(input), fs::path(output), options);
 
   B2JProgress progress(id);
@@ -166,6 +182,14 @@ je2be::Status UnsafeXbox360ToJava(char *input, char *output, char *id) {
 
   int concurrency = (int)thread::hardware_concurrency() - 1;
   Options options;
+#if J2B_DEBUG_CHUNK_FILTER_RADIUS
+  int r = J2B_DEBUG_CHUNK_FILTER_RADIUS;
+  for (int x = -r; x <= r; x++) {
+    for (int z = -r; z <= r; z++) {
+      options.fChunkFilter.insert(je2be::Pos2i(x, z));
+    }
+  }
+#endif
   X2JProgress progress(id);
   return Converter::Run(fs::path(input), fs::path(output), concurrency, options, &progress);
 }
@@ -183,6 +207,14 @@ je2be::Status UnsafeXbox360ToBedrock(char *input, char *output, char *id) {
 
   {
     box360::Options options;
+#if J2B_DEBUG_CHUNK_FILTER_RADIUS
+    int r = J2B_DEBUG_CHUNK_FILTER_RADIUS;
+    for (int x = -r; x <= r; x++) {
+      for (int z = -r; z <= r; z++) {
+        options.fChunkFilter.insert(je2be::Pos2i(x, z));
+      }
+    }
+#endif
     X2JProgress progress(id);
     auto st = box360::Converter::Run(fs::path(input), javaOutput, concurrency, options, &progress);
     if (!st.ok()) {
@@ -192,6 +224,14 @@ je2be::Status UnsafeXbox360ToBedrock(char *input, char *output, char *id) {
 
   {
     tobe::Options options;
+#if J2B_DEBUG_CHUNK_FILTER_RADIUS
+    int r = J2B_DEBUG_CHUNK_FILTER_RADIUS;
+    for (int x = -r; x <= r; x++) {
+      for (int z = -r; z <= r; z++) {
+        options.fChunkFilter.insert(je2be::Pos2i(x, z));
+      }
+    }
+#endif
     J2BProgress progress(id);
     tobe::Converter converter(javaOutput, fs::path(output), options);
     return converter.run(concurrency, &progress);
