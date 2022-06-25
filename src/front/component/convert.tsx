@@ -200,7 +200,11 @@ export const Convert: React.FC<{
       )}
       {session.current && (
         <div className="vFlex" style={{ margin: 20 }}>
-          <div>{gettext("Selected file: ") + session.current.filename}</div>
+          <div>
+            {(session.current.file instanceof File
+              ? gettext("Selected file: ")
+              : gettext("Selected directory: ")) + session.current.filename}
+          </div>
           {state.current.endTime === undefined && (
             <>
               <div>{gettext("Mode: ") + convertModeDescription(mode)}</div>

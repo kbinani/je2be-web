@@ -19,7 +19,7 @@ export class ConvertSession {
   private readonly converter: Worker;
   private startTime: number = 0;
   private readonly kvs = new KvsServer();
-  private readonly file: File | FileList;
+  readonly file: File | FileList;
   readonly filename: string;
   private readonly id: string;
   private readonly updateProgress: (reducer: ProgressReducer) => void;
