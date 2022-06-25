@@ -86,7 +86,7 @@ export const Main: React.FC = () => {
   const supported = isSupportedBrowser();
   return (
     <div className="main">
-      <Header disableLink={state.converting} />
+      <Header />
       <div className="container">
         {state.mode === "select" && <ModeSelect onSelect={onModeSelect} />}
         {state.mode !== "select" && (
