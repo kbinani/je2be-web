@@ -9,13 +9,13 @@ import { ErrorMessage } from "./error-message";
 import { directoryNameFromFileList } from "../../share/file-list-ext";
 import {
   initialProgress,
-  J2BConverterMetadata,
   Progress,
   ProgressReducer,
 } from "../../share/progress";
 import {
   ConvertMode,
   convertModeInputFileExtension,
+  convertModeMetadata,
   convertModeSupportsDirectoryInput,
 } from "../mode";
 
@@ -109,7 +109,7 @@ export const Convert: React.FC<{
         filename = dirname;
       }
       const id = uuidv4();
-      const meta = new J2BConverterMetadata(file);
+      const meta = convertModeMetadata(mode, file);
       const s = new ConvertSession({
         id,
         mode,

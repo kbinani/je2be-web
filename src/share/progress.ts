@@ -59,6 +59,55 @@ export class J2BConverterMetadata implements ConverterMetadata {
   }
 }
 
+export class B2JConverterMetadata implements ConverterMetadata {
+  constructor(readonly file: boolean) {}
+
+  get steps(): Step[] {
+    if (this.file) {
+      return ["unzip", "convert"];
+    } else {
+      return ["copy", "convert"];
+    }
+  }
+
+  displayUnit(step: Step): string | undefined {
+    switch (step) {
+      case "unzip":
+      case "copy":
+        return "files";
+      case "convert":
+        return "chunks";
+    }
+  }
+}
+
+export class X2JConverterMetadata implements ConverterMetadata {
+  get steps(): Step[] {
+    return ["extract"];
+  }
+
+  displayUnit(step: Step): string | undefined {
+    return undefined;
+  }
+}
+
+export class X2BConverterMetadata implements ConverterMetadata {
+  get steps(): Step[] {
+    return ["extract", "convert", "compaction"];
+  }
+
+  displayUnit(step: Step): string | undefined {
+    switch (step) {
+      case "extract":
+        return undefined;
+      case "convert":
+        return "chunks";
+      case "compaction":
+        return undefined;
+    }
+  }
+}
+
 export function nextProgress(
   progress: Progress,
   m: ProgressMessage,

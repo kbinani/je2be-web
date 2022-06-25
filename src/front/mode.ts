@@ -1,3 +1,11 @@
+import {
+  B2JConverterMetadata,
+  ConverterMetadata,
+  J2BConverterMetadata,
+  X2BConverterMetadata,
+  X2JConverterMetadata,
+} from "../share/progress";
+
 export type ConvertMode = "j2b" | "b2j" | "x2b" | "x2j";
 export type Mode = "select" | ConvertMode;
 
@@ -25,5 +33,21 @@ export function convertModeOutputFileExtension(mode: ConvertMode): string {
     case "b2j":
     case "x2j":
       return ".zip";
+  }
+}
+
+export function convertModeMetadata(
+  mode: ConvertMode,
+  file: boolean
+): ConverterMetadata {
+  switch (mode) {
+    case "j2b":
+      return new J2BConverterMetadata(file);
+    case "b2j":
+      return new B2JConverterMetadata(file);
+    case "x2j":
+      return new X2JConverterMetadata();
+    case "x2b":
+      return new X2BConverterMetadata();
   }
 }
