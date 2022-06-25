@@ -11,7 +11,7 @@ import {
 import { iterate, mkdirp, readFile, unlink, unmount } from "../../share/fs-ext";
 import JSZip from "jszip";
 import { promiseUnzipFileInZip } from "../../share/zip-ext";
-import { KvsClient } from "../../share/kvs";
+import { defer, KvsClient } from "../../share/kvs";
 import { mountFilesAsWorkerFs } from "../../share/kvs-ext";
 import { DlStore, FileMeta } from "../../share/dl";
 import { directoryNameFromFileList } from "../../share/file-list-ext";
@@ -43,6 +43,14 @@ function errorCatcher(id: string): (e: any) => void {
   };
 }
 
+const sRuntimeInitialized = defer<void>();
+
+self.importScripts("./core.js");
+Module.onRuntimeInitialized = () => {
+  console.log(`[converter] onRuntimeInitialized`);
+  sRuntimeInitialized.resolve();
+};
+
 self.addEventListener("message", (ev: MessageEvent) => {
   if (isStartMessage(ev.data)) {
     const { id } = ev.data;
@@ -53,8 +61,6 @@ self.addEventListener("message", (ev: MessageEvent) => {
     self.postMessage(ev.data);
   }
 });
-
-self.importScripts("./core.js");
 
 const sKvs = new KvsClient();
 
@@ -81,6 +87,8 @@ async function readFileAsUint8Array(file: File): Promise<Uint8Array> {
 }
 
 async function start(m: StartMessage): Promise<void> {
+  await sRuntimeInitialized;
+
   console.log(`[converter] (${m.id}) start`);
   const { id, file, mode } = m;
 

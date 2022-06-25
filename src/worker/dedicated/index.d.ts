@@ -1,4 +1,4 @@
-declare const Module: any;
+declare let Module: any;
 declare const FS: any;
 declare const MEMFS: any;
 declare const WORKERFS: any;
