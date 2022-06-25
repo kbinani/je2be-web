@@ -31,8 +31,13 @@ const DependsOn: React.FC<{ name: string; url: string }> = ({
 };
 
 export const About: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+  const onClickContainer = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onBack();
+    }
+  };
   return (
-    <div className="aboutContainer vFlex">
+    <div className="aboutContainer vFlex" onClick={onClickContainer}>
       <div className="about vFlex">
         <div>About je2be-web</div>
         <VSpace />
