@@ -7,6 +7,7 @@ import { ModeSelect } from "./mode-select";
 import { gettext } from "../i18n";
 import { Mode } from "../mode";
 import { Convert } from "./convert";
+import { About } from "./about";
 
 export const useForceUpdate = () => {
   const [counter, setCounter] = useReducer(
@@ -19,6 +20,7 @@ export const useForceUpdate = () => {
 type MainState = {
   mode: Mode;
   converting: boolean;
+  about: boolean;
 };
 
 function isSharedArrayBufferSupported() {
@@ -45,6 +47,7 @@ export const Main: React.FC = () => {
   const [state, setState] = useState<MainState>({
     mode: "select",
     converting: false,
+    about: false,
   });
   const onModeSelect = (next: Mode) => {
     setState({ ...state, mode: next });
@@ -64,7 +67,10 @@ export const Main: React.FC = () => {
     }
   };
   const onBack = () => {
-    setState({ converting: false, mode: "select" });
+    setState({ converting: false, mode: "select", about: false });
+  };
+  const onClickAbout = () => {
+    setState({ ...state, about: true });
   };
   useEffect(() => {
     const launcher = new ServiceWorkerLauncher();
@@ -92,58 +98,62 @@ export const Main: React.FC = () => {
           />
         )}
       </div>
-      <Footer />
-      {!supported && (
-        <div className="unsupportedMessageContainer">
-          <div className="unsupportedMessage vFlex">
-            <div>{gettext("Unsupported browser because:")}</div>
-            <ul>
-              {typeof navigator.hardwareConcurrency === "undefined" && (
-                <li>
-                  {gettext(
-                    "This browser doesn't have navigator.hardwareConcurrency property"
-                  ) + ": "}
-                  <a
-                    target={"_blank"}
-                    href={
-                      "https://developer.mozilla.org/en-US/docs/Web/API/Navigator/hardwareConcurrency"
-                    }
-                  >
-                    https://developer.mozilla.org/en-US/docs/Web/API/Navigator/hardwareConcurrency
-                  </a>
-                </li>
-              )}
-              {typeof Worker === "undefined" && (
-                <li>
-                  {gettext("This browser doesn't have Worker class") + ": "}
-                  <a
-                    target={"_blank"}
-                    href={
-                      "https://developer.mozilla.org/en-US/docs/Web/API/Worker/Worker"
-                    }
-                  >
-                    https://developer.mozilla.org/en-US/docs/Web/API/Worker/Worker
-                  </a>
-                </li>
-              )}
-              {!isSharedArrayBufferSupported() && (
-                <li>
-                  {gettext("This browser doesn't support SharedArrayBuffer") +
-                    ": "}
-                  <a
-                    target={"_blank"}
-                    href={
-                      "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer"
-                    }
-                  >
-                    https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer
-                  </a>
-                </li>
-              )}
-            </ul>
-          </div>
-        </div>
-      )}
+      <Footer onClickAbout={onClickAbout} />
+      {!supported && <UnsupportedBrowserMessage />}
+      {state.about && <About onBack={onBack} />}
+    </div>
+  );
+};
+
+const UnsupportedBrowserMessage: React.FC = () => {
+  return (
+    <div className="unsupportedMessageContainer">
+      <div className="unsupportedMessage vFlex">
+        <div>{gettext("Unsupported browser because:")}</div>
+        <ul>
+          {typeof navigator.hardwareConcurrency === "undefined" && (
+            <li>
+              {gettext(
+                "This browser doesn't have navigator.hardwareConcurrency property"
+              ) + ": "}
+              <a
+                target={"_blank"}
+                href={
+                  "https://developer.mozilla.org/en-US/docs/Web/API/Navigator/hardwareConcurrency"
+                }
+              >
+                https://developer.mozilla.org/en-US/docs/Web/API/Navigator/hardwareConcurrency
+              </a>
+            </li>
+          )}
+          {typeof Worker === "undefined" && (
+            <li>
+              {gettext("This browser doesn't have Worker class") + ": "}
+              <a
+                target={"_blank"}
+                href={
+                  "https://developer.mozilla.org/en-US/docs/Web/API/Worker/Worker"
+                }
+              >
+                https://developer.mozilla.org/en-US/docs/Web/API/Worker/Worker
+              </a>
+            </li>
+          )}
+          {!isSharedArrayBufferSupported() && (
+            <li>
+              {gettext("This browser doesn't support SharedArrayBuffer") + ": "}
+              <a
+                target={"_blank"}
+                href={
+                  "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer"
+                }
+              >
+                https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer
+              </a>
+            </li>
+          )}
+        </ul>
+      </div>
     </div>
   );
 };

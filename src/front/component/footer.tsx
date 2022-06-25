@@ -2,7 +2,7 @@ import * as React from "react";
 import { FC } from "react";
 import { kAppVersion } from "../../share/version";
 
-export const Footer: FC = () => {
+export const Footer: FC<{ onClickAbout: () => void }> = ({ onClickAbout }) => {
   return (
     <div className="footer">
       <div className="footerContent">
@@ -21,7 +21,12 @@ export const Footer: FC = () => {
         <div className="footerRow">
           je2be-web {kAppVersion === "" ? "(local)" : kAppVersion}
         </div>
-        <div className="footerRow">Copyright © kbinani</div>
+        <div className="footerRow hFlex">
+          <div>Copyright © kbinani</div>・
+          <div onClick={onClickAbout} style={{ cursor: "pointer" }}>
+            About je2be-web
+          </div>
+        </div>
       </div>
     </div>
   );
