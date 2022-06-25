@@ -14,25 +14,12 @@ export type ProgressReducer = (progress: Progress) => Progress;
 
 export type Step = "unzip" | "copy" | "convert" | "compaction" | "extract";
 
-export function stepDescription(step: Step): string {
-  switch (step) {
-    case "unzip":
-      return "Unzip";
-    case "copy":
-      return "Copy";
-    case "convert":
-      return "Convert";
-    case "compaction":
-      return "LevelDB Compaction";
-    case "extract":
-      return "Extract";
-  }
-}
-
 export interface ConverterMetadata {
   steps: Step[];
 
   displayUnit(step: Step): string | undefined;
+
+  stepDescription(step: Step): string | undefined;
 }
 
 export class J2BConverterMetadata implements ConverterMetadata {
@@ -57,6 +44,19 @@ export class J2BConverterMetadata implements ConverterMetadata {
         return undefined;
     }
   }
+
+  stepDescription(step: Step): string | undefined {
+    switch (step) {
+      case "unzip":
+        return "Unzip";
+      case "copy":
+        return "Copy";
+      case "convert":
+        return "Convert";
+      case "compaction":
+        return "LevelDB Compaction";
+    }
+  }
 }
 
 export class B2JConverterMetadata implements ConverterMetadata {
@@ -79,6 +79,17 @@ export class B2JConverterMetadata implements ConverterMetadata {
         return "chunks";
     }
   }
+
+  stepDescription(step: Step): string | undefined {
+    switch (step) {
+      case "unzip":
+        return "Unzip";
+      case "copy":
+        return "Copy";
+      case "convert":
+        return "Convert";
+    }
+  }
 }
 
 export class X2JConverterMetadata implements ConverterMetadata {
@@ -88,6 +99,13 @@ export class X2JConverterMetadata implements ConverterMetadata {
 
   displayUnit(step: Step): string | undefined {
     return undefined;
+  }
+
+  stepDescription(step: Step): string | undefined {
+    switch (step) {
+      case "extract":
+        return "Convert";
+    }
   }
 }
 
@@ -104,6 +122,17 @@ export class X2BConverterMetadata implements ConverterMetadata {
         return "chunks";
       case "compaction":
         return undefined;
+    }
+  }
+
+  stepDescription(step: Step): string | undefined {
+    switch (step) {
+      case "extract":
+        return "Extract";
+      case "convert":
+        return "Convert";
+      case "compaction":
+        return "LevelDB Compaction";
     }
   }
 }
