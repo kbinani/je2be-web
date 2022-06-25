@@ -232,6 +232,8 @@ a .button {
   overflow: hidden;
   white-space: nowrap;
   background-color: #273338;
+  text-decoration: none;
+  color: white;
 }
 
 .roundButton:hover {
