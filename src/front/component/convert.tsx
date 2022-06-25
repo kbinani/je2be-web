@@ -198,46 +198,70 @@ export const Convert: React.FC<{
       )}
       {session.current && (
         <div className="progressContainer">
-          {session.current.meta.steps.includes("unzip") &&
-            state.current.unzip && (
-              <ProgressComponent
-                progress={state.current.unzip}
-                step={"unzip"}
-                meta={session.current.meta}
-              />
-            )}
-          {session.current.meta.steps.includes("copy") &&
-            state.current.copy && (
-              <ProgressComponent
-                progress={state.current.copy}
-                step={"copy"}
-                meta={session.current.meta}
-              />
-            )}
-          {session.current.meta.steps.includes("convert") &&
-            state.current.convert && (
-              <ProgressComponent
-                progress={state.current.convert}
-                step={"convert"}
-                meta={session.current.meta}
-              />
-            )}
-          {session.current.meta.steps.includes("compaction") &&
-            state.current.compaction && (
-              <ProgressComponent
-                progress={state.current.compaction}
-                step={"compaction"}
-                meta={session.current.meta}
-              />
-            )}
-          {session.current.meta.steps.includes("extract") &&
-            state.current.extract && (
-              <ProgressComponent
-                progress={state.current.extract}
-                step={"extract"}
-                meta={session.current.meta}
-              />
-            )}
+          {session.current.meta.steps.map((step) => {
+            switch (step) {
+              case "unzip":
+                return (
+                  session.current?.meta &&
+                  state.current.unzip && (
+                    <ProgressComponent
+                      key={step}
+                      progress={state.current.unzip}
+                      step={step}
+                      meta={session.current.meta}
+                    />
+                  )
+                );
+              case "copy":
+                return (
+                  session.current?.meta &&
+                  state.current.copy && (
+                    <ProgressComponent
+                      key={step}
+                      progress={state.current.copy}
+                      step={step}
+                      meta={session.current.meta}
+                    />
+                  )
+                );
+              case "convert":
+                return (
+                  session.current?.meta &&
+                  state.current.convert && (
+                    <ProgressComponent
+                      key={step}
+                      progress={state.current.convert}
+                      step={step}
+                      meta={session.current.meta}
+                    />
+                  )
+                );
+              case "compaction":
+                return (
+                  session.current?.meta &&
+                  state.current.compaction && (
+                    <ProgressComponent
+                      key={step}
+                      progress={state.current.compaction}
+                      step={step}
+                      meta={session.current.meta}
+                    />
+                  )
+                );
+              case "extract":
+                return (
+                  session.current?.meta &&
+                  state.current.extract && (
+                    <ProgressComponent
+                      key={step}
+                      progress={state.current.extract}
+                      step={step}
+                      meta={session.current.meta}
+                    />
+                  )
+                );
+            }
+          })}
           {state.current.dl && state.current.error === undefined && (
             <div className="hFlex" style={{ marginTop: 20 }}>
               <div style={{ height: "38px", lineHeight: "38px" }}>
