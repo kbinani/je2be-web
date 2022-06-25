@@ -14,6 +14,7 @@ import {
 } from "../../share/progress";
 import {
   ConvertMode,
+  convertModeDescription,
   convertModeInputFileExtension,
   convertModeMetadata,
   convertModeSupportsDirectoryInput,
@@ -31,7 +32,8 @@ export const Convert: React.FC<{
   mode: ConvertMode;
   onFinish: () => void;
   onStart: () => void;
-}> = ({ onFinish, onStart, mode }) => {
+  onBack: () => void;
+}> = ({ onFinish, onStart, onBack, mode }) => {
   const session = useRef<ConvertSession | null>(null);
   const forceUpdate = useForceUpdate();
   const state = useRef<State>({});
@@ -49,6 +51,18 @@ export const Convert: React.FC<{
   const onFinishCalled = () => {
     setState({ endTime: Date.now() });
     onFinish();
+  };
+  const onCancelOrBack = () => {
+    if (
+      state.current.startTime !== undefined &&
+      state.current.endTime === undefined
+    ) {
+      if (!confirm(gettext("Do you really want to cancel?"))) {
+        return;
+      }
+    }
+    session.current?.close();
+    onBack();
   };
   const changeHandler = ({ file }: { file: boolean }) => {
     return (ev: ChangeEvent<HTMLInputElement>) => {
@@ -154,6 +168,7 @@ export const Convert: React.FC<{
                 <label
                   className="roundButton inputLabel"
                   htmlFor="input_directory"
+                  style={{ marginRight: "20px" }}
                 >
                   {gettext("Select directory")}
                   <input
@@ -181,10 +196,13 @@ export const Convert: React.FC<{
         )}
       </div>
       {session.current && (
-        <div className="vFlex">
+        <div className="vFlex" style={{ margin: 20 }}>
           <div>{gettext("Selected file: ") + session.current.filename}</div>
           {state.current.endTime === undefined && (
-            <div>{gettext("Converting...")}</div>
+            <>
+              <div>{gettext("Mode: ") + convertModeDescription(mode)}</div>
+              <div>{gettext("Converting...")}</div>
+            </>
           )}
           {state.current.startTime && state.current.endTime && (
             <div>
@@ -282,6 +300,19 @@ export const Convert: React.FC<{
           )}
         </div>
       )}
+      <div className="vFlex" style={{ margin: "20px" }}>
+        <div
+          className="roundButton"
+          data-destructive={"true"}
+          style={{ marginTop: 20 }}
+          onClick={onCancelOrBack}
+        >
+          {state.current.startTime !== undefined &&
+          state.current.endTime === undefined
+            ? gettext("Cancel")
+            : gettext("Back")}
+        </div>
+      </div>
       {state.current.error && <ErrorMessage error={state.current.error} />}
     </>
   );

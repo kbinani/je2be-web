@@ -43,6 +43,9 @@ export const Main: React.FC = () => {
       );
     }
   };
+  const onBack = () => {
+    setState({ converting: false, mode: "select" });
+  };
   useEffect(() => {
     const launcher = new ServiceWorkerLauncher();
     launcher
@@ -61,7 +64,12 @@ export const Main: React.FC = () => {
       <div className="container">
         {state.mode === "select" && <ModeSelect onSelect={onModeSelect} />}
         {state.mode !== "select" && (
-          <Convert mode={state.mode} onFinish={onFinish} onStart={onStart} />
+          <Convert
+            mode={state.mode}
+            onFinish={onFinish}
+            onStart={onStart}
+            onBack={onBack}
+          />
         )}
       </div>
       <Footer />

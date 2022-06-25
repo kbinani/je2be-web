@@ -5,6 +5,7 @@ import {
   X2BConverterMetadata,
   X2JConverterMetadata,
 } from "../share/progress";
+import { gettext } from "./i18n";
 
 export type ConvertMode = "j2b" | "b2j" | "x2b" | "x2j";
 export type Mode = "select" | ConvertMode;
@@ -49,5 +50,18 @@ export function convertModeMetadata(
       return new X2JConverterMetadata();
     case "x2b":
       return new X2BConverterMetadata();
+  }
+}
+
+export function convertModeDescription(mode: ConvertMode): string {
+  switch (mode) {
+    case "j2b":
+      return gettext("Java to Bedrock");
+    case "b2j":
+      return gettext("Bedrock to Java");
+    case "x2j":
+      return gettext("Xbox360 to Java");
+    case "x2b":
+      return gettext("Xbox360 to Bedrock");
   }
 }

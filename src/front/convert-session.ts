@@ -102,6 +102,7 @@ export class ConvertSession {
   }
 
   close() {
+    this.converter.terminate();
     this.kvs.close();
   }
 

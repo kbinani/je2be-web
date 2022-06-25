@@ -69,6 +69,8 @@ a {
 .container {
   width: 608px;
   margin: 90px auto auto auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .inputZip {
@@ -83,8 +85,6 @@ a {
 }
 
 .inputLabel {
-  margin-right: 10px;
-  min-width: 50%;
   width: 100%;
 }
 
@@ -92,18 +92,14 @@ a {
   display: none;
 }
 
-.inputLabel:last-child {
-  margin-left: 10px;
-  margin-right: 0;
-}
-
 .progressContainer {
-  width: 100%;
+  /*width: 100%;*/
+  margin: 20px;
 }
 
 .progress {
   background-color: #263238;
-  width: 100%;
+  /*width: 100%;*/
   height: 38px;
   margin-top: 10px;
   position: relative;
@@ -221,10 +217,10 @@ a {
   cursor: pointer;
   padding: 0 20px 0 20px;
   text-align: center;
-  background-color: #273338;
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+  background-color: #273338;
 }
 
 .roundButton:hover {
@@ -233,6 +229,18 @@ a {
 
 .roundButton:active {
   background-color: #4d5a60;
+}
+
+.roundButton[data-destructive="true"] {
+  background-color: #ff3b30;
+}
+
+.roundButton[data-destructive="true"]:hover {
+  background-color: #ff7272;
+}
+
+.roundButton[data-destructive="true"]:active {
+  background-color: #ff5757;
 }
 
 .modeSelectButton {
