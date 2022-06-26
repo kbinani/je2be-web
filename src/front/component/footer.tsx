@@ -3,7 +3,7 @@ import { FC } from "react";
 import { kAppVersion } from "../../share/version";
 
 const Separator: FC = () => {
-  return <div style={{ width: 20 }}>・</div>;
+  return <div>・</div>;
 };
 
 export const Footer: FC<{ onClickAbout: () => void }> = ({ onClickAbout }) => {
@@ -11,7 +11,7 @@ export const Footer: FC<{ onClickAbout: () => void }> = ({ onClickAbout }) => {
     <div className="footer">
       <div className="footerContent">
         <div className="footerRow hFlex">
-          <div>
+          <div style={{ whiteSpace: "nowrap" }}>
             <a
               href={"https://github.com/kbinani/je2be-web"}
               target={"je2be.app/github-link"}
@@ -24,11 +24,16 @@ export const Footer: FC<{ onClickAbout: () => void }> = ({ onClickAbout }) => {
             </a>
           </div>
           <div>&nbsp;</div>
-          <div>je2be-web {kAppVersion === "" ? "(local)" : kAppVersion}</div>
+          <div style={{ whiteSpace: "nowrap" }}>
+            je2be-web {kAppVersion === "" ? "(local)" : kAppVersion}
+          </div>
           <Separator />
-          <div>Copyright © kbinani</div>
+          <div style={{ whiteSpace: "nowrap" }}>Copyright © kbinani</div>
           <Separator />
-          <div onClick={onClickAbout} style={{ cursor: "pointer" }}>
+          <div
+            onClick={onClickAbout}
+            style={{ cursor: "pointer", whiteSpace: "nowrap" }}
+          >
             About je2be-web
           </div>
         </div>

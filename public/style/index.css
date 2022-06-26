@@ -10,7 +10,7 @@
   --text-bright: #7399a8;
 
   --header-background: var(--background-bright);
-  --container-width: 648px;
+  --container-width: 608px;
 }
 
 body {
@@ -57,6 +57,7 @@ a .button {
   line-height: 60px;
   font-size: 20px;
   font-weight: bold;
+  white-space: nowrap;
 }
 
 .appLabelSub {
@@ -64,13 +65,29 @@ a .button {
   line-height: 65px;
   font-size: 16px;
   margin-left: 30px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+@media (max-width: 480px) and (orientation: portrait) {
+  .header {
+    background-image: none;
+  }
+
+  .appLabel {
+    text-indent: 10px;
+  }
+
+  .appLabelSub {
+    margin-left: 10px;
+  }
 }
 
 .container {
   position: relative;
   top: 90px;
   bottom: 120px;
-  width: 608px;
+  max-width: var(--container-width);
   height: calc(100% - 210px);
   margin-left: auto;
   margin-right: auto;
@@ -271,6 +288,12 @@ a .button {
 .modeSelectButton {
   width: calc(var(--container-width) / 2);
   margin: 10px;
+}
+
+@media (max-width: 480px) and (orientation: portrait) {
+  .modeSelectButton {
+    width: 220px;
+  }
 }
 
 .unsupportedMessageContainer {
