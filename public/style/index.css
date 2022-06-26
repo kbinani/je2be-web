@@ -99,10 +99,10 @@ a .button {
   display: flex;
   padding: 10px;
   background-color: #273338;
+  border-radius: 3px;
 }
 
 .inputLabel {
-  /*width: 100%;*/
 }
 
 .inputLabel input {
