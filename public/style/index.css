@@ -13,6 +13,12 @@
   --container-width: 608px;
 }
 
+@media (max-width: 480px) and (orientation: portrait) {
+  :root {
+    --container-width: 100%;
+  }
+}
+
 body {
   margin: 0;
   background-color: var(--background-bright);
@@ -87,7 +93,7 @@ a .button {
   position: relative;
   top: 90px;
   bottom: 120px;
-  max-width: var(--container-width);
+  width: var(--container-width);
   height: calc(100% - 210px);
   margin-left: auto;
   margin-right: auto;

@@ -49,6 +49,17 @@ function errorCatcher(id: string): (e: any) => void {
   };
 }
 
+self.addEventListener("message", (ev: MessageEvent) => {
+  if (isStartMessage(ev.data)) {
+    const { id } = ev.data;
+    start(ev.data)
+      .catch(errorCatcher(id))
+      .finally(() => typeof Module._Deinit === "function" && Module._Deinit());
+  } else if (isProgressMessage(ev.data)) {
+    self.postMessage(ev.data);
+  }
+});
+
 const sRuntimeInitialized = defer<void>();
 
 self.importScripts("./core.js");
@@ -56,17 +67,6 @@ Module.onRuntimeInitialized = () => {
   console.log(`[converter] onRuntimeInitialized`);
   sRuntimeInitialized.resolve();
 };
-
-self.addEventListener("message", (ev: MessageEvent) => {
-  if (isStartMessage(ev.data)) {
-    const { id } = ev.data;
-    start(ev.data)
-      .catch(errorCatcher(id))
-      .finally(() => Module._Deinit());
-  } else if (isProgressMessage(ev.data)) {
-    self.postMessage(ev.data);
-  }
-});
 
 const sKvs = new KvsClient();
 
@@ -93,6 +93,16 @@ async function readFileAsUint8Array(file: File): Promise<Uint8Array> {
 }
 
 async function start(m: StartMessage): Promise<void> {
+  if (typeof Worker === "undefined") {
+    const e: FailedMessage = {
+      id: m.id,
+      type: "failed",
+      error: { type: "Other", native: { message: "Worker class not found" } },
+    };
+    self.postMessage(e);
+    return;
+  }
+
   await sRuntimeInitialized;
 
   console.log(`[converter] (${m.id}) start`);
