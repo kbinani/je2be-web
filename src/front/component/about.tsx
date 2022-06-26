@@ -1,16 +1,9 @@
 import React from "react";
 import { gettext } from "../i18n";
+import { Link } from "./link";
 
 const VSpace: React.FC = () => {
   return <div>&nbsp;</div>;
-};
-
-const Link: React.FC<{ url: string }> = ({ url }) => {
-  return (
-    <a target={"_blank"} href={url}>
-      {url}
-    </a>
-  );
 };
 
 const DependsOn: React.FC<{ name: string; url: string }> = ({

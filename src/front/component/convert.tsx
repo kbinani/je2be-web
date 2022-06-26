@@ -19,6 +19,7 @@ import {
   convertModeMetadata,
   convertModeSupportsDirectoryInput,
 } from "../mode";
+import { Link } from "./link";
 
 type State = Progress & {
   id?: string;
@@ -172,32 +173,43 @@ export const Convert: React.FC<{
           </div>
           <div className="hFlex" style={{ marginTop: 20 }}>
             {convertModeSupportsDirectoryInput(mode) && (
-              <label
-                className="roundButton inputLabel"
-                htmlFor="input_directory"
-                style={{ marginRight: 20 }}
-              >
-                {gettext("Select directory")}
+              <div className="inputContainer vFlex" style={{ marginRight: 5 }}>
+                <label
+                  className="roundButton inputLabel"
+                  htmlFor="input_directory"
+                >
+                  {gettext("Select directory")}
+                  <input
+                    id={"input_directory"}
+                    type={"file"}
+                    onChange={changeHandler({ file: false })}
+                    ref={inputDirectory}
+                    disabled={state.current.id !== undefined}
+                  />
+                </label>
+                <div className="inputGuidance">
+                  {gettext(
+                    "Select a world directory to convert, which must contain a level.dat file"
+                  )}
+                </div>
+              </div>
+            )}
+            <div className="inputContainer vFlex">
+              <label className="roundButton inputLabel" htmlFor="input_zip">
+                {gettext("Select archive")}
                 <input
-                  id={"input_directory"}
+                  id={"input_zip"}
                   type={"file"}
-                  onChange={changeHandler({ file: false })}
-                  ref={inputDirectory}
+                  onChange={changeHandler({ file: true })}
+                  accept={convertModeInputFileExtension(mode)}
+                  ref={inputFile}
                   disabled={state.current.id !== undefined}
                 />
               </label>
-            )}
-            <label className="roundButton inputLabel" htmlFor="input_zip">
-              {gettext("Select archive")}
-              <input
-                id={"input_zip"}
-                type={"file"}
-                onChange={changeHandler({ file: true })}
-                accept={convertModeInputFileExtension(mode)}
-                ref={inputFile}
-                disabled={state.current.id !== undefined}
-              />
-            </label>
+              <div className="inputGuidance">
+                <FileInputGuidance mode={mode} />
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -324,10 +336,34 @@ export const Convert: React.FC<{
           onClick={onCancelOrBack}
           style={{ width: 80 }}
         >
-          {isConverting() ? gettext("Cancel") : gettext("Back")}{" "}
+          {isConverting() ? gettext("Cancel") : gettext("Back")}
         </div>
       </div>
       {state.current.error && <ErrorMessage error={state.current.error} />}
     </>
   );
+};
+
+const FileInputGuidance: React.FC<{ mode: ConvertMode }> = ({ mode }) => {
+  switch (mode) {
+    case "j2b":
+      return (
+        <>{gettext("Select a zip archive of world directory to convert")}</>
+      );
+    case "b2j":
+      return <>{gettext("Select a *.mcworld file to convert")}</>;
+    case "x2j":
+    case "x2b":
+      const url =
+        "https://support.xbox.com/help/xbox-360/accessories/using-usb-flash-drive";
+      return (
+        <>
+          {gettext(
+            "Select a *.bin to convert. This file can be copied from Xbox360 using USB stick. Check the link to know how to prepare USB stick for Xbox360"
+          )}
+          <br />
+          <Link url={url} />
+        </>
+      );
+  }
 };

@@ -94,12 +94,24 @@ a .button {
   cursor: pointer;
 }
 
-.inputLabel {
+.inputContainer {
   width: 100%;
+  display: flex;
+  padding: 10px;
+  background-color: #273338;
+}
+
+.inputLabel {
+  /*width: 100%;*/
 }
 
 .inputLabel input {
   display: none;
+}
+
+.inputGuidance {
+  margin: 10px 5px 0 5px;
+  color: var(--text-bright);
 }
 
 .progressContainer {
