@@ -167,12 +167,15 @@ export const Convert: React.FC<{
           <div style={{ textAlign: "center" }}>
             {gettext("Select a world to convert")}
           </div>
+          <div style={{ marginTop: 20 }}>
+            {gettext("Mode: ") + convertModeDescription(mode)}
+          </div>
           <div className="hFlex" style={{ marginTop: 20 }}>
             {convertModeSupportsDirectoryInput(mode) && (
               <label
                 className="roundButton inputLabel"
                 htmlFor="input_directory"
-                style={{ marginRight: "20px" }}
+                style={{ marginRight: 20 }}
               >
                 {gettext("Select directory")}
                 <input
