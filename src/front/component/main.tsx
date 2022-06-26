@@ -89,7 +89,6 @@ export const Main: React.FC = () => {
   const supported = isSupportedBrowser();
   return (
     <div className="main">
-      <Header />
       <div className="container">
         {state.mode === "select" && <ModeSelect onSelect={onModeSelect} />}
         {state.mode !== "select" && (
@@ -100,9 +99,10 @@ export const Main: React.FC = () => {
             onBack={onBackConvert}
           />
         )}
+        {!supported && <UnsupportedBrowserMessage />}
       </div>
+      <Header />
       <Footer onClickAbout={onClickAbout} />
-      {!supported && <UnsupportedBrowserMessage />}
       {state.about && <About onBack={onBackAbout} />}
     </div>
   );
