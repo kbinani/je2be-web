@@ -310,11 +310,19 @@ export const Convert: React.FC<{
           )}
         </div>
       )}
-      <div className="vFlex" style={{ margin: "20px" }}>
+      <div
+        className="vFlex"
+        style={{
+          margin: "20px",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
         <div
           className="roundButton"
           data-destructive={isConverting()}
           onClick={onCancelOrBack}
+          style={{ width: 80 }}
         >
           {isConverting() ? gettext("Cancel") : gettext("Back")}{" "}
         </div>
