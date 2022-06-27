@@ -2,12 +2,12 @@ export type TranslationKey =
   | "Back"
   | "Bedrock to Java"
   | "Cancel"
-  | "Completed"
+  | "Conversion finished. Click the export button to get the result"
   | "Converter still working. Do you really leave the page?"
   | "Converting..."
   | "Do you really want to cancel?"
+  | "Elapsed time"
   | "Export"
-  | "Finished"
   | "Java to Bedrock"
   | "Mode: "
   | "Select a *.bin to convert. This file can be copied from Xbox360 using USB stick. Check the link to know how to prepare USB stick for Xbox360"
@@ -25,4 +25,5 @@ export type TranslationKey =
   | "This browser doesn't support SharedArrayBuffer"
   | "Unsupported browser because:"
   | "Xbox360 to Bedrock"
-  | "Xbox360 to Java";
+  | "Xbox360 to Java"
+  | "seconds";

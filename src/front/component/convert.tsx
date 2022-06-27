@@ -227,12 +227,20 @@ export const Convert: React.FC<{
             </>
           )}
           {state.current.startTime && state.current.endTime && (
-            <div>
-              {gettext("Finished") +
-                ": " +
-                (state.current.endTime - state.current.startTime) / 1000 +
-                " seconds"}
-            </div>
+            <>
+              <div>
+                {gettext("Elapsed time") +
+                  ": " +
+                  (state.current.endTime - state.current.startTime) / 1000 +
+                  " " +
+                  gettext("seconds")}
+              </div>
+              <div>
+                {gettext(
+                  "Conversion finished. Click the export button to get the result"
+                )}
+              </div>
+            </>
           )}
         </div>
       )}
@@ -302,24 +310,19 @@ export const Convert: React.FC<{
                 );
             }
           })}
-          {state.current.dl && state.current.error === undefined && (
-            <div className="hFlex" style={{ marginTop: 20 }}>
-              <div style={{ height: "38px", lineHeight: "38px" }}>
-                {gettext("Completed")}
-              </div>
-              <a
-                className="roundButton"
-                style={{ marginLeft: 10, paddingLeft: 20, paddingRight: 20 }}
-                href={`./dl/${
-                  state.current.dl.id
-                }?action=download&filename=${btoa(
-                  encodeURIComponent(state.current.dl.filename)
-                )}`}
-              >
-                {gettext("Export")} {state.current.dl.filename}
-              </a>
-            </div>
-          )}
+        </div>
+      )}
+      {state.current.dl && state.current.error === undefined && (
+        <div className="hFlex" style={{ margin: 20 }}>
+          <a
+            className="roundButton"
+            style={{ paddingLeft: 20, paddingRight: 20 }}
+            href={`./dl/${state.current.dl.id}?action=download&filename=${btoa(
+              encodeURIComponent(state.current.dl.filename)
+            )}`}
+          >
+            {gettext("Export") + ": "} {state.current.dl.filename}
+          </a>
         </div>
       )}
       <div

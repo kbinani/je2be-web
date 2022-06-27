@@ -24,8 +24,8 @@ export function gettext(
           return "統合版 から Java版に";
         case "Cancel":
           return "キャンセル";
-        case "Completed":
-          return "完了";
+        case "Conversion finished. Click the export button to get the result":
+          return "変換処理が終了しました。書き出しボタンを押すと結果ファイルが取得できます";
         case "Converter still working. Do you really leave the page?":
           return "変換処理中です。中断してページを読み込みますか？";
         case "Converting...":
@@ -34,8 +34,10 @@ export function gettext(
           return "本当に処理を中断しますか?";
         case "Export":
           return "書き出し";
-        case "Finished":
-          return "完了";
+        case "Elapsed time":
+          return "処理時間";
+        case "seconds":
+          return "秒";
         case "Java to Bedrock":
           return "Java版 から 統合版に";
         case "Mode: ":
