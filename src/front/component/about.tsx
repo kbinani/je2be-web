@@ -928,6 +928,68 @@ export const About: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           <br />
           THE SOFTWARE.
         </DependsOn>
+        <VSpace />
+        <DependsOn
+          name={"sprintf-js"}
+          url={"https://github.com/alexei/sprintf.js"}
+        >
+          Copyright (c) 2007-present, Alexandru Mărășteanu
+          &lt;hello@alexei.ro&gt;
+          <br />
+          All rights reserved.
+          <br />
+          <br />
+          Redistribution and use in source and binary forms, with or without
+          <br />
+          modification, are permitted provided that the following conditions are
+          met:
+          <br />
+          * Redistributions of source code must retain the above copyright
+          <br />
+          notice, this list of conditions and the following disclaimer.
+          <br />
+          * Redistributions in binary form must reproduce the above copyright
+          <br />
+          notice, this list of conditions and the following disclaimer in the
+          <br />
+          documentation and/or other materials provided with the distribution.
+          <br />
+          * Neither the name of this software nor the names of its contributors
+          may be
+          <br />
+          used to endorse or promote products derived from this software without
+          <br />
+          specific prior written permission.
+          <br />
+          <br />
+          THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+          "AS IS" AND
+          <br />
+          ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+          IMPLIED
+          <br />
+          WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+          <br />
+          DISCLAIMED. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+          LIABLE FOR
+          <br />
+          ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+          DAMAGES
+          <br />
+          (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+          SERVICES;
+          <br />
+          LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+          CAUSED AND
+          <br />
+          ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+          TORT
+          <br />
+          (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+          OF THIS
+          <br />
+          SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+        </DependsOn>
       </div>
       <div
         className="roundButton"
