@@ -10,6 +10,7 @@
     "@types/node": "^18.0.0",
     "@types/react": "^17.0.38",
     "@types/react-dom": "^17.0.11",
+    "@types/sprintf-js": "^1.1.2",
     "@types/uuid": "^8.3.4",
     "esbuild": "^0.14.39",
     "prettier": "^2.6.2",
@@ -23,6 +24,7 @@
     "jszip": "^3.10.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
+    "sprintf-js": "^1.1.2",
     "uuid": "^8.3.2"
   },
   "scripts": {
