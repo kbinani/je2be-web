@@ -15,7 +15,7 @@ const DependsOn: React.FC<{ name: string; url: string }> = ({
     <>
       <VSpace />
       <div>
-        {name}: <Link url={url} />
+        <span className="aboutTitle">{name}</span>: <Link url={url} />
       </div>
       <VSpace />
       <div>{children}</div>
@@ -32,27 +32,36 @@ export const About: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   return (
     <div className="aboutContainer vFlex" onClick={onClickContainer}>
       <div className="about vFlex">
-        <div>About je2be-web</div>
+        <div className="aboutHeader">About je2be-web</div>
         <VSpace />
         <div>Copyright (C) kbinani 2022</div>
+        <Link url={"https://github.com/kbinani/je2be-web"} />
         <VSpace />
         <div>
           This program is free software: you can redistribute it and/or modify
+          <br />
           it under the terms of the GNU Affero General Public License as
+          <br />
           published by the Free Software Foundation, either version 3 of the
+          <br />
           License, or (at your option) any later version. This program is
+          <br />
           distributed in the hope that it will be useful, but WITHOUT ANY
+          <br />
           WARRANTY; without even the implied warranty of MERCHANTABILITY or
+          <br />
           FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public
+          <br />
           License for more details. You should have received a copy of the GNU
+          <br />
           Affero General Public License along with this program. If not, see
           &lt;
           <Link url={"https://www.gnu.org/licenses/"} />
           &gt;.
         </div>
         <VSpace />
-        <div>Open source licenses</div>
         <VSpace />
+        <div className="aboutHeader">Open source licenses</div>
         <DependsOn
           name={"client-zip"}
           url={"https://github.com/Touffy/client-zip.git"}
@@ -920,7 +929,11 @@ export const About: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           THE SOFTWARE.
         </DependsOn>
       </div>
-      <div className="roundButton" onClick={onBack} style={{ margin: 10 }}>
+      <div
+        className="roundButton"
+        onClick={onBack}
+        style={{ marginTop: 10, marginBottom: 20, minWidth: 300 }}
+      >
         {gettext("Back")}
       </div>
     </div>

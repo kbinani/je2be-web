@@ -336,10 +336,21 @@ a .button {
 
 .about {
   width: 50%;
-  height: 80%;
   border-radius: 10px;
-  background-color: #4d5a60;
+  background-color: #192124;
   padding: 20px;
+  margin-top: 20px;
   overflow-y: scroll;
-  text-align: center;
+  color: var(--text-bright);
+  user-select: text;
+}
+
+.aboutHeader {
+  font-weight: bold;
+  color: white;
+  user-select: none;
+}
+
+.aboutTitle {
+  color: white;
 }
