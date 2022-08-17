@@ -265,10 +265,9 @@ async function extractZip(file: File, id: string): Promise<void> {
   }
   const foundLevelDat: string[] = [];
   zip.forEach((p: string) => {
-    if (!p.endsWith("level.dat")) {
-      return;
+    if (p === "level.dat" || p.endsWith("/level.dat")) {
+      foundLevelDat.push(p);
     }
-    foundLevelDat.push(p);
   });
   if (foundLevelDat.length === 0) {
     const error: WorkerError = {
