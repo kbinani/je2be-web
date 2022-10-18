@@ -8,6 +8,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 
+set(BUILD_SHARED_LIBS OFF)
+
 if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
   add_definitions(
     -Wno-deprecated-declarations
@@ -20,7 +22,8 @@ set(common_em_compile_and_link_options
   -fexceptions
   -flto
   -pthread
-  -g2)
+  -g2
+  -sUSE_ZLIB=0)
 
 list(APPEND core_files src/worker/dedicated/core.cpp)
 add_executable(core ${core_files})
