@@ -15,6 +15,7 @@ RUN apt update \
     && sh ./cmake-${CMAKE_VERSION}-linux-x86_64.sh --skip-license --prefix=/usr/local --exclude-subdir \
     && rm -f /src/cmake-${CMAKE_VERSION}-linux-x86_64.sh
 RUN cd /emsdk/upstream/emscripten \
-    && ./embuilder.py build --lto libembind-rtti libGL libGL-mt libal libhtml5 libstubs libstubs-debug libc libc-mt libc-mt-debug libcompiler_rt libcompiler_rt-mt libc++ libc++-mt libc++abi libc++abi-mt libdlmalloc libdlmalloc-mt libsockets libsockets-mt libnoexit \
-    && chown emscripten:emscripten -R /emsdk/upstream/emscripten/cache/sysroot/lib/wasm32-emscripten/lto \
-    && chmod og+w /emsdk/upstream/emscripten/cache/sysroot/lib/wasm32-emscripten/lto
+    && ./embuilder.py build --lto libembind-rtti libGL libGL-mt libal libhtml5 libstubs libstubs-debug libc libc-mt libc-mt-debug libcompiler_rt libcompiler_rt-mt libc++ libc++-mt libc++abi libc++abi-mt libdlmalloc libdlmalloc-mt libsockets libsockets-mt libnoexit libc++abi-debug-mt \
+    && echo 'int main() { return 0; }' > /tmp/a.c \
+    && emcc -sUSE_ZLIB=1 -flto /tmp/a.c -lz -o /tmp/a.out \
+    && rm -f /tmp/a.c /tmp/a.out
