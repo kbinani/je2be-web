@@ -17,8 +17,7 @@ build_docker_image:
 
 .PHONY: wasm_target
 wasm_target:
-	cd build && emcmake cmake .. && make -j $$(nproc) core
-
+	cd build && emcmake cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_LIBRARY_PATH=/emsdk/upstream/emscripten/cache/sysroot/lib/wasm32-emscripten/lto && make -j $$(nproc) core
 
 build/core.js: .wasm-built
 
