@@ -48,7 +48,7 @@ jobs:
           make all
       - name: Deploy
         if: github.ref_type == 'tag'
-        uses: burnett01/rsync-deployments@5.2
+        uses: burnett01/rsync-deployments@5.2.1
         with:
           switches: -avc --delete
           path: public/
