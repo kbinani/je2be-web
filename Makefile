@@ -12,7 +12,7 @@ build_docker_image:
 
 .wasm-built: src/worker/dedicated/core.cpp CMakeLists.txt
 	mkdir -p build
-	docker run --rm -v $$(pwd):/src/je2be-web -u emscripten:emscripten -w /src/je2be-web je2be_build_wasm make wasm_target
+	docker run --rm -v $$(pwd):/src/je2be-web -u $$(id -u):$$(id -g) -w /src/je2be-web je2be_build_wasm make wasm_target
 	touch .wasm-built
 
 .PHONY: wasm_target

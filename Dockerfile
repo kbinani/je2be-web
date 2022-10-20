@@ -18,4 +18,5 @@ RUN cd /emsdk/upstream/emscripten \
     && ./embuilder.py build --lto libembind-rtti libGL libGL-mt libal libhtml5 libstubs libstubs-debug libc libc-mt libc-mt-debug libcompiler_rt libcompiler_rt-mt libc++ libc++-mt libc++abi libc++abi-mt libdlmalloc libdlmalloc-mt libsockets libsockets-mt libnoexit libc++abi-debug-mt \
     && echo 'int main() { return 0; }' > /tmp/a.c \
     && emcc -sUSE_ZLIB=1 -flto /tmp/a.c -lz -o /tmp/a.out \
-    && rm -f /tmp/a.c /tmp/a.out
+    && rm -f /tmp/a.c /tmp/a.out \
+    && chmod o+wrx -R /emsdk
