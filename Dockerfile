@@ -19,4 +19,4 @@ RUN cd /emsdk/upstream/emscripten \
     && echo 'int main() { return 0; }' > /tmp/a.c \
     && emcc -sUSE_ZLIB=1 -flto /tmp/a.c -lz -o /tmp/a.out \
     && rm -f /tmp/a.c /tmp/a.out \
-    && chmod o+wrx -R /emsdk
+    && chmod og=u -R /emsdk
