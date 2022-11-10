@@ -34,6 +34,6 @@
     "converter": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/worker/dedicated/converter.ts --bundle --outfile=build/converter.js --sourcemap=external",
     "fmt": "prettier --write '*.ts' 'src/**/*.ts' 'src/**/*.tsx' 'public/style/*.css'",
     "dev": "ts-node dev.ts",
-    "sourcemapup": "bugsnag-source-maps upload-browser --api-key \\\"$BUGSNAG_API_KEY\\\" --app-version $JE2BE_VERSION --base-url https://je2be.app --directory build"
+    "upsourcemaps": "bugsnag-source-maps upload-browser --api-key \\\"$BUGSNAG_API_KEY\\\" --app-version $JE2BE_VERSION --base-url https://je2be.app --directory build"
   }
 }

@@ -57,3 +57,9 @@ jobs:
           remote_user: ${{ secrets.DEPLOY_USERNAME }}
           remote_key: ${{ secrets.DEPLOY_KEY }}
           remote_port: ${{ secrets.DEPLOY_PORT }}
+      - name: Upload source maps
+        if: github.ref_type == 'tag'
+        env:
+          JE2BE_VERSION: ${{ github.ref_name }}
+          BUGSNAG_API_KEY: ${{ secrets.BUGSNAG_API_KEY }}
+        run: yarn upsourcemaps
