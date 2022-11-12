@@ -1,4 +1,5 @@
 /build
+/build_js
 /node_modules
 /.idea
 /public

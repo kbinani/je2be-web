@@ -3,7 +3,7 @@ all: public/script/front.js public/sworker.js public/script/converter.js public/
 
 .PHONY: clean
 clean:
-	rm -rf .wasm-built build/*.js build/*.js.map public/script public/sworker.js
+	rm -rf .wasm-built build build_js public/script public/sworker.js
 
 .PHONY: build_docker_image
 build_docker_image:
@@ -32,25 +32,25 @@ public/script/core.worker.js: build/core.worker.js
 	cp $^ $@
 
 
-public/script/converter.js: build/converter.js
+public/script/converter.js: build_js/script/converter.js
 	mkdir -p public/script
 	cp $^ $@
 
-build/converter.js:
+build_js/script/converter.js:
 	yarn converter --minify
 
 
-public/script/front.js: build/front.js
+public/script/front.js: build_js/script/front.js
 	mkdir -p public/script
 	cp $^ $@
 
-build/front.js:
+build_js/script/front.js:
 	yarn front --minify
 
 
-public/sworker.js: build/sworker.js
+public/sworker.js: build_js/sworker.js
 	mkdir -p public/script
 	cp $^ $@
 
-build/sworker.js:
+build_js/sworker.js:
 	yarn sworker --minify
