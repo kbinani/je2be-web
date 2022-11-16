@@ -8,6 +8,8 @@ esbuild
       servedir: path.join(__dirname, "public"),
     },
     {
+      define: { JE2BE_VERSION: '"(local)"' },
+      entryPoints: [path.join(__dirname, "src/front/component/index.tsx")],
       bundle: true,
       outfile: path.join(__dirname, "public", "script", "front.js"),
     }

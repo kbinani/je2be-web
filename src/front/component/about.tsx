@@ -6,11 +6,9 @@ const VSpace: React.FC = () => {
   return <div>&nbsp;</div>;
 };
 
-const DependsOn: React.FC<{ name: string; url: string }> = ({
-  name,
-  url,
-  children,
-}) => {
+const DependsOn: React.FC<
+  React.PropsWithChildren<{ name: string; url: string }>
+> = ({ name, url, children }) => {
   return (
     <>
       <VSpace />
@@ -258,8 +256,11 @@ export const About: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           SOFTWARE.
         </DependsOn>
         <VSpace />
-        <DependsOn name={"zlib-ng"} url={"https://github.com/zlib-ng/zlib-ng"}>
-          (C) 1995-2013 Jean-loup Gailly and Mark Adler
+        <DependsOn name={"zlib"} url={"https://github.com/madler/zlib"}>
+          Copyright notice:
+          <br />
+          <br />
+          (C) 1995-2022 Jean-loup Gailly and Mark Adler
           <br />
           <br />
           This software is provided 'as-is', without any express or implied
@@ -285,15 +286,18 @@ export const About: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           <br />
           appreciated but is not required.
           <br />
-          <br />
           2. Altered source versions must be plainly marked as such, and must
           not be
           <br />
           misrepresented as being the original software.
           <br />
-          <br />
           3. This notice may not be removed or altered from any source
           distribution.
+          <br />
+          <br />
+          Jean-loup Gailly Mark Adler
+          <br />
+          jloup@gzip.org madler@alumni.caltech.edu
         </DependsOn>
         <VSpace />
         <DependsOn
