@@ -37,4 +37,5 @@ esbuild
         req.pipe(proxyReq, { end: true });
       })
       .listen(3000);
+    console.log(`http://localhost:3000`);
   });
