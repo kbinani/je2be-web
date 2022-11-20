@@ -12,12 +12,20 @@ build_docker_image:
 
 .wasm-built: src/worker/dedicated/core.cpp CMakeLists.txt
 	mkdir -p build/cxx
-	docker run --rm -v $$(pwd):/src/je2be-web -u $$(id -u):$$(id -g) -w /src/je2be-web je2be_build_wasm make wasm_target
+	docker run \
+		--rm \
+		-v $$(pwd):/src/je2be-web \
+		-u $$(id -u):$$(id -g) \
+		-w /src/je2be-web \
+		je2be_build_wasm \
+		make wasm_target
 	touch .wasm-built
 
 .PHONY: wasm_target
 wasm_target:
-	cd build/cxx && emcmake cmake ../.. -DCMAKE_BUILD_TYPE=Release -DCMAKE_LIBRARY_PATH=/emsdk/upstream/emscripten/cache/sysroot/lib/wasm32-emscripten/lto && make -j $$(nproc) core
+	cd build/cxx \
+		&& emcmake cmake ../.. -DCMAKE_BUILD_TYPE=Release -DCMAKE_LIBRARY_PATH=/emsdk/upstream/emscripten/cache/sysroot/lib/wasm32-emscripten/lto \
+		&& cmake --build . --parallel --target core --config Release --verbose
 
 
 # script/core.js
