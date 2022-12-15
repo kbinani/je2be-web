@@ -36,7 +36,7 @@ target_link_options(core PRIVATE
   -O3
   -sPTHREAD_POOL_SIZE=navigator.hardwareConcurrency
   -sEXPORTED_RUNTIME_METHODS=ccall,cwrap
-  -sEXPORTED_FUNCTIONS=_Init,_Deinit,_JavaToBedrock,_BedrockToJava,_Xbox360ToJava,_Xbox360ToBedrock
+  -sEXPORTED_FUNCTIONS=_Init,_Deinit,_JavaToBedrock,_BedrockToJava,_Xbox360ToJava,_Xbox360ToBedrock,_free
   -sASSERTIONS)
 
 list(APPEND all_files ${j2b_wasm_files})
