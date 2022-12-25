@@ -28,9 +28,12 @@
     "uuid": "^9.0.0"
   },
   "scripts": {
-    "front": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/front/component/index.tsx --bundle --outfile=build/ts/script/front.js --sourcemap=external",
-    "sworker": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/worker/service/sworker.ts --bundle --outfile=build/ts/sworker.js --sourcemap=external",
-    "converter": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/worker/dedicated/converter.ts --bundle --outfile=build/ts/script/converter.js --sourcemap=external",
+    "front": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/front/component/index.tsx --bundle --outfile=build/ts/script/front.js --sourcemap=external --minify",
+    "sworker": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/worker/service/sworker.ts --bundle --outfile=build/ts/sworker.js --sourcemap=external --minify",
+    "converter": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/worker/dedicated/converter.ts --bundle --outfile=build/ts/script/converter.js --sourcemap=external --minify",
+    "dev-front": "esbuild src/front/component/index.tsx --bundle --outfile=public/script/front.js --watch",
+    "dev-sworker": "esbuild src/worker/service/sworker.ts --bundle --outfile=public/sworker.js --watch",
+    "dev-converter": "esbuild src/worker/dedicated/converter.ts --bundle --outfile=public/script/converter.js --watch",
     "fmt": "prettier --write '*.ts' 'src/**/*.ts' 'src/**/*.tsx' 'public/style/*.css'",
     "dev": "ts-node dev.ts",
     "upsourcemaps": "bugsnag-source-maps upload-browser --api-key $BUGSNAG_API_KEY --app-version $JE2BE_VERSION --base-url https://je2be.app --directory build/ts",

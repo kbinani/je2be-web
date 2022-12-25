@@ -50,7 +50,7 @@ public/script/converter.js: build/ts/script/converter.js
 	cp $^ $@
 
 build/ts/script/converter.js:
-	yarn converter --minify
+	yarn converter
 
 
 # script/front.js
@@ -59,7 +59,7 @@ public/script/front.js: build/ts/script/front.js
 	cp $^ $@
 
 build/ts/script/front.js:
-	yarn front --minify
+	yarn front
 
 
 # sworker.js
@@ -68,4 +68,4 @@ public/sworker.js: build/ts/sworker.js
 	cp $^ $@
 
 build/ts/sworker.js:
-	yarn sworker --minify
+	yarn sworker
