@@ -27,6 +27,19 @@ wasm_target:
 		&& emcmake cmake ../.. -DCMAKE_BUILD_TYPE=Release -DCMAKE_LIBRARY_PATH=/emsdk/upstream/emscripten/cache/sysroot/lib/wasm32-emscripten/lto \
 		&& cmake --build . --parallel --target core --config Release --verbose
 
+.PHONY: rebuild_wasm
+rebuild_wasm:
+	rm -f build/cxx/core.js build/cxx/core.worker.js
+	docker run \
+		--rm \
+		-v $$(pwd):/src/je2be-web \
+		-u $$(id -u):$$(id -g) \
+		-w /src/je2be-web/build/cxx \
+		je2be_build_wasm \
+		cmake --build . --parallel --target core --config Release --verbose
+	cp build/cxx/core.js public/script/core.js
+	cp build/cxx/core.worker.js public/script/core.worker.js
+	touch .wasm-built
 
 # script/core.js
 build/cxx/core.js: .wasm-built
