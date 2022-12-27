@@ -22,6 +22,8 @@ set(common_em_compile_and_link_options
   -pthread
   -g2)
 
+target_compile_options(je2be PRIVATE -fexceptions)
+
 list(APPEND core_files src/worker/dedicated/core.cpp)
 add_executable(core ${core_files})
 target_link_libraries(core je2be)
