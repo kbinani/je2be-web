@@ -37,7 +37,6 @@ target_link_options(core PRIVATE
   -sINVOKE_RUN=0
   -O3
   -sPTHREAD_POOL_SIZE=navigator.hardwareConcurrency
-  -sEXPORTED_RUNTIME_METHODS=ccall,cwrap
   -sEXPORTED_FUNCTIONS=_Init,_Deinit,_JavaToBedrock,_BedrockToJava,_Xbox360ToJava,_Xbox360ToBedrock,_free
   -sASSERTIONS)
 
