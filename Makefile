@@ -5,8 +5,8 @@ all: public/script/front.js public/sworker.js public/script/converter.js public/
 clean:
 	rm -rf .wasm-built build public/script public/sworker.js
 
-.PHONY: build_docker_image
-build_docker_image:
+.PHONY: docker_image
+docker_image:
 	docker build -t je2be_build_wasm .
 
 
