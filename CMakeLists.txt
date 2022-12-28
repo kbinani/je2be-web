@@ -40,5 +40,4 @@ target_link_options(core PRIVATE
   -sEXPORTED_FUNCTIONS=_Init,_Deinit,_JavaToBedrock,_BedrockToJava,_Xbox360ToJava,_Xbox360ToBedrock,_free
   -sASSERTIONS)
 
-list(APPEND all_files ${j2b_wasm_files})
-source_group(TREE ${CMAKE_CURRENT_LIST_DIR} FILES ${all_files})
+source_group(TREE ${CMAKE_CURRENT_LIST_DIR} FILES ${core_files})
