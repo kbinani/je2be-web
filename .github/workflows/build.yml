@@ -36,7 +36,7 @@ jobs:
       - name: Build docker image
         if: steps.cache-docker-image.outputs.cache-hit != 'true'
         run: |
-          make build_docker_image
+          make docker_image
           docker save je2be_build_wasm:latest -o ${JE2BE_DOCKER_CACHE_PATH}
       - run: docker load -i ${JE2BE_DOCKER_CACHE_PATH}
         if: steps.cache-docker-image.outputs.cache-hit == 'true'
