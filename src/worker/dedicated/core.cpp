@@ -5,10 +5,13 @@
 #define J2B_EXPORT extern "C"
 #endif
 
+#include <je2be.hpp>
+
 #include <iostream>
 #include <sstream>
+#include <thread>
 
-#include <je2be.hpp>
+#include <nlohmann/json.hpp>
 
 #define J2B_DEBUG_CHUNK_FILTER_RADIUS (0)
 
@@ -18,7 +21,7 @@ namespace {
 
 pthread_t sMainThreadId = 0;
 
-void PostProgressMessage(std::string const &id, std::string const &stage, double progress, double total) {
+void PostProgressMessage(std::string const &id, std::string const &stage, double progress, uint32_t numConvertedChunks) {
 #if defined(EMSCRIPTEN)
   if (pthread_self() == sMainThreadId) {
     // clang-format off
@@ -31,7 +34,7 @@ void PostProgressMessage(std::string const &id, std::string const &stage, double
       m["progress"] = $4;
       m["total"] = $5;
       self.postMessage(m);
-    }, id.c_str(), id.size(), stage.c_str(), stage.size(), progress, total);
+    }, id.c_str(), id.size(), stage.c_str(), stage.size(), progress, numConvertedChunks);
     // clang-format on
   } else {
     char *idPtr = (char *)calloc(id.size() + 1, sizeof(char));
@@ -52,7 +55,7 @@ void PostProgressMessage(std::string const &id, std::string const &stage, double
       self.postMessage(m);
       Module._free($0);
       Module._free($2);
-    }, idPtr, id.size(), stagePtr, stage.size(), progress, total);
+    }, idPtr, id.size(), stagePtr, stage.size(), progress, numConvertedChunks);
     // clang-format on
   }
 #endif
@@ -93,15 +96,13 @@ je2be::Status Error(char const *file, int line, std::string what = {}) {
 struct J2BProgress : public je2be::tobe::Progress {
   explicit J2BProgress(std::string const &id) : fId(id) {}
 
-  bool report(Phase phase, double progress, double total) override {
-    switch (phase) {
-    case Phase::Convert:
-      PostProgressMessage(fId, "convert", progress, total);
-      break;
-    case Phase::LevelDbCompaction:
-      PostProgressMessage(fId, "compaction", progress, total);
-      break;
-    }
+  bool reportConvert(double progress, uint64_t numConvertedChunks) override {
+    PostProgressMessage(fId, "convert", progress, numConvertedChunks);
+    return true;
+  }
+
+  bool reportCompaction(double progress) override {
+    PostProgressMessage(fId, "compaction", progress, 1);
     return true;
   }
 
@@ -111,8 +112,8 @@ struct J2BProgress : public je2be::tobe::Progress {
 struct B2JProgress : public je2be::toje::Progress {
   explicit B2JProgress(std::string const &id) : fId(id) {}
 
-  bool report(double progress, double total) override {
-    PostProgressMessage(fId, "convert", progress, total);
+  bool report(double progress, uint64_t numConvertedChunks) override {
+    PostProgressMessage(fId, "convert", progress, numConvertedChunks);
     return true;
   }
 
@@ -123,7 +124,7 @@ struct X2JProgress : public je2be::box360::Progress {
   explicit X2JProgress(std::string const &id) : fId(id) {}
 
   bool report(double progress, double total) override {
-    PostProgressMessage(fId, "extract", progress, total);
+    PostProgressMessage(fId, "extract", progress / total, total);
     return true;
   }
 
@@ -145,12 +146,10 @@ je2be::Status UnsafeJavaToBedrock(char *input, char *output, char *id) {
     }
   }
 #endif
-  Converter converter(fs::path(input), fs::path(output), options);
-
   J2BProgress progress(id);
 
   int concurrency = (int)thread::hardware_concurrency() - 1;
-  return converter.run(concurrency, &progress);
+  return Converter::Run(fs::path(input), fs::path(output), options, concurrency, &progress);
 }
 
 je2be::Status UnsafeBedrockToJava(char *input, char *output, char *id) {
@@ -167,12 +166,10 @@ je2be::Status UnsafeBedrockToJava(char *input, char *output, char *id) {
     }
   }
 #endif
-  Converter converter(fs::path(input), fs::path(output), options);
-
   B2JProgress progress(id);
 
   int concurrency = (int)thread::hardware_concurrency() - 1;
-  return converter.run(concurrency, &progress);
+  return Converter::Run(fs::path(input), fs::path(output), options, concurrency, &progress);
 }
 
 je2be::Status UnsafeXbox360ToJava(char *input, char *output, char *id) {
@@ -233,8 +230,7 @@ je2be::Status UnsafeXbox360ToBedrock(char *input, char *output, char *id) {
     }
 #endif
     J2BProgress progress(id);
-    tobe::Converter converter(javaOutput, fs::path(output), options);
-    return converter.run(concurrency, &progress);
+    return tobe::Converter::Run(javaOutput, fs::path(output), options, concurrency, &progress);
   }
 }
 

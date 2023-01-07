@@ -1,13 +1,13 @@
 import { ProgressMessage } from "./messages";
 
-export type Rational = { num: number; den: number };
+export type ProgressPair = { progress: number; total: number };
 
 export type Progress = {
-  unzip?: Rational;
-  copy?: Rational;
-  convert?: Rational;
-  compaction?: Rational;
-  extract?: Rational;
+  unzip?: ProgressPair;
+  copy?: ProgressPair;
+  convert?: ProgressPair;
+  compaction?: ProgressPair;
+  extract?: ProgressPair;
 };
 
 export type ProgressReducer = (progress: Progress) => Progress;
@@ -152,13 +152,16 @@ export function nextProgress(
     const step = steps[i];
     ret[step] = progress[step];
   }
-  ret[m.step] = { num: m.progress === 0 ? -1 : m.progress, den: m.total };
+  ret[m.step] = {
+    progress: m.progress === 0 ? -1 : m.progress,
+    total: m.total,
+  };
   for (let i = index + 1; i < steps.length; i++) {
     const step = steps[i];
     if (i === index + 1 && m.progress === m.total) {
-      ret[step] = { num: -1, den: 1 };
+      ret[step] = { progress: -1, total: 1 };
     } else {
-      ret[step] = { num: 0, den: 1 };
+      ret[step] = { progress: 0, total: 1 };
     }
   }
   return ret;
@@ -170,9 +173,9 @@ export function initialProgress(meta: ConverterMetadata): Progress {
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i];
     if (i === 0) {
-      ret[step] = { num: -1, den: 1 };
+      ret[step] = { progress: -1, total: 1 };
     } else {
-      ret[step] = { num: 0, den: 1 };
+      ret[step] = { progress: 0, total: 1 };
     }
   }
   return ret;

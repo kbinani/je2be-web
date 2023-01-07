@@ -219,7 +219,7 @@ async function copyDirectory(file: FileList, id: string): Promise<void> {
         id,
         type: "progress",
         step: "copy",
-        progress,
+        progress: progress / total,
         total,
       };
       self.postMessage(m);
@@ -238,7 +238,7 @@ async function copyDirectory(file: FileList, id: string): Promise<void> {
           id,
           type: "progress",
           step: "copy",
-          progress,
+          progress: progress / total,
           total,
         };
         self.postMessage(m);

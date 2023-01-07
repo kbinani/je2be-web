@@ -254,7 +254,7 @@ export const Convert: React.FC<{
                   state.current.unzip && (
                     <ProgressComponent
                       key={step}
-                      progress={state.current.unzip}
+                      value={state.current.unzip}
                       step={step}
                       meta={session.current.meta}
                     />
@@ -266,7 +266,7 @@ export const Convert: React.FC<{
                   state.current.copy && (
                     <ProgressComponent
                       key={step}
-                      progress={state.current.copy}
+                      value={state.current.copy}
                       step={step}
                       meta={session.current.meta}
                     />
@@ -278,7 +278,7 @@ export const Convert: React.FC<{
                   state.current.convert && (
                     <ProgressComponent
                       key={step}
-                      progress={state.current.convert}
+                      value={state.current.convert}
                       step={step}
                       meta={session.current.meta}
                     />
@@ -290,7 +290,7 @@ export const Convert: React.FC<{
                   state.current.compaction && (
                     <ProgressComponent
                       key={step}
-                      progress={state.current.compaction}
+                      value={state.current.compaction}
                       step={step}
                       meta={session.current.meta}
                     />
@@ -302,7 +302,7 @@ export const Convert: React.FC<{
                   state.current.extract && (
                     <ProgressComponent
                       key={step}
-                      progress={state.current.extract}
+                      value={state.current.extract}
                       step={step}
                       meta={session.current.meta}
                     />
