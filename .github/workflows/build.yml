@@ -8,8 +8,23 @@ on:
 env:
   JE2BE_DOCKER_CACHE_PATH: je2be_build_wasm.docker
 jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cache docker image
+        uses: actions/cache@v3
+        id: cache-docker-image
+        with:
+          path: ${{ env.JE2BE_DOCKER_CACHE_PATH }}
+          key: ${{ hashFiles('Dockerfile') }}
+      - name: Build docker image
+        if: steps.cache-docker-image.outputs.cache-hit != 'true'
+        run: |
+          make docker_image
+          docker save je2be_build_wasm:latest -o ${JE2BE_DOCKER_CACHE_PATH}
   build:
     runs-on: ubuntu-latest
+    needs: [docker]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -33,13 +48,8 @@ jobs:
         with:
           path: ${{ env.JE2BE_DOCKER_CACHE_PATH }}
           key: ${{ hashFiles('Dockerfile') }}
-      - name: Build docker image
-        if: steps.cache-docker-image.outputs.cache-hit != 'true'
-        run: |
-          make docker_image
-          docker save je2be_build_wasm:latest -o ${JE2BE_DOCKER_CACHE_PATH}
-      - run: docker load -i ${JE2BE_DOCKER_CACHE_PATH}
-        if: steps.cache-docker-image.outputs.cache-hit == 'true'
+      - name: Restore docker image
+        run: docker load -i ${JE2BE_DOCKER_CACHE_PATH}
       - name: Build
         env:
           JE2BE_VERSION: ${{ github.ref_name }}
