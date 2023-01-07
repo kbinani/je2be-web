@@ -24,7 +24,7 @@ docker_image:
 .PHONY: wasm_target
 wasm_target:
 	cd build/cxx \
-		&& emcmake cmake ../.. -DCMAKE_BUILD_TYPE=Release -DCMAKE_LIBRARY_PATH=/emsdk/upstream/emscripten/cache/sysroot/lib/wasm32-emscripten/lto \
+		&& emcmake cmake ../.. -DCMAKE_BUILD_TYPE=Release \
 		&& cmake --build . --parallel --target core --config Release --verbose
 
 .PHONY: rebuild_wasm

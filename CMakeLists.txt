@@ -18,7 +18,6 @@ add_subdirectory(deps/je2be EXCLUDE_FROM_ALL)
 
 set(common_em_compile_and_link_options
   -fexceptions
-  -flto
   -pthread
   -g2)
 
