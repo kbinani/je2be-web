@@ -34,15 +34,6 @@ jobs:
         with:
           node-version-file: .node-version
           cache: yarn
-      - name: Cache build/cxx directory
-        uses: actions/cache@v3
-        id: cache-build-directory
-        with:
-          path: build/cxx
-          key: ${{ hashFiles('src/**/*.cpp', 'CMakeLists.txt', 'deps/**/*', 'Dockerfile')}}
-      - name: Touch restored build files
-        if: steps.cache-build-directory.outputs.cache-hit == 'true'
-        run: find build/cxx -type f | xargs touch
       - name: Cache docker image
         uses: actions/cache@v3
         id: cache-docker-image
