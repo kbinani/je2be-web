@@ -147,6 +147,7 @@ a .button {
   margin-top: 10px;
   position: relative;
   border-radius: 8px;
+  overflow: hidden;
 }
 
 .progressBar {
