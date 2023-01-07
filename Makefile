@@ -25,7 +25,7 @@ docker_image:
 wasm_target:
 	cd build/cxx \
 		&& emcmake cmake ../.. -DCMAKE_BUILD_TYPE=Release \
-		&& cmake --build . --parallel --target core --config Release --verbose
+		&& cmake --build . --parallel $$(nproc) --target core --config Release --verbose
 
 .PHONY: rebuild_wasm
 rebuild_wasm:
