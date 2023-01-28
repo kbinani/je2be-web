@@ -28,7 +28,9 @@ export const Progress: FC<{
         data-intermediate={progress < 0}
         data-fullwidth={p === 100 || progress < 0}
       />
-      <div className="progressLabel">{`${label}: ${msg}`}</div>
+      <div className="progressLabel">
+        {progress === 0 ? label : `${label}: ${msg}`}
+      </div>
     </div>
   );
 };
