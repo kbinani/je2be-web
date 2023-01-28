@@ -112,8 +112,13 @@ struct J2BProgress : public je2be::tobe::Progress {
 struct B2JProgress : public je2be::toje::Progress {
   explicit B2JProgress(std::string const &id) : fId(id) {}
 
-  bool report(double progress, uint64_t numConvertedChunks) override {
+  bool reportConvert(double progress, uint64_t numConvertedChunks) override {
     PostProgressMessage(fId, "convert", progress, numConvertedChunks);
+    return true;
+  }
+
+  bool reportTerraform(double progress, uint64_t numConvertedChunks) override {
+    PostProgressMessage(fId, "postprocess", progress, numConvertedChunks);
     return true;
   }
 
