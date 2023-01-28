@@ -128,8 +128,8 @@ struct B2JProgress : public je2be::toje::Progress {
 struct X2JProgress : public je2be::box360::Progress {
   explicit X2JProgress(std::string const &id) : fId(id) {}
 
-  bool report(double progress, double total) override {
-    PostProgressMessage(fId, "extract", progress / total, total);
+  bool report(double progress) override {
+    PostProgressMessage(fId, "extract", progress, 0);
     return true;
   }
 
