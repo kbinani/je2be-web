@@ -220,7 +220,7 @@ async function copyDirectory(file: FileList, id: string): Promise<void> {
         type: "progress",
         step: "copy",
         progress: progress / total,
-        total,
+        count: progress,
       };
       self.postMessage(m);
       continue;
@@ -239,7 +239,7 @@ async function copyDirectory(file: FileList, id: string): Promise<void> {
           type: "progress",
           step: "copy",
           progress: progress / total,
-          total,
+          count: progress,
         };
         self.postMessage(m);
       });
@@ -312,8 +312,8 @@ async function extractZip(file: File, id: string): Promise<void> {
     type: "progress",
     id,
     step: "unzip",
-    progress: -1,
-    total,
+    progress: 0,
+    count: 0,
   };
   self.postMessage(m);
 
@@ -330,8 +330,8 @@ async function extractZip(file: File, id: string): Promise<void> {
       type: "progress",
       id,
       step: "unzip",
-      progress,
-      total,
+      progress: progress / total,
+      count: progress,
     };
     self.postMessage(m);
   });
@@ -348,8 +348,8 @@ async function extractZip(file: File, id: string): Promise<void> {
       type: "progress",
       id,
       step: "unzip",
-      progress,
-      total,
+      progress: progress / total,
+      count: progress,
     };
     self.postMessage(m);
   });

@@ -9,14 +9,14 @@ export const Progress: FC<{
   step: Step;
   meta: ConverterMetadata;
 }> = ({ value, step, meta }) => {
-  const { progress, total } = value;
+  const { progress, count } = value;
   const p = clamp(progress * 100, 0, 100);
   const width = progress < 0 ? 100 : p;
   const unit = meta.displayUnit(step);
   const label = meta.stepDescription(step);
   let msg: string;
   if (unit) {
-    msg = `${Math.max(0, total)} ${unit}, ${sprintf("%.1f", p)}% done`;
+    msg = `${Math.max(0, count)} ${unit}, ${sprintf("%.1f", p)}% done`;
   } else {
     msg = `${sprintf("%.1f", p)}% done`;
   }

@@ -32,7 +32,7 @@ void PostProgressMessage(std::string const &id, std::string const &stage, double
       m["id"] = UTF8ToString($0, $1);
       m["step"] = UTF8ToString($2, $3);
       m["progress"] = $4;
-      m["total"] = $5;
+      m["count"] = $5;
       self.postMessage(m);
     }, id.c_str(), id.size(), stage.c_str(), stage.size(), progress, numConvertedChunks);
     // clang-format on
@@ -51,7 +51,7 @@ void PostProgressMessage(std::string const &id, std::string const &stage, double
       m["id"] = UTF8ToString($0, $1);
       m["step"] = UTF8ToString($2, $3);
       m["progress"] = $4;
-      m["total"] = $5;
+      m["count"] = $5;
       self.postMessage(m);
       Module._free($0);
       Module._free($2);
@@ -102,7 +102,7 @@ struct J2BProgress : public je2be::tobe::Progress {
   }
 
   bool reportCompaction(double progress) override {
-    PostProgressMessage(fId, "compaction", progress, 1);
+    PostProgressMessage(fId, "compaction", progress, 0);
     return true;
   }
 

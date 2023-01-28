@@ -6,7 +6,7 @@ export type ProgressMessage = {
   id: string;
   step: Step;
   progress: number;
-  total: number;
+  count: number;
 };
 
 export function isProgressMessage(x: any): x is ProgressMessage {
@@ -23,7 +23,7 @@ export function isProgressMessage(x: any): x is ProgressMessage {
       x["step"] === "extract" ||
       x["step"] === "postprocess") &&
     typeof x["progress"] === "number" &&
-    typeof x["total"] === "number"
+    typeof x["count"] === "number"
   );
 }
 

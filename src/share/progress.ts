@@ -1,6 +1,6 @@
 import { ProgressMessage } from "./messages";
 
-export type ProgressPair = { progress: number; total: number };
+export type ProgressPair = { progress: number; count: number };
 
 export type Progress = {
   unzip?: ProgressPair;
@@ -165,14 +165,14 @@ export function nextProgress(
   }
   ret[m.step] = {
     progress: m.progress === 0 ? -1 : m.progress,
-    total: m.total,
+    count: m.count,
   };
   for (let i = index + 1; i < steps.length; i++) {
     const step = steps[i];
-    if (i === index + 1 && m.progress === m.total) {
-      ret[step] = { progress: -1, total: 1 };
+    if (i === index + 1 && m.progress >= 1) {
+      ret[step] = { progress: -1, count: 0 };
     } else {
-      ret[step] = { progress: 0, total: 1 };
+      ret[step] = { progress: 0, count: 0 };
     }
   }
   return ret;
@@ -184,9 +184,9 @@ export function initialProgress(meta: ConverterMetadata): Progress {
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i];
     if (i === 0) {
-      ret[step] = { progress: -1, total: 1 };
+      ret[step] = { progress: -1, count: 0 };
     } else {
-      ret[step] = { progress: 0, total: 1 };
+      ret[step] = { progress: 0, count: 0 };
     }
   }
   return ret;
