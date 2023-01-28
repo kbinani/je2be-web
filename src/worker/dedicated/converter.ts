@@ -282,32 +282,7 @@ async function extractZip(file: File, id: string): Promise<void> {
     };
     throw error;
   }
-  const levelDatPath = foundLevelDat[0];
-  const idx = levelDatPath.lastIndexOf("level.dat");
-  const prefix = levelDatPath.substring(0, idx);
-  const other: string[] = [];
-  const mca: string[] = [];
-  const entities: string[] = [];
-  zip.forEach((path: string, f: JSZip.JSZipObject) => {
-    if (!path.startsWith(prefix)) {
-      return;
-    }
-    if (f.dir) {
-      return;
-    }
-    if (path.endsWith(".mca")) {
-      if (path.includes("/region/")) {
-        mca.push(path);
-        return;
-      } else if (path.includes("/entities/")) {
-        entities.push(path);
-        return;
-      }
-    }
-    other.push(path);
-  });
 
-  const total = other.length + mca.length + entities.length;
   const m: ProgressMessage = {
     type: "progress",
     id,
@@ -317,43 +292,42 @@ async function extractZip(file: File, id: string): Promise<void> {
   };
   self.postMessage(m);
 
-  let progress = 0;
-  const unzipOthers = [...other, ...entities].map(async (path) => {
-    const rel = path.substring(prefix.length);
+  const levelDatPath = foundLevelDat[0];
+  const idx = levelDatPath.lastIndexOf("level.dat");
+  const prefix = levelDatPath.substring(0, idx);
+  const files: string[] = [];
+  zip.forEach((path: string, f: JSZip.JSZipObject) => {
+    const normal = path.replace("\\", "/");
+    if (!normal.startsWith(prefix)) {
+      return;
+    }
+    if (f.dir) {
+      return;
+    }
+    files.push(path);
+  });
+
+  const total = files.length;
+  let count = 0;
+  const promises = files.map(async (path) => {
+    const normal = path.replace("\\", "/");
+    const rel = normal.substring(prefix.length);
     const target = `/je2be/${id}/in/${rel}`;
     const buffer = await promiseUnzipFileInZip({ zip, path });
     mkdirp(dirname(target));
     await writeFile(target, buffer);
 
-    progress++;
+    count++;
     const m: ProgressMessage = {
       type: "progress",
       id,
       step: "unzip",
-      progress: progress / total,
-      count: progress,
+      progress: count / total,
+      count,
     };
     self.postMessage(m);
   });
-  await Promise.all(unzipOthers);
-
-  const unzipRegions = mca.map(async (path) => {
-    const rel = path.substring(prefix.length);
-    const target = `/je2be/${id}/in/${rel}`;
-    const buffer = await promiseUnzipFileInZip({ zip, path });
-    mkdirp(dirname(target));
-    await writeFile(target, buffer);
-    progress++;
-    const m: ProgressMessage = {
-      type: "progress",
-      id,
-      step: "unzip",
-      progress: progress / total,
-      count: progress,
-    };
-    self.postMessage(m);
-  });
-  await Promise.all(unzipRegions);
+  await Promise.all(promises);
 }
 
 async function collectOutputFiles(id: string): Promise<void> {
