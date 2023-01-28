@@ -308,6 +308,18 @@ export const Convert: React.FC<{
                     />
                   )
                 );
+              case "postprocess":
+                return (
+                  session.current?.meta &&
+                  state.current.postprocess && (
+                    <ProgressComponent
+                      key={step}
+                      value={state.current.postprocess}
+                      step={step}
+                      meta={session.current.meta}
+                    />
+                  )
+                );
             }
           })}
         </div>

@@ -8,11 +8,18 @@ export type Progress = {
   convert?: ProgressPair;
   compaction?: ProgressPair;
   extract?: ProgressPair;
+  postprocess?: ProgressPair;
 };
 
 export type ProgressReducer = (progress: Progress) => Progress;
 
-export type Step = "unzip" | "copy" | "convert" | "compaction" | "extract";
+export type Step =
+  | "unzip"
+  | "copy"
+  | "convert"
+  | "compaction"
+  | "extract"
+  | "postprocess";
 
 export interface ConverterMetadata {
   steps: Step[];
@@ -64,9 +71,9 @@ export class B2JConverterMetadata implements ConverterMetadata {
 
   get steps(): Step[] {
     if (this.file) {
-      return ["unzip", "convert"];
+      return ["unzip", "convert", "postprocess"];
     } else {
-      return ["copy", "convert"];
+      return ["copy", "convert", "postprocess"];
     }
   }
 
@@ -76,6 +83,8 @@ export class B2JConverterMetadata implements ConverterMetadata {
       case "copy":
         return "files";
       case "convert":
+        return "chunks";
+      case "postprocess":
         return "chunks";
     }
   }
@@ -88,6 +97,8 @@ export class B2JConverterMetadata implements ConverterMetadata {
         return "Copy";
       case "convert":
         return "Convert";
+      case "postprocess":
+        return "Post process";
     }
   }
 }

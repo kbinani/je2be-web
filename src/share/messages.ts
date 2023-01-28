@@ -20,7 +20,8 @@ export function isProgressMessage(x: any): x is ProgressMessage {
       x["step"] === "convert" ||
       x["step"] === "compaction" ||
       x["step"] === "copy" ||
-      x["step"] === "extract") &&
+      x["step"] === "extract" ||
+      x["step"] === "postprocess") &&
     typeof x["progress"] === "number" &&
     typeof x["total"] === "number"
   );
