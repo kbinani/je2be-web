@@ -1,6 +1,6 @@
-[submodule "deps/je2be"]
-	path = deps/je2be
-	url = https://github.com/kbinani/je2be.git
 [submodule "deps/client-zip"]
 	path = deps/client-zip
 	url = https://github.com/kbinani/client-zip.git
+[submodule "deps/je2be-core"]
+	path = deps/je2be-core
+	url = https://github.com/kbinani/je2be-core.git

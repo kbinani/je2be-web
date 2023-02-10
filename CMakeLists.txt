@@ -14,7 +14,7 @@ if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQU
   )
 endif()
 
-add_subdirectory(deps/je2be EXCLUDE_FROM_ALL)
+add_subdirectory(deps/je2be-core EXCLUDE_FROM_ALL)
 
 set(common_em_compile_and_link_options
   -fexceptions
