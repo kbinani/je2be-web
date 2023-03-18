@@ -34,9 +34,9 @@ export class J2BConverterMetadata implements ConverterMetadata {
 
   get steps(): Step[] {
     if (this.file) {
-      return ["unzip", "convert", "compaction"];
+      return ["unzip", "convert", "postprocess", "compaction"];
     } else {
-      return ["copy", "convert", "compaction"];
+      return ["copy", "convert", "postprocess", "compaction"];
     }
   }
 
@@ -47,6 +47,8 @@ export class J2BConverterMetadata implements ConverterMetadata {
         return "files";
       case "convert":
         return "chunks";
+      case "postprocess":
+        return undefined;
       case "compaction":
         return undefined;
     }
@@ -60,6 +62,8 @@ export class J2BConverterMetadata implements ConverterMetadata {
         return "Copy";
       case "convert":
         return "Convert";
+      case "postprocess":
+        return "Post Process";
       case "compaction":
         return "LevelDB Compaction";
     }
@@ -122,7 +126,7 @@ export class X2JConverterMetadata implements ConverterMetadata {
 
 export class X2BConverterMetadata implements ConverterMetadata {
   get steps(): Step[] {
-    return ["extract", "convert", "compaction"];
+    return ["extract", "convert", "postprocess", "compaction"];
   }
 
   displayUnit(step: Step): string | undefined {
@@ -131,6 +135,8 @@ export class X2BConverterMetadata implements ConverterMetadata {
         return undefined;
       case "convert":
         return "chunks";
+      case "postprocess":
+        return undefined;
       case "compaction":
         return undefined;
     }
@@ -142,6 +148,8 @@ export class X2BConverterMetadata implements ConverterMetadata {
         return "Extract";
       case "convert":
         return "Convert";
+      case "postprocess":
+        return "Post Process";
       case "compaction":
         return "LevelDB Compaction";
     }
