@@ -25,12 +25,15 @@ export class KvsServer {
   readonly storage = new Map<string, FileWithMeta>();
 
   close() {
-    console.log(`[front] revoking object urls...`);
-    this.storage.forEach((entity, key) => {
-      URL.revokeObjectURL(entity.url);
-    });
-    this.storage.clear();
-    console.log(`[front] all object urls revoked`);
+    if (this.storage.size > 0) {
+      console.log(`[front] revoking object urls...`);
+      this.storage.forEach((entity, key) => {
+        URL.revokeObjectURL(entity.url);
+      });
+      this.storage.clear();
+      console.log(`[front] all object urls revoked`);
+    }
+    console.log(`[front] close`);
   }
 
   ls() {
