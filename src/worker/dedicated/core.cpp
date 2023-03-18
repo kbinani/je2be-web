@@ -64,11 +64,17 @@ void PostProgressMessage(std::string const &id, std::string const &stage, double
 char *CreateStatusJson(je2be::Status st) {
   if (auto error = st.error(); error) {
     nlohmann::json json;
-    json["what"] = error->fWhat;
-    nlohmann::json where;
-    where["file"] = error->fWhere.fFile;
-    where["line"] = error->fWhere.fLine;
-    json["where"] = where;
+    if (!error->fWhat.empty()) {
+      json["what"] = error->fWhat;
+    }
+    nlohmann::json trace;
+    for (int i = (int)error->fTrace.size() - 1; i >= 0; i--) {
+      nlohmann::json where;
+      where["file"] = error->fTrace[i].fFile;
+      where["line"] = error->fTrace[i].fLine;
+      trace.push_back(where);
+    }
+    json["trace"] = trace;
     std::string jsonStr = nlohmann::to_string(json);
     char *jsonPtr = (char *)calloc(jsonStr.size() + 1, sizeof(char));
     memcpy(jsonPtr, jsonStr.c_str(), jsonStr.size() * sizeof(char));
@@ -96,13 +102,18 @@ je2be::Status Error(char const *file, int line, std::string what = {}) {
 struct J2BProgress : public je2be::tobe::Progress {
   explicit J2BProgress(std::string const &id) : fId(id) {}
 
-  bool reportConvert(double progress, uint64_t numConvertedChunks) override {
-    PostProgressMessage(fId, "convert", progress, numConvertedChunks);
+  bool reportConvert(je2be::Rational<je2be::u64> const &progress, uint64_t numConvertedChunks) override {
+    PostProgressMessage(fId, "convert", progress.toD(), numConvertedChunks);
     return true;
   }
 
-  bool reportCompaction(double progress) override {
-    PostProgressMessage(fId, "compaction", progress, 0);
+  bool reportEntityPostProcess(je2be::Rational<je2be::u64> const &progress) override {
+    PostProgressMessage(fId, "postprocess", progress.toD(), 0);
+    return true;
+  }
+
+  bool reportCompaction(je2be::Rational<je2be::u64> const &progress) override {
+    PostProgressMessage(fId, "compaction", progress.toD(), 0);
     return true;
   }
 
@@ -112,13 +123,13 @@ struct J2BProgress : public je2be::tobe::Progress {
 struct B2JProgress : public je2be::toje::Progress {
   explicit B2JProgress(std::string const &id) : fId(id) {}
 
-  bool reportConvert(double progress, uint64_t numConvertedChunks) override {
-    PostProgressMessage(fId, "convert", progress, numConvertedChunks);
+  bool reportConvert(je2be::Rational<je2be::u64> const &progress, uint64_t numConvertedChunks) override {
+    PostProgressMessage(fId, "convert", progress.toD(), numConvertedChunks);
     return true;
   }
 
-  bool reportTerraform(double progress, uint64_t numConvertedChunks) override {
-    PostProgressMessage(fId, "postprocess", progress, numConvertedChunks);
+  bool reportTerraform(je2be::Rational<je2be::u64> const &progress, uint64_t numConvertedChunks) override {
+    PostProgressMessage(fId, "postprocess", progress.toD(), numConvertedChunks);
     return true;
   }
 
@@ -128,8 +139,8 @@ struct B2JProgress : public je2be::toje::Progress {
 struct X2JProgress : public je2be::box360::Progress {
   explicit X2JProgress(std::string const &id) : fId(id) {}
 
-  bool report(double progress) override {
-    PostProgressMessage(fId, "extract", progress, 0);
+  bool report(je2be::Rational<je2be::u64> const &progress) override {
+    PostProgressMessage(fId, "extract", progress.toD(), 0);
     return true;
   }
 
