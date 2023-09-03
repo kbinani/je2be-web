@@ -6,16 +6,16 @@
   "license": "AGPL-3.0-or-later",
   "devDependencies": {
     "@bugsnag/source-maps": "^2.3.1",
-    "@types/node": "^18.11.17",
+    "@types/node": "^20.5.9",
     "@types/react": "^18.0.26",
     "@types/react-dom": "^18.0.10",
     "@types/sprintf-js": "^1.1.2",
     "@types/uuid": "^9.0.0",
     "bugsnag-build-reporter": "^2.0.0",
-    "esbuild": "^0.16.10",
-    "prettier": "^2.8.1",
+    "esbuild": "^0.19.2",
+    "prettier": "^3.0.3",
     "ts-node": "^10.9.1",
-    "typescript": "^4.9.4"
+    "typescript": "^5.2.2"
   },
   "dependencies": {
     "@bugsnag/js": "^7.18.0",
