@@ -1,5 +1,5 @@
 export function directoryNameFromFileList(
-  fileList: FileList
+  fileList: FileList,
 ): string | undefined {
   let dirname: string | undefined = undefined;
   for (let i = 0; i < fileList.length; i++) {

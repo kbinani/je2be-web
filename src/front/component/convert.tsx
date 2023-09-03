@@ -189,7 +189,7 @@ export const Convert: React.FC<{
                 </label>
                 <div className="inputGuidance">
                   {gettext(
-                    "Select a world directory to convert, which must contain a level.dat file"
+                    "Select a world directory to convert, which must contain a level.dat file",
                   )}
                 </div>
               </div>
@@ -237,7 +237,7 @@ export const Convert: React.FC<{
               </div>
               <div>
                 {gettext(
-                  "Conversion finished. Click the export button to get the result"
+                  "Conversion finished. Click the export button to get the result",
                 )}
               </div>
             </>
@@ -330,7 +330,7 @@ export const Convert: React.FC<{
             className="roundButton"
             style={{ paddingLeft: 20, paddingRight: 20 }}
             href={`./dl/${state.current.dl.id}?action=download&filename=${btoa(
-              encodeURIComponent(state.current.dl.filename)
+              encodeURIComponent(state.current.dl.filename),
             )}`}
           >
             {gettext("Export") + ": "} {state.current.dl.filename}
@@ -374,7 +374,7 @@ const FileInputGuidance: React.FC<{ mode: ConvertMode }> = ({ mode }) => {
       return (
         <>
           {gettext(
-            "Select a *.bin to convert. This file can be copied from Xbox360 using USB stick. Check the link to know how to prepare USB stick for Xbox360"
+            "Select a *.bin to convert. This file can be copied from Xbox360 using USB stick. Check the link to know how to prepare USB stick for Xbox360",
           )}
           <br />
           <Link url={url} />

@@ -12,7 +12,7 @@ import { About } from "./about";
 export const useForceUpdate = () => {
   const [counter, setCounter] = useReducer(
     (prev: number, _: number) => prev + 1,
-    0
+    0,
   );
   return () => setCounter(counter + 1);
 };
@@ -62,7 +62,7 @@ export const Main: React.FC = () => {
     if (state.converting) {
       ev.preventDefault();
       ev.returnValue = gettext(
-        "Converter still working. Do you really leave the page?"
+        "Converter still working. Do you really leave the page?",
       );
     }
   };
@@ -117,7 +117,7 @@ const UnsupportedBrowserMessage: React.FC = () => {
           {typeof navigator.hardwareConcurrency === "undefined" && (
             <li>
               {gettext(
-                "This browser doesn't have navigator.hardwareConcurrency property"
+                "This browser doesn't have navigator.hardwareConcurrency property",
               ) + ": "}
               <a
                 target={"_blank"}

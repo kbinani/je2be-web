@@ -159,7 +159,7 @@ export class X2BConverterMetadata implements ConverterMetadata {
 export function nextProgress(
   progress: Progress,
   m: ProgressMessage,
-  meta: ConverterMetadata
+  meta: ConverterMetadata,
 ): Progress {
   const steps = meta.steps;
   const index = steps.indexOf(m.step);

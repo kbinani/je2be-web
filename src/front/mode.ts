@@ -39,7 +39,7 @@ export function convertModeOutputFileExtension(mode: ConvertMode): string {
 
 export function convertModeMetadata(
   mode: ConvertMode,
-  file: boolean
+  file: boolean,
 ): ConverterMetadata {
   switch (mode) {
     case "j2b":

@@ -18,6 +18,6 @@ document.addEventListener("DOMContentLoaded", () => {
   root.render(
     <ErrorBoundary>
       <App />
-    </ErrorBoundary>
+    </ErrorBoundary>,
   );
 });

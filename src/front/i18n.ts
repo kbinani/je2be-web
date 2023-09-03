@@ -12,7 +12,7 @@ function normalize(language: string): string {
 
 export function gettext(
   s: TranslationKey,
-  language: string = navigator.language
+  language: string = navigator.language,
 ): string {
   const l = normalize(language);
   switch (l) {

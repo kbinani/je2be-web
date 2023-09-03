@@ -56,7 +56,7 @@ function onFetch(ev: FetchEvent) {
 
 async function* objectUrlsAsFile(
   files: FileMeta[],
-  prefix: string
+  prefix: string,
 ): AsyncIterable<File> {
   for (const file of files) {
     const { name, url } = file;
@@ -68,7 +68,7 @@ async function* objectUrlsAsFile(
 
 async function respondDownload(
   id: string,
-  filename: string
+  filename: string,
 ): Promise<Response> {
   const prefix = `/je2be/${id}/out/`;
   const db = new DlStore();
@@ -81,7 +81,7 @@ async function respondDownload(
       "Content-Type": "application/octet-stream",
       "Cache-Control": "no-cache",
       "Content-Disposition": `attachment; filename=\"${encodeURIComponent(
-        filename
+        filename,
       )}\"`,
     },
   });

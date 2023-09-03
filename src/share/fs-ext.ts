@@ -84,7 +84,7 @@ export function fread({
 
 export async function iterate(
   directory: string,
-  callback: ({ path, dir }: { path: string; dir: boolean }) => Promise<void>
+  callback: ({ path, dir }: { path: string; dir: boolean }) => Promise<void>,
 ): Promise<void> {
   const visit = async (item: any) => {
     const { path, node } = item;
