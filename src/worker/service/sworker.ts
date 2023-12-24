@@ -77,12 +77,7 @@ async function respondDownload(
     return new Response(null, { status: 404 });
   }
   return downloadZip(objectUrlsAsFile(response.files, prefix), {
-    headers: {
-      "Content-Type": "application/octet-stream",
-      "Cache-Control": "no-cache",
-      "Content-Disposition": `attachment; filename=\"${encodeURIComponent(
-        filename,
-      )}\"`,
-    },
+    filename: encodeURIComponent(filename),
+    cacheControl: "no-cache",
   });
 }
