@@ -10,7 +10,9 @@ import { directoryNameFromFileList } from "../../share/file-list-ext";
 import {
   initialProgress,
   Progress,
+  ProgressPair,
   ProgressReducer,
+  Step,
 } from "../../share/progress";
 import {
   ConvertMode,
@@ -161,6 +163,7 @@ export const Convert: React.FC<{
       session.current = null;
     };
   }, []);
+  const meta = session.current?.meta;
   return (
     <>
       {!session.current && (
@@ -244,82 +247,21 @@ export const Convert: React.FC<{
           )}
         </div>
       )}
-      {session.current && (
+      {meta && (
         <div className="progressContainer">
-          {session.current.meta.steps.map((step) => {
-            switch (step) {
-              case "unzip":
-                return (
-                  session.current?.meta &&
-                  state.current.unzip && (
-                    <ProgressComponent
-                      key={step}
-                      value={state.current.unzip}
-                      step={step}
-                      meta={session.current.meta}
-                    />
-                  )
-                );
-              case "copy":
-                return (
-                  session.current?.meta &&
-                  state.current.copy && (
-                    <ProgressComponent
-                      key={step}
-                      value={state.current.copy}
-                      step={step}
-                      meta={session.current.meta}
-                    />
-                  )
-                );
-              case "convert":
-                return (
-                  session.current?.meta &&
-                  state.current.convert && (
-                    <ProgressComponent
-                      key={step}
-                      value={state.current.convert}
-                      step={step}
-                      meta={session.current.meta}
-                    />
-                  )
-                );
-              case "compaction":
-                return (
-                  session.current?.meta &&
-                  state.current.compaction && (
-                    <ProgressComponent
-                      key={step}
-                      value={state.current.compaction}
-                      step={step}
-                      meta={session.current.meta}
-                    />
-                  )
-                );
-              case "extract":
-                return (
-                  session.current?.meta &&
-                  state.current.extract && (
-                    <ProgressComponent
-                      key={step}
-                      value={state.current.extract}
-                      step={step}
-                      meta={session.current.meta}
-                    />
-                  )
-                );
-              case "postprocess":
-                return (
-                  session.current?.meta &&
-                  state.current.postprocess && (
-                    <ProgressComponent
-                      key={step}
-                      value={state.current.postprocess}
-                      step={step}
-                      meta={session.current.meta}
-                    />
-                  )
-                );
+          {meta.steps.map((step, index) => {
+            const value = progressValue(state.current, meta.steps, index, step);
+            if (!value) {
+              return;
+            } else {
+              return (
+                <ProgressComponent
+                  key={step}
+                  value={value}
+                  step={step}
+                  meta={meta}
+                />
+              );
             }
           })}
         </div>
@@ -380,5 +322,33 @@ const FileInputGuidance: React.FC<{ mode: ConvertMode }> = ({ mode }) => {
           <Link url={url} />
         </>
       );
+  }
+};
+
+const progressValue = (
+  state: State,
+  steps: Step[],
+  index: number,
+  step: Step,
+): ProgressPair | undefined => {
+  const base = state[step];
+  if (!base) {
+    return undefined;
+  }
+  if (state.dl && state.error === undefined) {
+    return { progress: base.count, count: base.count };
+  }
+  if (
+    steps.slice(index + 1).some((s) => {
+      const p = state[s];
+      if (p === undefined) {
+        return false;
+      }
+      return p.progress > 0;
+    })
+  ) {
+    return { progress: base.count, count: base.count };
+  } else {
+    return base;
   }
 };
