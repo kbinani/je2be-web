@@ -336,7 +336,10 @@ const progressValue = (
     return undefined;
   }
   if (state.dl && state.error === undefined) {
-    return { progress: base.count, count: base.count };
+    return {
+      progress: base.progress === 1 && base.count === 0 ? 1 : base.count,
+      count: base.count,
+    };
   }
   if (
     steps.slice(index + 1).some((s) => {
@@ -347,7 +350,10 @@ const progressValue = (
       return p.progress > 0;
     })
   ) {
-    return { progress: base.count, count: base.count };
+    return {
+      progress: base.progress === 1 && base.count === 0 ? 1 : base.count,
+      count: base.count,
+    };
   } else {
     return base;
   }
