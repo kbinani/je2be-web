@@ -55,7 +55,7 @@ export const Footer: FC<{ onClickAbout: () => void }> = ({ onClickAbout }) => {
           <div style={{ margin: 10 }}>
             <a
               target={"_blank"}
-              href={"https://www.microsoft.com/store/apps/9PC9MFX9QCXS"}
+              href={"https://www.microsoft.com/store/productId/9PC9MFX9QCXS"}
             >
               <img
                 height={39}
