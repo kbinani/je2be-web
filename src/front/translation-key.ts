@@ -26,4 +26,7 @@ export type TranslationKey =
   | "Unsupported browser because:"
   | "Xbox360 to Bedrock"
   | "Xbox360 to Java"
-  | "seconds";
+  | "seconds"
+  | "PS3 to Bedrock"
+  | "PS3 to Java"
+  | "Select a world directory to convert, which must contain a GAMEDATA file";

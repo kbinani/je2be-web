@@ -156,6 +156,84 @@ export class X2BConverterMetadata implements ConverterMetadata {
   }
 }
 
+export class P2JConverterMetadata implements ConverterMetadata {
+  constructor(readonly file: boolean) {}
+
+  get steps(): Step[] {
+    if (this.file) {
+      return ["unzip", "extract"];
+    } else {
+      return ["copy", "extract"];
+    }
+  }
+
+  displayUnit(step: Step): string | undefined {
+    switch (step) {
+      case "copy":
+      case "unzip":
+        return "files";
+      case "extract":
+        return undefined;
+    }
+  }
+
+  stepDescription(step: Step): string | undefined {
+    switch (step) {
+      case "copy":
+        return "Copy";
+      case "unzip":
+        return "Unzip";
+      case "extract":
+        return "Convert";
+    }
+  }
+}
+
+export class P2BConverterMetadata implements ConverterMetadata {
+  constructor(readonly file: boolean) {}
+
+  get steps(): Step[] {
+    if (this.file) {
+      return ["unzip", "extract", "convert", "postprocess", "compaction"];
+    } else {
+      return ["copy", "extract", "convert", "postprocess", "compaction"];
+    }
+  }
+
+  displayUnit(step: Step): string | undefined {
+    switch (step) {
+      case "copy":
+      case "unzip":
+        return "files";
+      case "extract":
+        return undefined;
+      case "convert":
+        return "chunks";
+      case "postprocess":
+        return undefined;
+      case "compaction":
+        return undefined;
+    }
+  }
+
+  stepDescription(step: Step): string | undefined {
+    switch (step) {
+      case "copy":
+        return "Copy";
+      case "unzip":
+        return "Unzip";
+      case "extract":
+        return "Extract";
+      case "convert":
+        return "Convert";
+      case "postprocess":
+        return "Post Process";
+      case "compaction":
+        return "LevelDB Compaction";
+    }
+  }
+}
+
 export function nextProgress(
   progress: Progress,
   m: ProgressMessage,

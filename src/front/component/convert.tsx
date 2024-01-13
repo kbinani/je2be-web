@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import { ConvertSession } from "../convert-session";
 import { gettext } from "../i18n";
 import { useForceUpdate } from "./main";
-import { WorkerError } from "../../share/messages";
+import { WorkerError, WorkerErrorType } from "../../share/messages";
 import { ErrorMessage } from "./error-message";
 import { directoryNameFromFileList } from "../../share/file-list-ext";
 import {
@@ -19,6 +19,7 @@ import {
   convertModeDescription,
   convertModeInputFileExtension,
   convertModeMetadata,
+  convertModeRequiredFile,
   convertModeSupportsDirectoryInput,
 } from "../mode";
 import { Link } from "./link";
@@ -70,7 +71,17 @@ export const Convert: React.FC<{
     session.current?.close();
     onBack();
   };
-  const changeHandler = ({ file }: { file: boolean }) => {
+  const changeHandler = ({
+    file,
+    requiredFile,
+  }: {
+    file: boolean;
+    requiredFile?: {
+      name: string;
+      notFoundError: WorkerErrorType;
+      tooManyError: WorkerErrorType;
+    };
+  }) => {
     return (ev: ChangeEvent<HTMLInputElement>) => {
       const files = ev.target.files;
       const noFileSelectedError: WorkerError = {
@@ -98,7 +109,7 @@ export const Convert: React.FC<{
         source = f;
         filename = f.name;
       } else {
-        let numLevelDatFiles = 0;
+        let numRequiredFiles = 0;
         const dirname = directoryNameFromFileList(files);
         if (dirname === undefined) {
           setState({
@@ -109,21 +120,27 @@ export const Convert: React.FC<{
           });
           return;
         }
-        for (let i = 0; i < files.length; i++) {
-          const item = files.item(i);
-          if (!item) {
-            continue;
+        if (requiredFile !== undefined) {
+          for (let i = 0; i < files.length; i++) {
+            const item = files.item(i);
+            if (!item) {
+              continue;
+            }
+            if (item.name === requiredFile.name) {
+              numRequiredFiles++;
+            }
           }
-          if (item.name === "level.dat") {
-            numLevelDatFiles++;
+          if (numRequiredFiles === 0) {
+            setState({
+              error: { type: requiredFile.notFoundError, native: {} },
+            });
+            return;
+          } else if (numRequiredFiles > 1) {
+            setState({
+              error: { type: requiredFile.tooManyError, native: {} },
+            });
+            return;
           }
-        }
-        if (numLevelDatFiles === 0) {
-          setState({ error: { type: "NoLevelDatFound", native: {} } });
-          return;
-        } else if (numLevelDatFiles > 1) {
-          setState({ error: { type: "2OrMoreLevelDatFound", native: {} } });
-          return;
         }
         source = files;
         filename = dirname;
@@ -175,7 +192,10 @@ export const Convert: React.FC<{
             {gettext("Mode: ") + convertModeDescription(mode)}
           </div>
           <div className="hFlex" style={{ marginTop: 20 }}>
-            {convertModeSupportsDirectoryInput(mode) && (
+            {(mode === "j2b" ||
+              mode === "b2j" ||
+              mode === "p2j" ||
+              mode === "p2b") && (
               <div className="inputContainer vFlex" style={{ marginRight: 5 }}>
                 <label
                   className="roundButton inputLabel"
@@ -185,14 +205,19 @@ export const Convert: React.FC<{
                   <input
                     id={"input_directory"}
                     type={"file"}
-                    onChange={changeHandler({ file: false })}
+                    onChange={changeHandler({
+                      file: false,
+                      requiredFile: convertModeRequiredFile(mode),
+                    })}
                     ref={inputDirectory}
                     disabled={state.current.id !== undefined}
                   />
                 </label>
                 <div className="inputGuidance">
                   {gettext(
-                    "Select a world directory to convert, which must contain a level.dat file",
+                    mode === "j2b" || mode === "b2j"
+                      ? "Select a world directory to convert, which must contain a level.dat file"
+                      : "Select a world directory to convert, which must contain a GAMEDATA file",
                   )}
                 </div>
               </div>
@@ -304,6 +329,8 @@ export const Convert: React.FC<{
 const FileInputGuidance: React.FC<{ mode: ConvertMode }> = ({ mode }) => {
   switch (mode) {
     case "j2b":
+    case "p2j":
+    case "p2b":
       return (
         <>{gettext("Select a zip archive of world directory to convert")}</>
       );

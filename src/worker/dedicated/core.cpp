@@ -99,7 +99,7 @@ je2be::Status Error(char const *file, int line, std::string what = {}) {
   return je2be::Status(je2be::Status::ErrorData(w, what));
 }
 
-struct J2BProgress : public je2be::tobe::Progress {
+struct J2BProgress : public je2be::java::Progress {
   explicit J2BProgress(std::string const &id) : fId(id) {}
 
   bool reportConvert(je2be::Rational<je2be::u64> const &progress, uint64_t numConvertedChunks) override {
@@ -120,7 +120,7 @@ struct J2BProgress : public je2be::tobe::Progress {
   std::string fId;
 };
 
-struct B2JProgress : public je2be::toje::Progress {
+struct B2JProgress : public je2be::bedrock::Progress {
   explicit B2JProgress(std::string const &id) : fId(id) {}
 
   bool reportConvert(je2be::Rational<je2be::u64> const &progress, uint64_t numConvertedChunks) override {
@@ -136,8 +136,8 @@ struct B2JProgress : public je2be::toje::Progress {
   std::string fId;
 };
 
-struct X2JProgress : public je2be::box360::Progress {
-  explicit X2JProgress(std::string const &id) : fId(id) {}
+struct LCEProgress : public je2be::lce::Progress {
+  explicit LCEProgress(std::string const &id) : fId(id) {}
 
   bool report(je2be::Rational<je2be::u64> const &progress) override {
     PostProgressMessage(fId, "extract", progress.toD(), 0);
@@ -150,7 +150,7 @@ struct X2JProgress : public je2be::box360::Progress {
 je2be::Status UnsafeJavaToBedrock(char *input, char *output, char *id) {
   using namespace std;
   using namespace je2be;
-  using namespace je2be::tobe;
+  using namespace je2be::java;
 
   Options options;
   options.fLevelDirectoryStructure = LevelDirectoryStructure::Vanilla;
@@ -171,7 +171,7 @@ je2be::Status UnsafeJavaToBedrock(char *input, char *output, char *id) {
 je2be::Status UnsafeBedrockToJava(char *input, char *output, char *id) {
   using namespace std;
   using namespace je2be;
-  using namespace je2be::toje;
+  using namespace je2be::bedrock;
 
   Options options;
 #if J2B_DEBUG_CHUNK_FILTER_RADIUS
@@ -191,10 +191,10 @@ je2be::Status UnsafeBedrockToJava(char *input, char *output, char *id) {
 je2be::Status UnsafeXbox360ToJava(char *input, char *output, char *id) {
   using namespace std;
   using namespace je2be;
-  using namespace je2be::box360;
+  using namespace je2be::xbox360;
 
   int concurrency = (int)thread::hardware_concurrency() - 1;
-  Options options;
+  lce::Options options;
 #if J2B_DEBUG_CHUNK_FILTER_RADIUS
   int r = J2B_DEBUG_CHUNK_FILTER_RADIUS;
   for (int x = -r; x <= r; x++) {
@@ -203,7 +203,7 @@ je2be::Status UnsafeXbox360ToJava(char *input, char *output, char *id) {
     }
   }
 #endif
-  X2JProgress progress(id);
+  LCEProgress progress(id);
   return Converter::Run(fs::path(input), fs::path(output), concurrency, options, &progress);
 }
 
@@ -219,7 +219,7 @@ je2be::Status UnsafeXbox360ToBedrock(char *input, char *output, char *id) {
   int concurrency = (int)thread::hardware_concurrency() - 1;
 
   {
-    box360::Options options;
+    lce::Options options;
 #if J2B_DEBUG_CHUNK_FILTER_RADIUS
     int r = J2B_DEBUG_CHUNK_FILTER_RADIUS;
     for (int x = -r; x <= r; x++) {
@@ -228,15 +228,15 @@ je2be::Status UnsafeXbox360ToBedrock(char *input, char *output, char *id) {
       }
     }
 #endif
-    X2JProgress progress(id);
-    auto st = box360::Converter::Run(fs::path(input), javaOutput, concurrency, options, &progress);
+    LCEProgress progress(id);
+    auto st = xbox360::Converter::Run(fs::path(input), javaOutput, concurrency, options, &progress);
     if (!st.ok()) {
       return st;
     }
   }
 
   {
-    tobe::Options options;
+    java::Options options;
 #if J2B_DEBUG_CHUNK_FILTER_RADIUS
     int r = J2B_DEBUG_CHUNK_FILTER_RADIUS;
     for (int x = -r; x <= r; x++) {
@@ -246,7 +246,69 @@ je2be::Status UnsafeXbox360ToBedrock(char *input, char *output, char *id) {
     }
 #endif
     J2BProgress progress(id);
-    return tobe::Converter::Run(javaOutput, fs::path(output), options, concurrency, &progress);
+    return java::Converter::Run(javaOutput, fs::path(output), options, concurrency, &progress);
+  }
+}
+
+je2be::Status UnsafePS3ToJava(char *input, char *output, char *id) {
+  using namespace std;
+  using namespace je2be;
+  using namespace je2be::ps3;
+
+  int concurrency = (int)thread::hardware_concurrency() - 1;
+  lce::Options options;
+#if J2B_DEBUG_CHUNK_FILTER_RADIUS
+  int r = J2B_DEBUG_CHUNK_FILTER_RADIUS;
+  for (int x = -r; x <= r; x++) {
+    for (int z = -r; z <= r; z++) {
+      options.fChunkFilter.insert(je2be::Pos2i(x, z));
+    }
+  }
+#endif
+  LCEProgress progress(id);
+  return Converter::Run(fs::path(input), fs::path(output), concurrency, options, &progress);
+}
+
+je2be::Status UnsafePS3ToBedrock(char *input, char *output, char *id) {
+  using namespace std;
+  using namespace je2be;
+
+  auto javaOutput = fs::temp_directory_path() / "java";
+  if (!je2be::Fs::CreateDirectories(javaOutput)) {
+    return Error(__FILE__, __LINE__, "can't create directory " + javaOutput.string());
+  }
+
+  int concurrency = (int)thread::hardware_concurrency() - 1;
+
+  {
+    lce::Options options;
+#if J2B_DEBUG_CHUNK_FILTER_RADIUS
+    int r = J2B_DEBUG_CHUNK_FILTER_RADIUS;
+    for (int x = -r; x <= r; x++) {
+      for (int z = -r; z <= r; z++) {
+        options.fChunkFilter.insert(je2be::Pos2i(x, z));
+      }
+    }
+#endif
+    LCEProgress progress(id);
+    auto st = ps3::Converter::Run(fs::path(input), javaOutput, concurrency, options, &progress);
+    if (!st.ok()) {
+      return st;
+    }
+  }
+
+  {
+    java::Options options;
+#if J2B_DEBUG_CHUNK_FILTER_RADIUS
+    int r = J2B_DEBUG_CHUNK_FILTER_RADIUS;
+    for (int x = -r; x <= r; x++) {
+      for (int z = -r; z <= r; z++) {
+        options.fChunkFilter.insert(je2be::Pos2i(x, z));
+      }
+    }
+#endif
+    J2BProgress progress(id);
+    return java::Converter::Run(javaOutput, fs::path(output), options, concurrency, &progress);
   }
 }
 
@@ -289,4 +351,12 @@ J2B_EXPORT char *Xbox360ToJava(char *input, char *output, char *id) {
 
 J2B_EXPORT char *Xbox360ToBedrock(char *input, char *output, char *id) {
   return Wrap(UnsafeXbox360ToBedrock, input, output, id);
+}
+
+J2B_EXPORT char *PS3ToJava(char *input, char *output, char *id) {
+  return Wrap(UnsafePS3ToJava, input, output, id);
+}
+
+J2B_EXPORT char *PS3ToBedrock(char *input, char *output, char *id) {
+  return Wrap(UnsafePS3ToBedrock, input, output, id);
 }

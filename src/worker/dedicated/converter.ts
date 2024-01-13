@@ -118,9 +118,13 @@ async function start(m: StartMessage): Promise<void> {
   await db.dlFiles.clear();
 
   let inputPath: string;
-  if (mode === "j2b" || mode === "b2j") {
+  if (mode === "j2b" || mode === "b2j" || mode === "p2j" || mode === "p2b") {
     console.log(`[converter] (${id}) extract...`);
-    await extract(file, id);
+    await extract(
+      file,
+      id,
+      mode === "j2b" || mode === "b2j" ? "level.dat" : "GAMEDATTA",
+    );
     console.log(`[converter] (${id}) extract done`);
     inputPath = `/je2be/${id}/in`;
   } else {
@@ -154,6 +158,12 @@ async function start(m: StartMessage): Promise<void> {
       break;
     case "x2b":
       errorJsonPtr = Module._Xbox360ToBedrock(inputPtr, outputPtr, idPtr);
+      break;
+    case "p2b":
+      errorJsonPtr = Module._PS3ToBedrock(inputPtr, outputPtr, idPtr);
+      break;
+    case "p2j":
+      errorJsonPtr = Module._PS3ToJava(inputPtr, outputPtr, idPtr);
       break;
   }
   if (errorJsonPtr != 0) {
@@ -190,15 +200,23 @@ async function start(m: StartMessage): Promise<void> {
   self.postMessage(done);
 }
 
-async function extract(file: File | FileList, id: string): Promise<void> {
+async function extract(
+  file: File | FileList,
+  id: string,
+  requiredFile: string,
+): Promise<void> {
   if (file instanceof File) {
-    await extractZip(file, id);
+    await extractZip(file, id, requiredFile);
   } else {
-    await copyDirectory(file, id);
+    await copyDirectory(file, id, requiredFile);
   }
 }
 
-async function copyDirectory(file: FileList, id: string): Promise<void> {
+async function copyDirectory(
+  file: FileList,
+  id: string,
+  requiredFile: string,
+): Promise<void> {
   let prefix = directoryNameFromFileList(file);
   if (prefix === undefined) {
     const e: WorkerError = {
@@ -248,7 +266,11 @@ async function copyDirectory(file: FileList, id: string): Promise<void> {
   await Promise.all(promises);
 }
 
-async function extractZip(file: File, id: string): Promise<void> {
+async function extractZip(
+  file: File,
+  id: string,
+  requiredFile: string,
+): Promise<void> {
   let zip: any;
   try {
     zip = await JSZip.loadAsync(file);
@@ -263,21 +285,25 @@ async function extractZip(file: File, id: string): Promise<void> {
     };
     throw error;
   }
-  const foundLevelDat: string[] = [];
+  const foundRequired: string[] = [];
   zip.forEach((p: string) => {
-    if (p === "level.dat" || p.endsWith("/level.dat")) {
-      foundLevelDat.push(p);
+    if (p === requiredFile || p.endsWith(`/${requiredFile}`)) {
+      foundRequired.push(p);
     }
   });
-  if (foundLevelDat.length === 0) {
+  if (foundRequired.length === 0) {
     const error: WorkerError = {
-      type: "NoLevelDatFound",
+      type:
+        requiredFile === "level.dat" ? "NoLevelDatFound" : "NoGAMEDATAFound",
       native: {},
     };
     throw error;
-  } else if (foundLevelDat.length !== 1) {
+  } else if (foundRequired.length !== 1) {
     const error: WorkerError = {
-      type: "2OrMoreLevelDatFound",
+      type:
+        requiredFile === "level.dat"
+          ? "2OrMoreLevelDatFound"
+          : "2OrMoreGAMEDATAFound",
       native: {},
     };
     throw error;
@@ -292,9 +318,9 @@ async function extractZip(file: File, id: string): Promise<void> {
   };
   self.postMessage(m);
 
-  const levelDatPath = foundLevelDat[0];
-  const idx = levelDatPath.lastIndexOf("level.dat");
-  const prefix = levelDatPath.substring(0, idx);
+  const requiredFilePath = foundRequired[0];
+  const idx = requiredFilePath.lastIndexOf(requiredFile);
+  const prefix = requiredFilePath.substring(0, idx);
   const files: string[] = [];
   zip.forEach((path: string, f: JSZip.JSZipObject) => {
     const normal = path.replace("\\", "/");

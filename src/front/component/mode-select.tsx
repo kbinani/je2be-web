@@ -34,6 +34,18 @@ export const ModeSelect: React.FC<{
       >
         {gettext("Xbox360 to Java")}
       </div>
+      <div
+        className="roundButton modeSelectButton"
+        onClick={() => onSelect("p2b")}
+      >
+        {gettext("PS3 to Bedrock")}
+      </div>
+      <div
+        className="roundButton modeSelectButton"
+        onClick={() => onSelect("p2j")}
+      >
+        {gettext("PS3 to Java")}
+      </div>
     </div>
   );
 };

@@ -67,13 +67,19 @@ export function gettext(
         case "Xbox360 to Java":
           return "Xbox360版 から Java版に";
         case "Select a world directory to convert, which must contain a level.dat file":
-          return "変換するワールドのディレクトリを選択して下さい。このディレクトリには level.dat が含まれている必要があります";
+          return "変換するワールドのディレクトリを選択して下さい。このディレクトリには level.dat ファイルが含まれている必要があります";
         case "Select a zip archive of world directory to convert":
-          return "変換するワールドの zip ファイルを選択して下さい";
+          return "変換するワールドのディレクトリを zip に圧縮したファイルを選択して下さい";
         case "Select a *.mcworld file to convert":
           return "変換する *.mcworld ファイルを選択して下さい";
         case "Select a *.bin to convert. This file can be copied from Xbox360 using USB stick. Check the link to know how to prepare USB stick for Xbox360":
           return "変換する *.bin ファイルを選択して下さい。このファイルは USB メモリーを使うことで Xbox360 の実機からコピーする必要があります。Xbox360 用の USB メモリーを準備する方法は以下のリンクが参考になります。";
+        case "PS3 to Java":
+          return "PS3版 から Java版に";
+        case "PS3 to Bedrock":
+          return "PS3版 から 統合版に";
+        case "Select a world directory to convert, which must contain a GAMEDATA file":
+          return "変換するワールドのディレクトリを選択して下さい。このディレクトリには GAMEDATA ファイルが含まれている必要があります";
       }
       break;
     }

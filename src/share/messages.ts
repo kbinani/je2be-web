@@ -27,9 +27,11 @@ export function isProgressMessage(x: any): x is ProgressMessage {
   );
 }
 
-type WorkerErrorType =
+export type WorkerErrorType =
   | "NoLevelDatFound"
+  | "NoGAMEDATAFound"
   | "2OrMoreLevelDatFound"
+  | "2OrMoreGAMEDATAFound"
   | "ConverterFailed"
   | "Unzip"
   | "CopyToIdb"
