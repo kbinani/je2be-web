@@ -138,7 +138,7 @@ async function start(m: StartMessage): Promise<void> {
   }
 
   console.log(`[converter] (${id}) convert...`);
-  await mkdirp(`/je2be/${id}/out`);
+  mkdirp(`/je2be/${id}/out`);
 
   Module._Init();
 
@@ -219,11 +219,10 @@ async function copyDirectory(
 ): Promise<void> {
   let prefix = directoryNameFromFileList(file);
   if (prefix === undefined) {
-    const e: WorkerError = {
+    throw {
       type: "Other",
       native: { message: "can't get directory name from FileList" },
-    };
-    throw e;
+    } satisfies WorkerError;
   }
   prefix += "/";
   const promises: Promise<void>[] = [];
@@ -275,15 +274,14 @@ async function extractZip(
   try {
     zip = await JSZip.loadAsync(file);
   } catch (native: any) {
-    const error: WorkerError = {
+    throw {
       type: "Unzip",
       native: {
         name: native?.name,
         message: native?.message,
         stack: native?.stack,
       },
-    };
-    throw error;
+    } satisfies WorkerError;
   }
   const foundRequired: string[] = [];
   zip.forEach((p: string) => {
@@ -292,21 +290,19 @@ async function extractZip(
     }
   });
   if (foundRequired.length === 0) {
-    const error: WorkerError = {
+    throw {
       type:
         requiredFile === "level.dat" ? "NoLevelDatFound" : "NoGAMEDATAFound",
       native: {},
-    };
-    throw error;
+    } satisfies WorkerError;
   } else if (foundRequired.length !== 1) {
-    const error: WorkerError = {
+    throw {
       type:
         requiredFile === "level.dat"
           ? "2OrMoreLevelDatFound"
           : "2OrMoreGAMEDATAFound",
       native: {},
-    };
-    throw error;
+    } satisfies WorkerError;
   }
 
   const m: ProgressMessage = {
