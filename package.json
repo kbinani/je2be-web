@@ -6,26 +6,26 @@
   "license": "AGPL-3.0-or-later",
   "devDependencies": {
     "@bugsnag/source-maps": "^2.3.3",
-    "@types/node": "^20.12.11",
-    "@types/react": "^18.3.2",
-    "@types/react-dom": "^18.3.0",
+    "@types/node": "^22.10.1",
+    "@types/react": "^19.0.1",
+    "@types/react-dom": "^19.0.1",
     "@types/sprintf-js": "^1.1.4",
-    "@types/uuid": "^9.0.8",
+    "@types/uuid": "^10.0.0",
     "bugsnag-build-reporter": "^2.0.0",
-    "esbuild": "^0.21.1",
-    "prettier": "^3.2.5",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.4.5"
+    "esbuild": "^0.24.0",
+    "prettier": "^3.4.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
   },
   "dependencies": {
-    "@bugsnag/js": "^7.23.0",
-    "@bugsnag/plugin-react": "^7.22.7",
-    "dexie": "^4.0.4",
+    "@bugsnag/js": "^8.1.2",
+    "@bugsnag/plugin-react": "^8.1.1",
+    "dexie": "^4.0.10",
     "jszip": "^3.10.1",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "sprintf-js": "^1.1.3",
-    "uuid": "^9.0.1"
+    "uuid": "^11.0.3"
   },
   "scripts": {
     "front": "esbuild --define:JE2BE_VERSION=\\\"$JE2BE_VERSION\\\" src/front/component/index.tsx --bundle --outfile=build/ts/script/front.js --sourcemap=external --minify",
@@ -35,7 +35,7 @@
     "dev-sworker": "esbuild src/worker/service/sworker.ts --bundle --outfile=public/sworker.js --watch",
     "dev-converter": "esbuild src/worker/dedicated/converter.ts --bundle --outfile=public/script/converter.js --watch",
     "fmt": "prettier --write '*.ts' 'src/**/*.ts' 'src/**/*.tsx' 'public/style/*.css'",
-    "dev": "ts-node dev.ts",
+    "dev": "tsx dev.ts",
     "upsourcemaps": "bugsnag-source-maps upload-browser --api-key $BUGSNAG_API_KEY --app-version $JE2BE_VERSION --base-url https://je2be.app --directory build/ts",
     "reportbuild": "bugsnag-build-reporter --api-key $BUGSNAG_API_KEY --app-version $JE2BE_VERSION"
   }
