@@ -20,6 +20,7 @@
   "dependencies": {
     "@bugsnag/js": "^8.1.2",
     "@bugsnag/plugin-react": "^8.1.1",
+    "coi-serviceworker": "^0.1.7",
     "dexie": "^4.0.10",
     "jszip": "^3.10.1",
     "react": "^19.0.0",

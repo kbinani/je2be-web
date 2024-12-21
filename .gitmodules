@@ -4,6 +4,3 @@
 [submodule "deps/je2be-core"]
 	path = deps/je2be-core
 	url = https://github.com/kbinani/je2be-core.git
-[submodule "deps/coi-serviceworker"]
-	path = deps/coi-serviceworker
-	url = https://github.com/gzuidhof/coi-serviceworker.git

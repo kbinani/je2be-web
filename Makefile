@@ -1,5 +1,5 @@
 .PHONY: all
-all: public/script/front.js public/sworker.js public/script/converter.js public/script/core.js public/script/core.worker.js public/script/coi-serviceworker.min.js
+all: public/script/front.js public/sworker.js public/script/converter.js public/script/core.js public/script/core.worker.js public/coi-serviceworker.js
 
 .PHONY: clean
 clean:
@@ -83,6 +83,6 @@ public/sworker.js: build/ts/sworker.js
 build/ts/sworker.js:
 	yarn sworker
 
-# script/coi-serviceworker.min.js:
-public/script/coi-serviceworker.min.js: deps/coi-serviceworker/coi-serviceworker.min.js
+# script/coi-serviceworker.js:
+public/coi-serviceworker.js: node_modules/coi-serviceworker/coi-serviceworker.js
 	cp $^ $@
