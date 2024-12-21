@@ -25,6 +25,7 @@ jobs:
           docker save je2be_build_wasm:latest -o ${JE2BE_DOCKER_CACHE_PATH}
   build:
     runs-on: ubuntu-latest
+    if: github.ref_type != 'tag'
     needs: [docker]
     steps:
       - uses: actions/checkout@v4
@@ -48,19 +49,45 @@ jobs:
         run: |
           yarn install
           make all
-      - name: Deploy
-        if: github.ref_type == 'tag'
-        uses: burnett01/rsync-deployments@7.0.1
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.ref_type == 'tag'
+    needs: [docker]
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
         with:
-          switches: -avc --delete
-          path: public/
-          remote_path: ${{ secrets.DEPLOY_DIR }}
-          remote_host: ${{ secrets.DEPLOY_HOST }}
-          remote_user: ${{ secrets.DEPLOY_USERNAME }}
-          remote_key: ${{ secrets.DEPLOY_KEY }}
-          remote_port: ${{ secrets.DEPLOY_PORT }}
+          submodules: recursive
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: yarn
+      - name: Cache docker image
+        uses: actions/cache@v4
+        id: cache-docker-image
+        with:
+          path: ${{ env.JE2BE_DOCKER_CACHE_PATH }}
+          key: ${{ hashFiles('Dockerfile') }}
+      - name: Restore docker image
+        run: docker load -i ${JE2BE_DOCKER_CACHE_PATH}
+      - uses: actions/configure-pages@v5
+      - name: Build
+        env:
+          JE2BE_VERSION: ${{ github.ref_name }}
+        run: |
+          yarn install
+          make all
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: './public'
+      - uses: actions/deploy-pages@v4
       - name: Setup bugsnag
-        if: github.ref_type == 'tag'
         env:
           JE2BE_VERSION: ${{ github.ref_name }}
           BUGSNAG_API_KEY: ${{ secrets.BUGSNAG_API_KEY }}
