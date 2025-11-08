@@ -5,13 +5,12 @@
   "author": "kbinani <kbinani.bt@gmail.com>",
   "license": "AGPL-3.0-or-later",
   "devDependencies": {
-    "@bugsnag/source-maps": "^2.3.3",
+    "@bugsnag/cli": "^3.4.1",
     "@types/node": "^24.10.0",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "@types/sprintf-js": "^1.1.4",
     "@types/uuid": "^11.0.0",
-    "bugsnag-build-reporter": "^2.0.0",
     "esbuild": "^0.25.12",
     "prettier": "^3.6.2",
     "tsx": "^4.20.6",
@@ -37,7 +36,7 @@
     "dev-converter": "esbuild src/worker/dedicated/converter.ts --bundle --outfile=public/script/converter.js --watch",
     "fmt": "prettier --write '*.ts' 'src/**/*.ts' 'src/**/*.tsx' 'public/style/*.css'",
     "dev": "tsx dev.ts",
-    "upsourcemaps": "bugsnag-source-maps upload-browser --api-key $BUGSNAG_API_KEY --app-version $JE2BE_VERSION --base-url https://je2be.app --directory build/ts",
-    "reportbuild": "bugsnag-build-reporter --api-key $BUGSNAG_API_KEY --app-version $JE2BE_VERSION"
+    "upsourcemaps": "bash tool/upsourcemaps.sh",
+    "reportbuild": "bugsnag-cli create-build --api-key=$BUGSNAG_API_KEY --version-name $JE2BE_VERSION --release-stage=production"
   }
 }
