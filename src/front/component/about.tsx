@@ -32,7 +32,7 @@ export const About: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       <div className="about vFlex">
         <div className="aboutHeader">About je2be-web</div>
         <VSpace />
-        <div>Copyright (C) kbinani 2022-2024</div>
+        <div>Copyright (C) kbinani 2022-2025</div>
         <Link url={"https://github.com/kbinani/je2be-web"} />
         <VSpace />
         <div>
